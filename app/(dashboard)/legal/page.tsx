@@ -13,10 +13,17 @@ import {
   Eye,
   CheckCircle,
   XCircle,
+  Clock,
+  Filter,
+  Layers,
+  Scale,
+  Building2,
+  ExternalLink,
 } from 'lucide-react';
 
 export default function LegalScrutinyPage() {
   const [activeTab, setActiveTab] = useState<'PENDING' | 'VERIFIED' | 'REJECTED'>('PENDING');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const scrutinyCases = [
     {
@@ -25,14 +32,18 @@ export default function LegalScrutinyPage() {
       ownerName: 'Ajay Kumar',
       city: 'Pitampura, New Delhi',
       state: 'Delhi',
+      cts: 'CTS-1029',
+      advocate: 'Adv. Suresh Verma',
       docs: [
         { name: 'Sale_Deed_2020.pdf', status: 'clear' },
         { name: 'Society_NOC.pdf', status: 'pending' },
         { name: 'Index_II.pdf', status: 'clear' },
+        { name: 'Electricity_Bill.pdf', status: 'clear' },
       ],
       pendingCount: 1,
       aiMatchScore: 98,
       riskLevel: 'LOW',
+      date: 'Aug 30, 2026',
     },
     {
       id: 'REQ-345',
@@ -40,14 +51,18 @@ export default function LegalScrutinyPage() {
       ownerName: 'Rajesh Patil',
       city: 'Borivali, Mumbai',
       state: 'Maharashtra',
+      cts: 'CTS-482/A',
+      advocate: 'Adv. Meenakshi Rao',
       docs: [
         { name: 'Builder_Agreement.pdf', status: 'clear' },
         { name: 'Property_Card.pdf', status: 'clear' },
         { name: '7_12_Extract.pdf', status: 'clear' },
+        { name: 'Share_Certificate.pdf', status: 'clear' },
       ],
       pendingCount: 0,
       aiMatchScore: 95,
       riskLevel: 'CLEAR',
+      date: 'Aug 29, 2026',
     },
     {
       id: 'REQ-320',
@@ -55,148 +70,204 @@ export default function LegalScrutinyPage() {
       ownerName: 'Suresh Mehta',
       city: 'Andheri, Mumbai',
       state: 'Maharashtra',
+      cts: 'CTS-991',
+      advocate: 'Adv. Prakash Desai',
       docs: [
         { name: 'Chain_Deed_1995.pdf', status: 'rejected' },
         { name: 'Mutation_Entry.pdf', status: 'pending' },
+        { name: 'Index_II_Search.pdf', status: 'clear' },
       ],
       pendingCount: 2,
-      aiMatchScore: 42,
-      riskLevel: 'HIGH_RISK',
+      aiMatchScore: 72,
+      riskLevel: 'HIGH',
+      date: 'Aug 28, 2026',
+    },
+    {
+      id: 'REQ-308',
+      propertyName: 'Nirman Park Horizon',
+      ownerName: 'Vikram Joshi',
+      city: 'Thane West',
+      state: 'Maharashtra',
+      cts: 'CTS-562',
+      advocate: 'Adv. Anjali Kulkarni',
+      docs: [
+        { name: 'Deed_of_Conveyance.pdf', status: 'clear' },
+        { name: 'Index_II.pdf', status: 'pending' },
+        { name: 'Non_Encumbrance_Cert.pdf', status: 'clear' },
+      ],
+      pendingCount: 1,
+      aiMatchScore: 91,
+      riskLevel: 'LOW',
+      date: 'Aug 26, 2026',
     },
   ];
 
+  const filteredCases = scrutinyCases.filter((c) => {
+    const matchesTab =
+      activeTab === 'PENDING'
+        ? c.pendingCount > 0 && c.riskLevel !== 'HIGH'
+        : activeTab === 'VERIFIED'
+        ? c.pendingCount === 0
+        : c.riskLevel === 'HIGH';
+
+    const matchesSearch =
+      c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.propertyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.ownerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      c.city.toLowerCase().includes(searchQuery.toLowerCase());
+
+    return matchesTab && matchesSearch;
+  });
+
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950/30 to-slate-900 border border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Header Banner */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <span className="text-xs font-semibold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-1 rounded-full flex items-center gap-1.5 w-fit">
-            <Sparkles className="w-3.5 h-3.5" />
-            Legal Scrutiny & Investigation Engine
-          </span>
-          <h1 className="text-2xl font-bold text-white tracking-tight mt-2">
-            Document Clearance & Title Scrutiny Queue
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
+              <Scale className="w-6 h-6 text-blue-400" />
+              Legal Scrutiny Queue
+            </h1>
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              42 Pending
+            </span>
+          </div>
           <p className="text-xs text-slate-400 mt-1">
-            Review extracted property chains, scrutinize deeds, and generate verified Legal Search Reports (LSR).
+            Side-by-side title tree verification, AI cross-matching against IGR Maharashtra & Delhi DORIS records.
           </p>
         </div>
+
+        {/* Quick Tab Switcher */}
+        <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 p-1 rounded-xl">
+          <button
+            onClick={() => setActiveTab('PENDING')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              activeTab === 'PENDING'
+                ? 'bg-blue-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Pending Verification (2)
+          </button>
+          <button
+            onClick={() => setActiveTab('VERIFIED')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              activeTab === 'VERIFIED'
+                ? 'bg-emerald-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Verified Titles (1)
+          </button>
+          <button
+            onClick={() => setActiveTab('REJECTED')}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+              activeTab === 'REJECTED'
+                ? 'bg-red-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            High Risk / Discrepancies (1)
+          </button>
+        </div>
       </div>
 
-      {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
-          <span className="text-xs font-medium text-slate-400">Cases Pending Scrutiny</span>
-          <p className="text-2xl font-bold text-amber-400 mt-2">42</p>
-          <p className="text-[11px] text-slate-400 mt-1">Requires advocate review</p>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
-          <span className="text-xs font-medium text-slate-400">High Risk Encumbrances</span>
-          <p className="text-2xl font-bold text-red-400 mt-2">6</p>
-          <p className="text-[11px] text-red-400/90 mt-1">Mortgage / Dispute flagged</p>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
-          <span className="text-xs font-medium text-slate-400">AI Confidence &gt; 95%</span>
-          <p className="text-2xl font-bold text-indigo-400 mt-2">88%</p>
-          <p className="text-[11px] text-slate-400 mt-1">Fast-track eligible</p>
-        </div>
-
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800">
-          <span className="text-xs font-medium text-slate-400">LSRs Generated (Today)</span>
-          <p className="text-2xl font-bold text-emerald-400 mt-2">24</p>
-          <p className="text-[11px] text-emerald-400/90 mt-1">Ready for Bank Branch</p>
-        </div>
-      </div>
-
-      {/* Scrutiny Queue Table */}
-      <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-bold text-white tracking-tight">Active Scrutiny Queue</h2>
-          <div className="flex items-center gap-2">
-            {(['PENDING', 'VERIFIED', 'REJECTED'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  activeTab === tab
-                    ? 'bg-blue-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4">
-          {scrutinyCases.map((c) => (
-            <div
-              key={c.id}
-              className="p-5 rounded-xl bg-slate-950/70 border border-slate-800 hover:border-slate-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
-            >
-              <div className="space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-blue-400 text-sm">{c.id}</span>
-                  <span className="text-xs font-semibold text-white">— {c.propertyName}</span>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                      c.riskLevel === 'CLEAR'
-                        ? 'badge-clear'
-                        : c.riskLevel === 'HIGH_RISK'
-                        ? 'badge-rejected'
-                        : 'badge-pending'
-                    }`}
-                  >
-                    {c.riskLevel}
-                  </span>
+      {/* Scrutiny Queue Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {filteredCases.map((item) => (
+          <div
+            key={item.id}
+            className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700/80 transition-all shadow-sm flex flex-col justify-between group space-y-4"
+          >
+            <div>
+              {/* Card Header: Case ID, Risk Tag, AI Match */}
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-sm font-bold text-blue-400">
+                      {item.id}
+                    </span>
+                    <span className="text-xs text-slate-500">&bull;</span>
+                    <span className="text-xs text-slate-400">{item.date}</span>
+                  </div>
+                  <h3 className="text-base font-bold text-white group-hover:text-blue-300 transition-colors mt-1">
+                    {item.propertyName}
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {item.city} &bull; <span className="font-mono">{item.cts}</span>
+                  </p>
                 </div>
-                <p className="text-xs text-slate-400">
-                  Owner: <span className="text-slate-200">{c.ownerName}</span> | Location:{' '}
-                  <span className="text-slate-200">{c.city}</span> ({c.state})
-                </p>
 
-                {/* Docs pill preview */}
-                <div className="flex flex-wrap items-center gap-2 pt-2">
-                  {c.docs.map((doc, idx) => (
-                    <span
+                {/* AI Score Badge */}
+                <div className="text-right">
+                  <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-bold shadow-sm">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>{item.aiMatchScore}% Match</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                    Advocate: {item.advocate}
+                  </p>
+                </div>
+              </div>
+
+              {/* Deed Checklist */}
+              <div className="mt-4 pt-3 border-t border-slate-800/80">
+                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                  Document Chain Verification
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {item.docs.map((doc, idx) => (
+                    <div
                       key={idx}
-                      className={`px-2.5 py-1 rounded-md text-[11px] font-mono flex items-center gap-1.5 ${
+                      className={`px-2.5 py-1.5 rounded-lg border text-xs flex items-center justify-between gap-2 ${
                         doc.status === 'clear'
-                          ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
                           : doc.status === 'rejected'
-                          ? 'bg-red-500/10 text-red-300 border border-red-500/20'
-                          : 'bg-amber-500/10 text-amber-300 border border-amber-500/20'
+                          ? 'bg-red-500/10 border-red-500/20 text-red-300'
+                          : 'bg-amber-500/10 border-amber-500/20 text-amber-300'
                       }`}
                     >
-                      {doc.status === 'clear' ? (
-                        <CheckCircle className="w-3 h-3 text-emerald-400" />
-                      ) : doc.status === 'rejected' ? (
-                        <XCircle className="w-3 h-3 text-red-400" />
-                      ) : (
-                        <FileText className="w-3 h-3 text-amber-400" />
-                      )}
-                      <span>{doc.name}</span>
-                    </span>
+                      <span className="truncate max-w-[130px]">{doc.name}</span>
+                      {doc.status === 'clear' && <CheckCircle className="w-3.5 h-3.5 shrink-0 text-emerald-400" />}
+                      {doc.status === 'rejected' && <XCircle className="w-3.5 h-3.5 shrink-0 text-red-400" />}
+                      {doc.status === 'pending' && <Clock className="w-3.5 h-3.5 shrink-0 text-amber-400" />}
+                    </div>
                   ))}
                 </div>
               </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-3 shrink-0">
-                <Link
-                  href={`/requests/${c.id}`}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md transition-all"
-                >
-                  <Eye className="w-4 h-4" />
-                  <span>Review & Verify Docs</span>
-                </Link>
-              </div>
             </div>
-          ))}
-        </div>
+
+            {/* Bottom Action Footer */}
+            <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                {item.riskLevel === 'CLEAR' && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                    Title Clean & Clear
+                  </span>
+                )}
+                {item.riskLevel === 'LOW' && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                    Low Risk (1 Doc Pending)
+                  </span>
+                )}
+                {item.riskLevel === 'HIGH' && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30">
+                    Broken Chain of Title
+                  </span>
+                )}
+              </div>
+
+              <Link
+                href={`/requests/${item.id}`}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/25 transition-all group"
+              >
+                <span>Launch Workspace</span>
+                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

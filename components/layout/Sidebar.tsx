@@ -10,14 +10,12 @@ import {
   Database,
   FileText,
   ShieldAlert,
-  Settings,
   PlusCircle,
   Sparkles,
-  Building,
+  Zap,
 } from 'lucide-react';
 import { useEntitlements } from '@/lib/hooks/useEntitlements';
 import { Logo } from '@/components/ui/Logo';
-
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -36,6 +34,7 @@ export function Sidebar() {
       icon: FileCheck2,
       show: true,
       badge: '42',
+      badgeColor: 'amber',
     },
     {
       label: 'Property Requests',
@@ -63,7 +62,7 @@ export function Sidebar() {
       show: hasModuleAccess('case_analyzer') || isAdmin,
     },
     {
-      label: 'System Health & Scrapers',
+      label: 'System Health & AI',
       href: '/admin',
       icon: ShieldAlert,
       show: isAdmin,
@@ -71,54 +70,58 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 border-r border-slate-800 bg-slate-900 flex flex-col justify-between shrink-0 h-screen sticky top-0">
-      {/* Brand logo & title */}
+    <aside className="w-64 border-r border-slate-800/80 bg-slate-900 dark:bg-slate-950 flex flex-col justify-between shrink-0 h-screen sticky top-0 transition-colors">
       <div>
-        <div className="h-16 border-b border-slate-800 px-5 flex items-center">
+        {/* Brand Logo Header */}
+        <div className="h-16 border-b border-slate-800/80 px-5 flex items-center">
           <Logo variant="nobg" size="sm" showBadge={true} href="/branch" />
         </div>
 
-
         {/* Quick Action Button */}
-        <div className="p-4">
+        <div className="p-3.5">
           <Link
             href="/requests/new"
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/30 transition-all group"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/35 transition-all group active:scale-95"
           >
             <PlusCircle className="w-4 h-4 transition-transform group-hover:rotate-90" />
             <span>Create New Request</span>
           </Link>
         </div>
 
-        {/* Navigation list */}
-        <nav className="px-3 space-y-1">
+        {/* Navigation Section */}
+        <nav className="px-3 space-y-1 mt-1">
+          <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+            Workspaces
+          </p>
           {navItems
             .filter((item) => item.show)
             .map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+              const isActive = pathname === item.href || (pathname?.startsWith(item.href + '/') && item.href !== '/');
 
               return (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all ${
+                  className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all group ${
                     isActive
-                      ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30 shadow-sm'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                      ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30 shadow-sm font-semibold'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <Icon
-                      className={`w-4 h-4 ${
-                        isActive ? 'text-blue-400' : 'text-slate-400 group-hover:text-slate-300'
+                      className={`w-4 h-4 transition-colors ${
+                        isActive
+                          ? 'text-blue-400'
+                          : 'text-slate-400 group-hover:text-slate-300'
                       }`}
                     />
                     <span>{item.label}</span>
                   </div>
 
                   {item.badge && (
-                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                       {item.badge}
                     </span>
                   )}
@@ -128,13 +131,18 @@ export function Sidebar() {
         </nav>
       </div>
 
-      {/* AI Status Badge at bottom */}
-      <div className="p-4 border-t border-slate-800/80">
-        <div className="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/20 flex items-start gap-3">
-          <Sparkles className="w-4 h-4 text-indigo-400 shrink-0 mt-0.5" />
+      {/* AI Copilot & Status Pill at Bottom */}
+      <div className="p-3.5 border-t border-slate-800/80">
+        <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-950/40 to-slate-900/60 border border-indigo-500/20 flex items-start gap-3">
+          <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center shrink-0 text-indigo-400 mt-0.5">
+            <Zap className="w-4 h-4" />
+          </div>
           <div>
-            <p className="text-xs font-semibold text-indigo-200">AI Title Scrutiny</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">GPT-4 OCR Extraction Active</p>
+            <div className="flex items-center gap-1.5">
+              <p className="text-xs font-bold text-indigo-200">AI Title Scrutiny</p>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">GPT-4 Extraction Active</p>
           </div>
         </div>
       </div>
