@@ -70,10 +70,10 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 border-r border-slate-800/80 bg-slate-900 dark:bg-slate-950 flex flex-col justify-between shrink-0 h-screen sticky top-0 transition-colors">
+    <aside className="w-64 border-r theme-border theme-surface flex flex-col justify-between shrink-0 h-screen sticky top-0 transition-colors z-20">
       <div>
         {/* Brand Logo Header */}
-        <div className="h-16 border-b border-slate-800/80 px-5 flex items-center">
+        <div className="h-16 border-b theme-border px-5 flex items-center">
           <Logo variant="nobg" size="sm" showBadge={true} href="/branch" />
         </div>
 
@@ -90,7 +90,7 @@ export function Sidebar() {
 
         {/* Navigation Section */}
         <nav className="px-3 space-y-1 mt-1">
-          <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
             Workspaces
           </p>
           {navItems
@@ -105,23 +105,23 @@ export function Sidebar() {
                   href={item.href}
                   className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all group ${
                     isActive
-                      ? 'bg-blue-600/15 text-blue-400 border border-blue-500/30 shadow-sm font-semibold'
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                      ? 'bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 shadow-sm font-semibold'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50'
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <Icon
                       className={`w-4 h-4 transition-colors ${
                         isActive
-                          ? 'text-blue-400'
-                          : 'text-slate-400 group-hover:text-slate-300'
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-300'
                       }`}
                     />
                     <span>{item.label}</span>
                   </div>
 
                   {item.badge && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30">
                       {item.badge}
                     </span>
                   )}
@@ -132,17 +132,17 @@ export function Sidebar() {
       </div>
 
       {/* AI Copilot & Status Pill at Bottom */}
-      <div className="p-3.5 border-t border-slate-800/80">
-        <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-950/40 to-slate-900/60 border border-indigo-500/20 flex items-start gap-3">
-          <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center shrink-0 text-indigo-400 mt-0.5">
+      <div className="p-3.5 border-t theme-border">
+        <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-500/10 to-blue-500/5 dark:from-indigo-950/40 dark:to-slate-900/60 border border-indigo-500/20 flex items-start gap-3">
+          <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center shrink-0 text-indigo-600 dark:text-indigo-400 mt-0.5">
             <Zap className="w-4 h-4" />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
-              <p className="text-xs font-bold text-indigo-200">AI Title Scrutiny</p>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+              <p className="text-xs font-bold text-indigo-700 dark:text-indigo-200">AI Title Scrutiny</p>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">GPT-4 Extraction Active</p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">GPT-4 Extraction Active</p>
           </div>
         </div>
       </div>

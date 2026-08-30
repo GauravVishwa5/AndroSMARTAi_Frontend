@@ -22,10 +22,10 @@ export function Logo({
   href,
 }: LogoProps) {
   const dimensions = {
-    sm: { height: 28, maxH: 'max-h-7' },
-    md: { height: 36, maxH: 'max-h-9' },
-    lg: { height: 44, maxH: 'max-h-11' },
-    xl: { height: 56, maxH: 'max-h-14' },
+    sm: { width: 140, height: 28 },
+    md: { width: 180, height: 36 },
+    lg: { width: 220, height: 44 },
+    xl: { width: 280, height: 56 },
   }[size];
 
   const logoSrc =
@@ -41,9 +41,10 @@ export function Logo({
         <Image
           src={logoSrc}
           alt="AndroSMARTAi Logo"
-          width={180}
+          width={dimensions.width}
           height={dimensions.height}
-          className={`w-auto ${dimensions.maxH} object-contain transition-transform duration-200`}
+          style={{ width: 'auto', height: `${dimensions.height}px` }}
+          className="object-contain transition-transform duration-200"
           priority
         />
       </div>
@@ -52,13 +53,13 @@ export function Logo({
         <div className="flex flex-col justify-center">
           {showBadge && (
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-500/15 text-blue-400 border border-blue-500/30 px-1.5 py-0.5 rounded font-mono">
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-500/15 text-blue-500 dark:text-blue-400 border border-blue-500/30 px-1.5 py-0.5 rounded font-mono">
                 PVS v1.0
               </span>
             </div>
           )}
           {subtitle && (
-            <span className="text-[11px] text-slate-400 font-medium mt-0.5">
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
               {subtitle}
             </span>
           )}

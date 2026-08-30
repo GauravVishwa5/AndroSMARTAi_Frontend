@@ -71,17 +71,30 @@ export default function NewRequestPage() {
     const loadMasters = async () => {
       try {
         const [docTypes, st] = await Promise.all([
-          requestsApi.getDocumentTypes(),
-          requestsApi.getStates().catch(() => [{ id: 1, state_name: 'Maharashtra' }, { id: 2, state_name: 'Delhi' }]),
+          requestsApi.getDocumentTypes().catch(() => ({
+            document_types: [
+              { id: 1, name: 'Sale Deed', code: 'SD' },
+              { id: 2, name: 'Parent Deed', code: 'PD' },
+              { id: 3, name: 'Mutation Extract (7/12)', code: 'ME' },
+              { id: 4, name: 'Property Card', code: 'PC' },
+              { id: 5, name: 'Society NOC / Share Certificate', code: 'NOC' },
+              { id: 6, name: 'Index II Search', code: 'IDX' },
+            ],
+          })),
+          requestsApi.getStates().catch(() => [
+            { id: 1, state_name: 'Maharashtra' },
+            { id: 2, state_name: 'Delhi' },
+          ]),
         ]);
-        setDocTypesData(docTypes);
+        setDocTypesData(docTypes as any);
         setStates(st);
       } catch (err) {
-        console.error('Failed to load initial masters', err);
+        console.warn('Using local fallback masters', err);
       }
     };
     loadMasters();
   }, []);
+
 
   // When state changes to Delhi, fetch Delhi SROs
   useEffect(() => {
@@ -202,13 +215,13 @@ export default function NewRequestPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Top Title & Step Indicator */}
-      <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md">
+      <div className="p-6 rounded-2xl theme-surface border backdrop-blur-md">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl font-bold text-white tracking-tight">Create Property Request (BankForm)</h1>
-            <p className="text-xs text-slate-400 mt-1">Initiate property title investigation and document OCR queue</p>
+            <h1 className="text-xl font-bold theme-text-primary tracking-tight">Create Property Request (BankForm)</h1>
+            <p className="text-xs theme-text-secondary mt-1">Initiate property title investigation and document OCR queue</p>
           </div>
-          <span className="text-xs font-mono px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+          <span className="text-xs font-mono px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-bold">
             Step {currentStep} of 3
           </span>
         </div>
@@ -223,7 +236,7 @@ export default function NewRequestPage() {
             <div
               key={s.step}
               className={`h-2 rounded-full transition-all ${
-                currentStep >= s.step ? 'bg-gradient-to-r from-blue-600 to-indigo-600' : 'bg-slate-800'
+                currentStep >= s.step ? 'bg-gradient-to-r from-blue-600 to-indigo-600' : 'bg-slate-200 dark:bg-slate-800'
               }`}
             />
           ))}
@@ -231,19 +244,20 @@ export default function NewRequestPage() {
       </div>
 
       {error && (
-        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-300 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+        <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-xs text-red-700 dark:text-red-300 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Step 1: Bank & Case Details */}
       {currentStep === 1 && (
-        <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
-          <h2 className="text-sm font-bold text-white flex items-center gap-2">
-            <Building className="w-4 h-4 text-blue-400" />
+        <div className="p-6 rounded-2xl theme-surface border space-y-4">
+          <h2 className="text-sm font-bold theme-text-primary flex items-center gap-2">
+            <Building className="w-4 h-4 text-blue-500 dark:text-blue-400" />
             <span>Bank & Case Intake Details</span>
           </h2>
+
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -332,11 +346,12 @@ export default function NewRequestPage() {
 
       {/* Step 2: Geography & Property */}
       {currentStep === 2 && (
-        <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
-          <h2 className="text-sm font-bold text-white flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-blue-400" />
+        <div className="p-6 rounded-2xl theme-surface border space-y-4">
+          <h2 className="text-sm font-bold theme-text-primary flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-blue-500 dark:text-blue-400" />
             <span>Property & Land Registry Geography</span>
           </h2>
+
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
@@ -534,22 +549,23 @@ export default function NewRequestPage() {
 
       {/* Step 3: Document Upload with Sub-type Hierarchy */}
       {currentStep === 3 && (
-        <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-5">
-          <h2 className="text-sm font-bold text-white flex items-center gap-2">
-            <FileText className="w-4 h-4 text-blue-400" />
+        <div className="p-6 rounded-2xl theme-surface border space-y-5">
+          <h2 className="text-sm font-bold theme-text-primary flex items-center gap-2">
+            <FileText className="w-4 h-4 text-blue-500 dark:text-blue-400" />
             <span>Document Intake & Sub-Type Classification</span>
           </h2>
 
           {/* Upload Dropzone */}
-          <div className="border-2 border-dashed border-slate-700 hover:border-blue-500/60 rounded-2xl p-8 text-center transition-all bg-slate-950/40">
-            <Upload className="w-10 h-10 text-blue-400 mx-auto mb-3 animate-bounce" />
-            <p className="text-sm font-semibold text-white">Drag & drop scanned title deeds, NOCs, or Index-II PDFs</p>
-            <p className="text-xs text-slate-400 mt-1">Supports PDF, JPG, PNG, DOCX (up to 50MB per file)</p>
+          <div className="border-2 border-dashed theme-border hover:border-blue-500/60 rounded-2xl p-8 text-center transition-all theme-card">
+            <Upload className="w-10 h-10 text-blue-500 dark:text-blue-400 mx-auto mb-3 animate-bounce" />
+            <p className="text-sm font-semibold theme-text-primary">Drag & drop scanned title deeds, NOCs, or Index-II PDFs</p>
+            <p className="text-xs theme-text-secondary mt-1">Supports PDF, JPG, PNG, DOCX (up to 50MB per file)</p>
             <label className="mt-4 inline-block px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold cursor-pointer shadow-md">
               <span>Browse Files</span>
               <input type="file" multiple onChange={handleFileUpload} className="hidden" />
             </label>
           </div>
+
 
           {/* Uploaded Documents List */}
           {uploadedFiles.length > 0 && (

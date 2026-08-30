@@ -15,6 +15,20 @@ export const metadata: Metadata = {
   },
 };
 
+const themeInitScript = `
+(function() {
+  try {
+    var stored = localStorage.getItem('andropvs_theme') || 'dark';
+    var resolved = stored;
+    if (stored === 'system') {
+      resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(resolved);
+    document.documentElement.setAttribute('data-theme', resolved);
+  } catch (e) {}
+})();
+`;
 
 export default function RootLayout({
   children,
@@ -22,8 +36,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
-      <body className="bg-slate-950 text-slate-100 min-h-screen antialiased selection:bg-blue-600 selection:text-white">
+    <html lang="en" className="dark" data-theme="dark" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body className="theme-canvas min-h-screen antialiased selection:bg-blue-600 selection:text-white">
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

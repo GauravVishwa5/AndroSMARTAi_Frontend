@@ -125,27 +125,27 @@ export default function LegalScrutinyPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-              <Scale className="w-6 h-6 text-blue-400" />
+            <h1 className="text-2xl font-bold theme-text-primary tracking-tight flex items-center gap-2">
+              <Scale className="w-6 h-6 text-blue-500 dark:text-blue-400" />
               Legal Scrutiny Queue
             </h1>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30">
               42 Pending
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs theme-text-secondary mt-1">
             Side-by-side title tree verification, AI cross-matching against IGR Maharashtra & Delhi DORIS records.
           </p>
         </div>
 
         {/* Quick Tab Switcher */}
-        <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 p-1 rounded-xl">
+        <div className="flex items-center gap-2 theme-surface border p-1 rounded-xl">
           <button
             onClick={() => setActiveTab('PENDING')}
             className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activeTab === 'PENDING'
                 ? 'bg-blue-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
+                : 'theme-text-secondary hover:theme-text-primary'
             }`}
           >
             Pending Verification (2)
@@ -155,7 +155,7 @@ export default function LegalScrutinyPage() {
             className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activeTab === 'VERIFIED'
                 ? 'bg-emerald-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
+                : 'theme-text-secondary hover:theme-text-primary'
             }`}
           >
             Verified Titles (1)
@@ -165,7 +165,7 @@ export default function LegalScrutinyPage() {
             className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activeTab === 'REJECTED'
                 ? 'bg-red-600 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
+                : 'theme-text-secondary hover:theme-text-primary'
             }`}
           >
             High Risk / Discrepancies (1)
@@ -178,42 +178,42 @@ export default function LegalScrutinyPage() {
         {filteredCases.map((item) => (
           <div
             key={item.id}
-            className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-slate-700/80 transition-all shadow-sm flex flex-col justify-between group space-y-4"
+            className="p-5 rounded-2xl theme-surface border transition-all shadow-sm flex flex-col justify-between group space-y-4"
           >
             <div>
               {/* Card Header: Case ID, Risk Tag, AI Match */}
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-bold text-blue-400">
+                    <span className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">
                       {item.id}
                     </span>
-                    <span className="text-xs text-slate-500">&bull;</span>
-                    <span className="text-xs text-slate-400">{item.date}</span>
+                    <span className="text-xs text-slate-400">&bull;</span>
+                    <span className="text-xs theme-text-muted">{item.date}</span>
                   </div>
-                  <h3 className="text-base font-bold text-white group-hover:text-blue-300 transition-colors mt-1">
+                  <h3 className="text-base font-bold theme-text-primary group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors mt-1">
                     {item.propertyName}
                   </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
+                  <p className="text-xs theme-text-secondary mt-0.5">
                     {item.city} &bull; <span className="font-mono">{item.cts}</span>
                   </p>
                 </div>
 
                 {/* AI Score Badge */}
                 <div className="text-right">
-                  <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-bold shadow-sm">
+                  <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold shadow-sm">
                     <Sparkles className="w-3.5 h-3.5" />
                     <span>{item.aiMatchScore}% Match</span>
                   </div>
-                  <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                  <p className="text-[10px] theme-text-muted mt-1 font-medium">
                     Advocate: {item.advocate}
                   </p>
                 </div>
               </div>
 
               {/* Deed Checklist */}
-              <div className="mt-4 pt-3 border-t border-slate-800/80">
-                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              <div className="mt-4 pt-3 border-t theme-border">
+                <p className="text-[11px] font-semibold theme-text-secondary uppercase tracking-wider mb-2">
                   Document Chain Verification
                 </p>
                 <div className="grid grid-cols-2 gap-2">
@@ -222,16 +222,16 @@ export default function LegalScrutinyPage() {
                       key={idx}
                       className={`px-2.5 py-1.5 rounded-lg border text-xs flex items-center justify-between gap-2 ${
                         doc.status === 'clear'
-                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-300'
+                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300'
                           : doc.status === 'rejected'
-                          ? 'bg-red-500/10 border-red-500/20 text-red-300'
-                          : 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+                          ? 'bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-300'
+                          : 'bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300'
                       }`}
                     >
-                      <span className="truncate max-w-[130px]">{doc.name}</span>
-                      {doc.status === 'clear' && <CheckCircle className="w-3.5 h-3.5 shrink-0 text-emerald-400" />}
-                      {doc.status === 'rejected' && <XCircle className="w-3.5 h-3.5 shrink-0 text-red-400" />}
-                      {doc.status === 'pending' && <Clock className="w-3.5 h-3.5 shrink-0 text-amber-400" />}
+                      <span className="truncate max-w-[130px] font-medium">{doc.name}</span>
+                      {doc.status === 'clear' && <CheckCircle className="w-3.5 h-3.5 shrink-0 text-emerald-500" />}
+                      {doc.status === 'rejected' && <XCircle className="w-3.5 h-3.5 shrink-0 text-red-500" />}
+                      {doc.status === 'pending' && <Clock className="w-3.5 h-3.5 shrink-0 text-amber-500" />}
                     </div>
                   ))}
                 </div>
@@ -239,20 +239,20 @@ export default function LegalScrutinyPage() {
             </div>
 
             {/* Bottom Action Footer */}
-            <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
+            <div className="pt-3 border-t theme-border flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {item.riskLevel === 'CLEAR' && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
                     Title Clean & Clear
                   </span>
                 )}
                 {item.riskLevel === 'LOW' && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30">
                     Low Risk (1 Doc Pending)
                   </span>
                 )}
                 {item.riskLevel === 'HIGH' && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-400 border border-red-500/30">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-700 dark:text-red-400 border border-red-500/30">
                     Broken Chain of Title
                   </span>
                 )}

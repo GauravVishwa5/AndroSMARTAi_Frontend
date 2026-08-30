@@ -1,13 +1,16 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  /* Light Mode (Banking Studio Palette) */
+  /* Light Theme — Banking Studio */
   --bg-canvas: #F8FAFC;
   --bg-surface: #FFFFFF;
   --bg-surface-elevated: #F1F5F9;
   --bg-card: #FFFFFF;
   --bg-card-hover: #F8FAFC;
-  --bg-glass: rgba(255, 255, 255, 0.85);
+  --bg-glass: rgba(255, 255, 255, 0.88);
+  --input-bg: #FFFFFF;
 
   --border-subtle: #E2E8F0;
   --border-strong: #CBD5E1;
@@ -21,35 +24,32 @@
   --brand-primary-hover: #1D4ED8;
   --brand-accent: #6366F1;
 
-  --status-success: #10B981;
   --status-success-bg: rgba(16, 185, 129, 0.12);
   --status-success-border: rgba(16, 185, 129, 0.28);
   --status-success-text: #047857;
 
-  --status-warning: #F59E0B;
   --status-warning-bg: rgba(245, 158, 11, 0.12);
   --status-warning-border: rgba(245, 158, 11, 0.28);
   --status-warning-text: #B45309;
 
-  --status-danger: #EF4444;
   --status-danger-bg: rgba(239, 68, 68, 0.12);
   --status-danger-border: rgba(239, 68, 68, 0.28);
   --status-danger-text: #B91C1C;
 
-  --status-ai: #6366F1;
   --status-ai-bg: rgba(99, 102, 241, 0.12);
   --status-ai-border: rgba(99, 102, 241, 0.28);
   --status-ai-text: #4F46E5;
 }
 
 .dark, [data-theme='dark'] {
-  /* Dark Mode (Deep Obsidian & FinTech Slate Palette) */
+  /* Dark Theme — Deep Obsidian Slate */
   --bg-canvas: #080C14;
   --bg-surface: #0F172A;
   --bg-surface-elevated: #1E293B;
   --bg-card: #111A2E;
   --bg-card-hover: #17233D;
   --bg-glass: rgba(15, 23, 42, 0.85);
+  --input-bg: #080C14;
 
   --border-subtle: #1E293B;
   --border-strong: #334155;
@@ -63,22 +63,18 @@
   --brand-primary-hover: #2563EB;
   --brand-accent: #818CF8;
 
-  --status-success: #10B981;
   --status-success-bg: rgba(16, 185, 129, 0.15);
   --status-success-border: rgba(16, 185, 129, 0.3);
   --status-success-text: #34D399;
 
-  --status-warning: #F59E0B;
   --status-warning-bg: rgba(245, 158, 11, 0.15);
   --status-warning-border: rgba(245, 158, 11, 0.3);
   --status-warning-text: #FBBF24;
 
-  --status-danger: #EF4444;
   --status-danger-bg: rgba(239, 68, 68, 0.15);
   --status-danger-border: rgba(239, 68, 68, 0.3);
   --status-danger-text: #F87171;
 
-  --status-ai: #818CF8;
   --status-ai-bg: rgba(99, 102, 241, 0.15);
   --status-ai-border: rgba(99, 102, 241, 0.3);
   --status-ai-text: #A5B4FC;
@@ -92,26 +88,62 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Glassmorphism utilities */
+/* Reusable Theme Surface Classes */
+.theme-canvas {
+  background-color: var(--bg-canvas);
+  color: var(--text-primary);
+}
+
+.theme-surface {
+  background-color: var(--bg-surface);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.theme-card {
+  background-color: var(--bg-card);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.theme-card:hover {
+  background-color: var(--bg-card-hover);
+  border-color: var(--border-strong);
+}
+
+.theme-input {
+  background-color: var(--input-bg);
+  border-color: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.theme-input:focus {
+  border-color: var(--border-focus);
+}
+
+.theme-text-primary {
+  color: var(--text-primary);
+}
+
+.theme-text-secondary {
+  color: var(--text-secondary);
+}
+
+.theme-text-muted {
+  color: var(--text-muted);
+}
+
+.theme-border {
+  border-color: var(--border-subtle);
+}
+
+/* Glassmorphism utility */
 .glass-panel {
   background: var(--bg-glass);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-subtle);
-}
-
-.glass-card {
-  background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border-subtle);
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.glass-card:hover {
-  border-color: var(--border-strong);
-  background: var(--bg-card-hover);
-  transform: translateY(-1px);
 }
 
 /* Glowing accent effects */
