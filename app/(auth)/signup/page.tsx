@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api/auth';
 import { Building2, Lock, Mail, User, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
+import { Logo } from '@/components/ui/Logo';
+
 
 export default function SignupPage() {
   const router = useRouter();
@@ -46,13 +48,14 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-6">
       <div className="w-full max-w-md space-y-6">
-        <div className="text-center">
-          <div className="w-12 h-12 mx-auto rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25 mb-4">
-            <Building2 className="w-6 h-6" />
+        <div className="text-center flex flex-col items-center">
+          <div className="mb-4">
+            <Logo variant="nobg" size="lg" showBadge={true} href="/" />
           </div>
           <h2 className="text-2xl font-bold text-white tracking-tight">Create AndroPVS Account</h2>
           <p className="text-xs text-slate-400 mt-1">Register for institutional property title investigation</p>
         </div>
+
 
         {error && (
           <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 text-sm text-red-400">

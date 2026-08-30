@@ -18,6 +18,8 @@ import {
   Layers,
   Cpu,
 } from 'lucide-react';
+import { Logo } from '@/components/ui/Logo';
+
 
 export default function HomePage() {
   const router = useRouter();
@@ -31,20 +33,10 @@ export default function HomePage() {
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between selection:bg-blue-600 selection:text-white">
       {/* Top Navigation */}
       <header className="h-20 border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md px-6 sm:px-12 flex items-center justify-between sticky top-0 z-30">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
-            <Building2 className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
-              AndroPVS
-              <span className="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2 py-0.5 rounded-full font-mono">
-                Enterprise
-              </span>
-            </h1>
-            <p className="text-[11px] text-slate-400 font-medium">Property Verification & Due-Diligence</p>
-          </div>
+        <div>
+          <Logo variant="nobg" size="lg" showBadge={true} subtitle="Property Verification & Due-Diligence" href="/" />
         </div>
+
 
         <div className="flex items-center gap-3">
           <Link

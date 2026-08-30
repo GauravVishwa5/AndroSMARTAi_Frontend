@@ -3,9 +3,18 @@ import './globals.css';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 
 export const metadata: Metadata = {
-  title: 'AndroPVS — Property Due Diligence & Legal Search Platform',
+  title: 'AndroSMARTAi PVS — Property Due Diligence & Legal Search Platform',
   description: 'Automated legal due diligence, title search reports (LSR/SCR), OCR extraction, and land registry verification for banks.',
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon.png', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: '/favicon.png',
+  },
 };
+
 
 export default function RootLayout({
   children,

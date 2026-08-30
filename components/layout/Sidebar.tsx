@@ -16,6 +16,8 @@ import {
   Building,
 } from 'lucide-react';
 import { useEntitlements } from '@/lib/hooks/useEntitlements';
+import { Logo } from '@/components/ui/Logo';
+
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -72,20 +74,10 @@ export function Sidebar() {
     <aside className="w-64 border-r border-slate-800 bg-slate-900 flex flex-col justify-between shrink-0 h-screen sticky top-0">
       {/* Brand logo & title */}
       <div>
-        <div className="h-16 border-b border-slate-800 px-6 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
-            <Building className="w-5 h-5" />
-          </div>
-          <div>
-            <h1 className="font-bold text-lg text-white tracking-tight leading-none flex items-center gap-1.5">
-              AndroPVS
-              <span className="text-[10px] bg-blue-500/20 text-blue-400 border border-blue-500/30 px-1.5 py-0.5 rounded font-mono">
-                v1.0
-              </span>
-            </h1>
-            <p className="text-[11px] text-slate-400 font-medium">Property Verification</p>
-          </div>
+        <div className="h-16 border-b border-slate-800 px-5 flex items-center">
+          <Logo variant="nobg" size="sm" showBadge={true} href="/branch" />
         </div>
+
 
         {/* Quick Action Button */}
         <div className="p-4">

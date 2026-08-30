@@ -15,6 +15,8 @@ import {
   ArrowRight,
   AlertCircle,
 } from 'lucide-react';
+import { Logo } from '@/components/ui/Logo';
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -95,15 +97,10 @@ export default function LoginPage() {
         <div className="absolute bottom-10 right-10 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Logo & Brand Header */}
-        <div className="flex items-center gap-3 z-10">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-blue-500/25">
-            <Building2 className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-xl font-bold text-white tracking-tight">AndroPVS</h1>
-            <p className="text-xs text-slate-400">Legal Due-Diligence & Verification Platform</p>
-          </div>
+        <div className="z-10">
+          <Logo variant="nobg" size="lg" showBadge={true} subtitle="Legal Due-Diligence & Verification Platform" href="/" />
         </div>
+
 
         {/* Core Value Highlights */}
         <div className="space-y-6 z-10 max-w-md my-auto">
@@ -147,11 +144,15 @@ export default function LoginPage() {
         <div className="w-full max-w-md space-y-6">
           {/* Header */}
           <div className="text-center md:text-left">
+            <div className="md:hidden flex justify-center mb-6">
+              <Logo variant="nobg" size="md" showBadge={true} href="/" />
+            </div>
             <h2 className="text-2xl font-bold text-white tracking-tight">Sign In to AndroPVS</h2>
             <p className="text-sm text-slate-400 mt-1">
               Enter your banking credentials or sign in with SSO
             </p>
           </div>
+
 
           {/* Quick Demo Access Buttons */}
           <div className="p-3.5 rounded-xl bg-slate-900/90 border border-blue-500/25 space-y-2">
