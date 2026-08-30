@@ -95,23 +95,23 @@ export default function IGRSearchPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
-            <Database className="w-6 h-6 text-blue-400" />
+          <h1 className="text-2xl font-bold theme-text-primary tracking-tight flex items-center gap-2">
+            <Database className="w-6 h-6 text-blue-500 dark:text-blue-400" />
             Land Registry Search (IGR & DORIS)
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs theme-text-secondary mt-1">
             Real-time indexed search across Maharashtra IGR (e-Search) and Delhi DORIS property title archives.
           </p>
         </div>
 
         {/* State Toggle Tabs */}
-        <div className="flex items-center gap-1 p-1 bg-slate-900 border border-slate-800 rounded-xl">
+        <div className="flex items-center gap-1 p-1 theme-surface border rounded-xl">
           <button
             onClick={() => setSelectedState('Maharashtra')}
             className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
               selectedState === 'Maharashtra'
                 ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                : 'text-slate-400 hover:text-white'
+                : 'theme-text-secondary hover:theme-text-primary'
             }`}
           >
             🏛️ Maharashtra (IGR e-Search)
@@ -121,7 +121,7 @@ export default function IGRSearchPage() {
             className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
               selectedState === 'Delhi'
                 ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
-                : 'text-slate-400 hover:text-white'
+                : 'theme-text-secondary hover:theme-text-primary'
             }`}
           >
             🏢 Delhi (DORIS Portal)
@@ -130,10 +130,10 @@ export default function IGRSearchPage() {
       </div>
 
       {/* Query Filter Box */}
-      <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md space-y-4">
+      <div className="p-6 rounded-2xl theme-surface border space-y-4">
         <form onSubmit={handleSearch} className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+            <label className="block text-xs font-medium theme-text-secondary mb-1.5">
               Party / Owner Name
             </label>
             <div className="relative">
@@ -143,13 +143,13 @@ export default function IGRSearchPage() {
                 value={searchOwner}
                 onChange={(e) => setSearchOwner(e.target.value)}
                 placeholder="e.g. Kavitha, Ajay..."
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full theme-input border rounded-xl pl-9 pr-3 py-2 text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+            <label className="block text-xs font-medium theme-text-secondary mb-1.5">
               CTS / Survey / Plot No.
             </label>
             <div className="relative">
@@ -159,13 +159,13 @@ export default function IGRSearchPage() {
                 value={searchCTS}
                 onChange={(e) => setSearchCTS(e.target.value)}
                 placeholder="e.g. CTS 104/A, Plot 42..."
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full theme-input border rounded-xl pl-9 pr-3 py-2 text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">
+            <label className="block text-xs font-medium theme-text-secondary mb-1.5">
               Registration Year
             </label>
             <div className="relative">
@@ -173,7 +173,7 @@ export default function IGRSearchPage() {
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full theme-input border rounded-xl pl-9 pr-3 py-2 text-xs theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="2026">2026 (Current Year)</option>
                 <option value="2025">2025</option>
@@ -189,7 +189,7 @@ export default function IGRSearchPage() {
             <button
               type="submit"
               disabled={isSearching}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-md shadow-blue-600/20 transition-all disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs shadow-md shadow-blue-600/20 transition-all disabled:opacity-50 active:scale-95"
             >
               {isSearching ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -205,79 +205,78 @@ export default function IGRSearchPage() {
       </div>
 
       {/* Results Table */}
-      <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 backdrop-blur-md space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-white">
-              Indexed Land Registry Records
-            </h3>
-            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30">
-              {filteredRecords.length} Matches Found
+      {hasSearched && (
+        <div className="p-6 rounded-2xl theme-surface border space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-sm font-bold theme-text-primary">
+                Matched Land Registry Deeds ({filteredRecords.length})
+              </h2>
+              <p className="text-xs theme-text-secondary">Official 30-year indexed registration entries</p>
+            </div>
+
+            <span className="badge-clear px-2.5 py-1 rounded-full text-xs font-semibold">
+              Live SRO Bridge Connected
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-xs text-slate-400">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Partitioned GIN Trigram Search Enabled</span>
+          <div className="overflow-x-auto rounded-xl border theme-border">
+            <table className="w-full text-left text-xs theme-text-secondary">
+              <thead className="bg-slate-100/80 dark:bg-slate-950/80 text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b theme-border">
+                <tr>
+                  <th className="py-3 px-4">Doc No. & Year</th>
+                  <th className="py-3 px-4">SRO & District</th>
+                  <th className="py-3 px-4">Document Type</th>
+                  <th className="py-3 px-4">Parties (Transferor / Transferee)</th>
+                  <th className="py-3 px-4">Property Description & CTS</th>
+                  <th className="py-3 px-4">Status</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y theme-border">
+                {filteredRecords.map((rec) => (
+                  <tr key={rec.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td className="py-3.5 px-4 font-mono font-semibold text-blue-600 dark:text-blue-400">
+                      {rec.docNo}
+                      <p className="text-[10px] theme-text-muted font-normal">{rec.regDate}</p>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <p className="font-semibold theme-text-primary">{rec.sro}</p>
+                      <p className="text-[11px] theme-text-muted">{rec.district}, {rec.state}</p>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="px-2 py-0.5 rounded-md theme-card border text-[11px] font-medium theme-text-primary">
+                        {rec.docType}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <p className="theme-text-primary font-medium">P1: {rec.party1}</p>
+                      <p className="text-[11px] text-blue-600 dark:text-blue-400">P2: {rec.party2}</p>
+                    </td>
+                    <td className="py-3.5 px-4 max-w-xs truncate text-[11px] theme-text-secondary">
+                      {rec.propertyDesc}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="badge-clear px-2 py-0.5 rounded-full text-[10px] font-semibold">
+                        {rec.status}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      <button
+                        onClick={() => alert(`Opening Index II Search Certificate for Doc #${rec.docNo}`)}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg theme-card border hover:border-blue-500 theme-text-primary text-xs font-medium transition-colors"
+                      >
+                        <span>Index II</span>
+                        <ExternalLink className="w-3 h-3 text-slate-400" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
-
-        <div className="overflow-x-auto rounded-xl border border-slate-800">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-950/80 text-[11px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-800">
-              <tr>
-                <th className="py-3 px-4">Doc No / ID</th>
-                <th className="py-3 px-4">SRO & Jurisdiction</th>
-                <th className="py-3 px-4">Document Type</th>
-                <th className="py-3 px-4">Parties (Seller / Buyer)</th>
-                <th className="py-3 px-4">Property Description</th>
-                <th className="py-3 px-4">Reg Date</th>
-                <th className="py-3 px-4 text-center">Match AI</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-800/80">
-              {filteredRecords.map((rec) => (
-                <tr key={rec.id} className="hover:bg-slate-800/40 transition-colors">
-                  <td className="py-3.5 px-4 font-mono font-semibold text-blue-400">
-                    {rec.docNo}
-                    <span className="block text-[10px] text-slate-500 font-normal">{rec.id}</span>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <p className="font-semibold text-white">{rec.sro}</p>
-                    <p className="text-[10px] text-slate-400">{rec.district}, {rec.state}</p>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className="px-2 py-0.5 rounded-md bg-slate-800 text-slate-200 font-mono">
-                      {rec.docType}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 space-y-1">
-                    <div>
-                      <span className="text-[10px] text-slate-500 uppercase">Party 1:</span>{' '}
-                      <span className="text-slate-200">{rec.party1}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-slate-500 uppercase">Party 2:</span>{' '}
-                      <span className="text-emerald-400 font-medium">{rec.party2}</span>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4 max-w-xs truncate" title={rec.propertyDesc}>
-                    {rec.propertyDesc}
-                  </td>
-                  <td className="py-3.5 px-4 font-mono text-slate-400">
-                    {rec.regDate}
-                  </td>
-                  <td className="py-3.5 px-4 text-center">
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      {rec.matchScore}% Match
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

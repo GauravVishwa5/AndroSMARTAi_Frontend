@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 
-
 export default function LoginPage() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
@@ -89,9 +88,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col md:flex-row">
+    <div className="min-h-screen theme-canvas flex flex-col md:flex-row">
       {/* Left Column: Brand & FinTech Value Prop */}
-      <div className="hidden md:flex flex-col justify-between w-1/2 p-12 bg-gradient-to-br from-slate-900 via-slate-900 to-blue-950 border-r border-slate-800 relative overflow-hidden">
+      <div className="hidden md:flex flex-col justify-between w-1/2 p-12 bg-slate-900 border-r border-slate-800 text-slate-100 relative overflow-hidden">
         {/* Background ambient glow */}
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-10 right-10 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
@@ -100,7 +99,6 @@ export default function LoginPage() {
         <div className="z-10">
           <Logo variant="nobg" size="lg" showBadge={true} subtitle="Legal Due-Diligence & Verification Platform" href="/" />
         </div>
-
 
         {/* Core Value Highlights */}
         <div className="space-y-6 z-10 max-w-md my-auto">
@@ -147,53 +145,52 @@ export default function LoginPage() {
             <div className="md:hidden flex justify-center mb-6">
               <Logo variant="nobg" size="md" showBadge={true} href="/" />
             </div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">Sign In to AndroPVS</h2>
-            <p className="text-sm text-slate-400 mt-1">
+            <h2 className="text-2xl font-bold theme-text-primary tracking-tight">Sign In to AndroPVS</h2>
+            <p className="text-sm theme-text-secondary mt-1">
               Enter your banking credentials or sign in with SSO
             </p>
           </div>
 
-
           {/* Quick Demo Access Buttons */}
-          <div className="p-3.5 rounded-xl bg-slate-900/90 border border-blue-500/25 space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-400">
+          <div className="p-3.5 rounded-xl theme-surface border space-y-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
               ⚡ 1-Click Quick Demo Sign-In
             </p>
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => executeLogin('demo.branch@andropvs.com', 'DemoUser@12345', '/branch')}
-                className="p-2 rounded-lg bg-blue-600/15 hover:bg-blue-600/30 border border-blue-500/30 text-left transition-all group"
+                className="p-2 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/30 text-left transition-all group"
               >
-                <p className="text-xs font-bold text-white group-hover:text-blue-300">🏢 Branch</p>
-                <p className="text-[10px] text-slate-400">Maker Intake</p>
+                <p className="text-xs font-bold theme-text-primary group-hover:text-blue-600 dark:group-hover:text-blue-300">🏢 Branch</p>
+                <p className="text-[10px] theme-text-muted">Maker Intake</p>
               </button>
               <button
                 type="button"
                 onClick={() => executeLogin('demo.legal@andropvs.com', 'DemoUser@12345', '/legal')}
-                className="p-2 rounded-lg bg-indigo-600/15 hover:bg-indigo-600/30 border border-indigo-500/30 text-left transition-all group"
+                className="p-2 rounded-lg bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/30 text-left transition-all group"
               >
-                <p className="text-xs font-bold text-white group-hover:text-indigo-300">⚖️ Legal</p>
-                <p className="text-[10px] text-slate-400">Scrutiny LSR</p>
+                <p className="text-xs font-bold theme-text-primary group-hover:text-indigo-600 dark:group-hover:text-indigo-300">⚖️ Legal</p>
+                <p className="text-[10px] theme-text-muted">Scrutiny LSR</p>
               </button>
               <button
                 type="button"
                 onClick={() => executeLogin('demo.admin@andropvs.com', 'DemoUser@12345', '/admin')}
-                className="p-2 rounded-lg bg-emerald-600/15 hover:bg-emerald-600/30 border border-emerald-500/30 text-left transition-all group"
+                className="p-2 rounded-lg bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 text-left transition-all group"
               >
-                <p className="text-xs font-bold text-white group-hover:text-emerald-300">🛡️ Admin</p>
-                <p className="text-[10px] text-slate-400">System Ops</p>
+                <p className="text-xs font-bold theme-text-primary group-hover:text-emerald-600 dark:group-hover:text-emerald-300">🛡️ Admin</p>
+                <p className="text-[10px] theme-text-muted">System Ops</p>
               </button>
             </div>
           </div>
 
           {/* Error Alert */}
           {error && (
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 text-sm text-red-400">
+            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 text-sm text-red-600 dark:text-red-400">
               <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="font-semibold text-red-300">Authentication Failed</p>
-                <p className="text-xs text-red-400/90 mt-0.5">{error}</p>
+                <p className="font-semibold text-red-700 dark:text-red-300">Authentication Failed</p>
+                <p className="text-xs text-red-600 dark:text-red-400/90 mt-0.5">{error}</p>
               </div>
             </div>
           )}
@@ -203,7 +200,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => handleSSO('google')}
-              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-xs font-semibold text-slate-200 transition-all shadow-sm"
+              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl theme-card border text-xs font-semibold theme-text-primary transition-all shadow-sm"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24">
                 <path
@@ -229,7 +226,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => handleSSO('microsoft')}
-              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-xs font-semibold text-slate-200 transition-all shadow-sm"
+              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl theme-card border text-xs font-semibold theme-text-primary transition-all shadow-sm"
             >
               <svg className="w-4 h-4" viewBox="0 0 23 23">
                 <path fill="#f35325" d="M1 1h10v10H1z" />
@@ -242,17 +239,17 @@ export default function LoginPage() {
           </div>
 
           <div className="flex items-center gap-3 my-4">
-            <div className="h-px bg-slate-800 flex-1" />
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            <div className="h-px theme-border flex-1" />
+            <span className="text-[11px] font-semibold theme-text-muted uppercase tracking-wider">
               Or email login
             </span>
-            <div className="h-px bg-slate-800 flex-1" />
+            <div className="h-px theme-border flex-1" />
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+              <label className="block text-xs font-medium theme-text-secondary mb-1.5">
                 Work Email Address
               </label>
               <div className="relative">
@@ -263,17 +260,17 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@axisbank.com"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  className="w-full theme-input border rounded-xl pl-9 pr-4 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                 />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-medium text-slate-300">Password</label>
+                <label className="text-xs font-medium theme-text-secondary">Password</label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs font-medium text-blue-400 hover:text-blue-300"
+                  className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -286,7 +283,7 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                  className="w-full theme-input border rounded-xl pl-9 pr-4 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                 />
               </div>
             </div>
@@ -295,9 +292,9 @@ export default function LoginPage() {
               <input
                 id="remember-me"
                 type="checkbox"
-                className="w-4 h-4 rounded bg-slate-900 border-slate-700 text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900"
+                className="w-4 h-4 rounded theme-input text-blue-600 focus:ring-blue-500"
               />
-              <label htmlFor="remember-me" className="text-xs text-slate-400">
+              <label htmlFor="remember-me" className="text-xs theme-text-secondary">
                 Keep me signed in on this device
               </label>
             </div>
@@ -305,7 +302,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-sm shadow-lg shadow-blue-600/25 hover:shadow-blue-600/35 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-sm shadow-lg shadow-blue-600/25 hover:shadow-blue-600/35 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
             >
               {isLoading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -318,9 +315,9 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="text-center text-xs text-slate-400">
+          <p className="text-center text-xs theme-text-secondary">
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-blue-400 hover:underline font-medium">
+            <Link href="/signup" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
               Create an organization account
             </Link>
           </p>
