@@ -43,10 +43,11 @@ export function Logo({
       <div
         className={`relative flex items-center justify-center shrink-0 transition-all duration-200 ${
           withBackground
-            ? `${dimensions.padding} ${dimensions.rounded} bg-slate-950/90 dark:bg-slate-900/90 border border-slate-800/90 dark:border-slate-700/80 shadow-md shadow-slate-950/20 backdrop-blur-md`
+            ? `${dimensions.padding} ${dimensions.rounded} bg-white border border-slate-200 shadow-sm backdrop-blur-sm`
             : ''
         }`}
       >
+
         <Image
           src={logoSrc}
           alt="AndroSMARTAi Logo"
