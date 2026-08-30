@@ -139,10 +139,10 @@ export default function LegalScrutinyPage() {
         </div>
 
         {/* Quick Tab Switcher */}
-        <div className="flex items-center gap-2 theme-surface border p-1 rounded-xl">
+        <div className="flex items-center gap-1.5 theme-surface border p-1 rounded-xl overflow-x-auto max-w-full pb-1 sm:pb-1">
           <button
             onClick={() => setActiveTab('PENDING')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
               activeTab === 'PENDING'
                 ? 'bg-blue-600 text-white shadow-md'
                 : 'theme-text-secondary hover:theme-text-primary'
@@ -152,7 +152,7 @@ export default function LegalScrutinyPage() {
           </button>
           <button
             onClick={() => setActiveTab('VERIFIED')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
               activeTab === 'VERIFIED'
                 ? 'bg-emerald-600 text-white shadow-md'
                 : 'theme-text-secondary hover:theme-text-primary'
@@ -162,16 +162,17 @@ export default function LegalScrutinyPage() {
           </button>
           <button
             onClick={() => setActiveTab('REJECTED')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
               activeTab === 'REJECTED'
                 ? 'bg-red-600 text-white shadow-md'
                 : 'theme-text-secondary hover:theme-text-primary'
             }`}
           >
-            High Risk / Discrepancies (1)
+            High Risk (1)
           </button>
         </div>
       </div>
+
 
       {/* Scrutiny Queue Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

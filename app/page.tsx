@@ -31,27 +31,28 @@ export default function HomePage() {
   return (
     <div className="min-h-screen theme-canvas flex flex-col justify-between selection:bg-blue-600 selection:text-white">
       {/* Top Navigation */}
-      <header className="h-20 border-b theme-border theme-surface backdrop-blur-md px-6 sm:px-12 flex items-center justify-between sticky top-0 z-30">
+      <header className="h-16 sm:h-20 border-b theme-border theme-surface backdrop-blur-md px-4 sm:px-12 flex items-center justify-between sticky top-0 z-30">
         <div>
-          <Logo variant="nobg" size="lg" showBadge={true} subtitle="Property Verification & Due-Diligence" href="/" />
+          <Logo variant="nobg" size="md" showBadge={true} subtitle="Property Verification & Due-Diligence" href="/" />
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link
             href="/login"
-            className="px-4 py-2 rounded-xl text-xs font-semibold theme-text-secondary hover:theme-text-primary hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+            className="px-3 sm:px-4 py-2 rounded-xl text-xs font-semibold theme-text-secondary hover:theme-text-primary hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
           >
             Sign In
           </Link>
           <Link
             href="/branch"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/25 transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/25 transition-all active:scale-95 whitespace-nowrap"
           >
             <span>Open Portal</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
       </header>
+
 
       {/* Hero Section */}
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-12 sm:py-16 space-y-12">

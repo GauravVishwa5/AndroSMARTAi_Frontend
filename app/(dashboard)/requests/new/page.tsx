@@ -218,16 +218,17 @@ export default function NewRequestPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Top Title & Step Indicator */}
-      <div className="p-6 rounded-2xl theme-surface border backdrop-blur-md shadow-sm">
-        <div className="flex items-center justify-between">
+      <div className="p-4 sm:p-6 rounded-2xl theme-surface border backdrop-blur-md shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h1 className="text-xl font-bold theme-text-primary tracking-tight">Create Property Request (BankForm)</h1>
-            <p className="text-xs theme-text-secondary mt-1">Initiate property title investigation and document OCR queue</p>
+            <h1 className="text-lg sm:text-xl font-bold theme-text-primary tracking-tight">Create Property Request (BankForm)</h1>
+            <p className="text-xs theme-text-secondary mt-0.5">Initiate property title investigation and document OCR queue</p>
           </div>
-          <span className="text-xs font-mono px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-bold">
+          <span className="text-xs font-mono px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-bold w-fit">
             Step {currentStep} of 3
           </span>
         </div>
+
 
         {/* Stepper Progress */}
         <div className="grid grid-cols-3 gap-2 mt-6">

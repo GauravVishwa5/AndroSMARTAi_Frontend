@@ -13,13 +13,16 @@ import {
   PlusCircle,
   Sparkles,
   Zap,
+  X,
 } from 'lucide-react';
 import { useEntitlements } from '@/lib/hooks/useEntitlements';
+import { useUIStore } from '@/lib/store/uiStore';
 import { Logo } from '@/components/ui/Logo';
 
 export function Sidebar() {
   const pathname = usePathname();
   const { hasModuleAccess, isAdmin } = useEntitlements();
+  const { isMobileMenuOpen, closeMobileMenu } = useUIStore();
 
   const navItems = [
     {
@@ -69,18 +72,26 @@ export function Sidebar() {
     },
   ];
 
-  return (
-    <aside className="w-64 border-r theme-border theme-surface flex flex-col justify-between shrink-0 h-screen sticky top-0 transition-colors z-20">
+  const sidebarContent = (
+    <div className="flex flex-col justify-between h-full">
       <div>
         {/* Brand Logo Header */}
-        <div className="h-16 border-b theme-border px-5 flex items-center">
+        <div className="h-16 border-b theme-border px-5 flex items-center justify-between">
           <Logo variant="nobg" size="sm" showBadge={true} href="/branch" />
+          {/* Close button on mobile */}
+          <button
+            onClick={closeMobileMenu}
+            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Quick Action Button */}
         <div className="p-3.5">
           <Link
             href="/requests/new"
+            onClick={closeMobileMenu}
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/35 transition-all group active:scale-95"
           >
             <PlusCircle className="w-4 h-4 transition-transform group-hover:rotate-90" />
@@ -103,6 +114,7 @@ export function Sidebar() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  onClick={closeMobileMenu}
                   className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all group ${
                     isActive
                       ? 'bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 shadow-sm font-semibold'
@@ -146,6 +158,33 @@ export function Sidebar() {
           </div>
         </div>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Sticky Sidebar (>= 1024px) */}
+      <aside className="hidden lg:flex lg:w-64 border-r theme-border theme-surface flex-col justify-between shrink-0 h-screen sticky top-0 transition-colors z-20">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile Slide-over Drawer (< 1024px) */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          {/* Backdrop Blur */}
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+            onClick={closeMobileMenu}
+          />
+
+          {/* Drawer Panel */}
+          <div className="relative flex-1 flex flex-col max-w-xs w-full theme-surface border-r theme-border h-full shadow-2xl z-50 animate-slideInLeft">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
+
+export default Sidebar;
