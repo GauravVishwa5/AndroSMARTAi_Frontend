@@ -10,6 +10,7 @@ interface LogoProps {
   showBadge?: boolean;
   subtitle?: string;
   className?: string;
+  withBackground?: boolean;
   href?: string;
 }
 
@@ -19,13 +20,14 @@ export function Logo({
   showBadge = true,
   subtitle,
   className = '',
+  withBackground = true,
   href,
 }: LogoProps) {
   const dimensions = {
-    sm: { width: 140, height: 28 },
-    md: { width: 180, height: 36 },
-    lg: { width: 220, height: 44 },
-    xl: { width: 280, height: 56 },
+    sm: { width: 120, height: 24, padding: 'px-2.5 py-1', rounded: 'rounded-xl' },
+    md: { width: 160, height: 30, padding: 'px-3 py-1.5', rounded: 'rounded-xl' },
+    lg: { width: 200, height: 38, padding: 'px-3.5 py-2', rounded: 'rounded-2xl' },
+    xl: { width: 250, height: 48, padding: 'px-4 py-2.5', rounded: 'rounded-2xl' },
   }[size];
 
   const logoSrc =
@@ -36,15 +38,22 @@ export function Logo({
       : '/logo.png';
 
   const content = (
-    <div className={`flex items-center gap-3 select-none ${className}`}>
-      <div className="relative flex items-center justify-center shrink-0">
+    <div className={`flex items-center gap-2.5 select-none ${className}`}>
+      {/* Rounded Corner Rectangle Background Container for Logo */}
+      <div
+        className={`relative flex items-center justify-center shrink-0 transition-all duration-200 ${
+          withBackground
+            ? `${dimensions.padding} ${dimensions.rounded} bg-slate-950/90 dark:bg-slate-900/90 border border-slate-800/90 dark:border-slate-700/80 shadow-md shadow-slate-950/20 backdrop-blur-md`
+            : ''
+        }`}
+      >
         <Image
           src={logoSrc}
           alt="AndroSMARTAi Logo"
           width={dimensions.width}
           height={dimensions.height}
           style={{ width: 'auto', height: `${dimensions.height}px` }}
-          className="object-contain transition-transform duration-200"
+          className="object-contain transition-transform duration-200 hover:scale-[1.02]"
           priority
         />
       </div>
@@ -53,7 +62,7 @@ export function Logo({
         <div className="flex flex-col justify-center">
           {showBadge && (
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-500/15 text-blue-500 dark:text-blue-400 border border-blue-500/30 px-1.5 py-0.5 rounded font-mono">
+              <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 px-1.5 py-0.5 rounded font-mono">
                 PVS v1.0
               </span>
             </div>
@@ -70,7 +79,7 @@ export function Logo({
 
   if (href) {
     return (
-      <Link href={href} className="inline-flex items-center hover:opacity-90 transition-opacity">
+      <Link href={href} className="inline-flex items-center hover:opacity-95 transition-opacity">
         {content}
       </Link>
     );
