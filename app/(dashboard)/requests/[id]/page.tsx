@@ -31,7 +31,10 @@ import {
   MapPin,
   Clock,
   ArrowLeft,
+  Camera,
 } from 'lucide-react';
+import { SitePhotoInspection } from '@/components/survey/SitePhotoInspection';
+
 
 export default function RequestWorkspacePage() {
   const params = useParams();
@@ -39,8 +42,9 @@ export default function RequestWorkspacePage() {
 
   // Active Workspace Tab
   const [activeTab, setActiveTab] = useState<
-    'TIMELINE' | 'EXTRACTED_OCR' | 'IGR_SEARCH' | 'DISCREPANCIES' | 'TSR_REPORT'
+    'TIMELINE' | 'EXTRACTED_OCR' | 'IGR_SEARCH' | 'SITE_SURVEY' | 'DISCREPANCIES' | 'TSR_REPORT'
   >('TIMELINE');
+
 
   // Request State
   const [requestStatus, setRequestStatus] = useState<'Pending' | 'Verified' | 'Rejected'>('Pending');
@@ -281,9 +285,11 @@ export default function RequestWorkspacePage() {
               { id: 'TIMELINE', label: 'Flow of Title Timeline', icon: GitBranch },
               { id: 'EXTRACTED_OCR', label: 'OCR Data Grid', icon: FileSpreadsheet },
               { id: 'IGR_SEARCH', label: 'IGR Registry Search', icon: Database },
+              { id: 'SITE_SURVEY', label: 'Field Site Survey', icon: Camera },
               { id: 'DISCREPANCIES', label: 'Encumbrance Flags', icon: AlertTriangle },
               { id: 'TSR_REPORT', label: 'TSR / Live Editor', icon: FileCheck2 },
             ].map((tab) => {
+
               const Icon = tab.icon;
               return (
                 <button
@@ -435,8 +441,19 @@ export default function RequestWorkspacePage() {
               </div>
             )}
 
+            {/* Tab 4: Field Site Survey & Geotagged Camera Intake */}
+            {activeTab === 'SITE_SURVEY' && (
+              <div className="space-y-4">
+                <SitePhotoInspection
+                  requestId={requestId}
+                  propertyName="Deepali Residency, Pitampura"
+                />
+              </div>
+            )}
+
             {/* Tab 5: Live TSR / WOPI Word Editor */}
             {activeTab === 'TSR_REPORT' && (
+
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>

@@ -5,6 +5,7 @@ import { Sidebar } from '@/components/layout/Sidebar';
 import { Navbar } from '@/components/layout/Navbar';
 import { useAuthStore } from '@/lib/store/authStore';
 import { useThemeStore } from '@/lib/store/themeStore';
+import { InactivityWarningModal } from '@/components/security/InactivityWarningModal';
 
 export default function DashboardLayout({
   children,
@@ -28,6 +29,7 @@ export default function DashboardLayout({
           {children}
         </main>
       </div>
+      <InactivityWarningModal />
     </div>
   );
 }

@@ -1,0 +1,24 @@
+{
+  "name": "AndroSMARTAi Property Verification System",
+  "short_name": "AndroPVS",
+  "description": "Enterprise Property Title Due-Diligence & Legal Scrutiny Platform",
+  "start_url": "/branch",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#080C14",
+  "theme_color": "#2563EB",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
