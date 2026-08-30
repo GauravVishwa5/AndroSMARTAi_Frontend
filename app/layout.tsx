@@ -32,7 +32,7 @@ const clientInitScript = `
 (function() {
   // Theme initialization
   try {
-    var stored = localStorage.getItem('andropvs_theme') || 'dark';
+    var stored = localStorage.getItem('andropvs_theme') || 'light';
     var resolved = stored;
     if (stored === 'system') {
       resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
@@ -59,7 +59,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark" data-theme="dark" suppressHydrationWarning>
+    <html lang="en" className="light" data-theme="light" suppressHydrationWarning>
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="mobile-web-app-capable" content="yes" />

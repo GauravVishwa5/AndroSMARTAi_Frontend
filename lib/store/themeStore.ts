@@ -13,8 +13,8 @@ interface ThemeState {
 }
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
-  theme: 'dark',
-  resolvedTheme: 'dark',
+  theme: 'light',
+  resolvedTheme: 'light',
 
   setTheme: (theme: Theme) => {
     if (typeof window === 'undefined') return;
@@ -44,7 +44,7 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   initializeTheme: () => {
     if (typeof window === 'undefined') return;
 
-    const storedTheme = (localStorage.getItem('andropvs_theme') as Theme) || 'dark';
+    const storedTheme = (localStorage.getItem('andropvs_theme') as Theme) || 'light';
     get().setTheme(storedTheme);
   },
 }));
