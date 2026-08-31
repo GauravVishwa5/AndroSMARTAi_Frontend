@@ -14,15 +14,18 @@ import {
   Sparkles,
   Zap,
   X,
+  LogOut,
 } from 'lucide-react';
 import { useEntitlements } from '@/lib/hooks/useEntitlements';
 import { useUIStore } from '@/lib/store/uiStore';
+import { useAuthStore } from '@/lib/store/authStore';
 import { Logo } from '@/components/ui/Logo';
 
 export function Sidebar() {
   const pathname = usePathname();
   const { hasModuleAccess, isAdmin } = useEntitlements();
   const { isMobileMenuOpen, closeMobileMenu } = useUIStore();
+  const { user, logout } = useAuthStore();
 
   const navItems = [
     {
@@ -143,8 +146,8 @@ export function Sidebar() {
         </nav>
       </div>
 
-      {/* AI Copilot & Status Pill at Bottom */}
-      <div className="p-3.5 border-t theme-border">
+      {/* AI Copilot & User Profile / Logout at Bottom */}
+      <div className="p-3.5 border-t theme-border space-y-2.5">
         <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-500/10 to-blue-500/5 dark:from-indigo-950/40 dark:to-slate-900/60 border border-indigo-500/20 flex items-start gap-3">
           <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center shrink-0 text-indigo-600 dark:text-indigo-400 mt-0.5">
             <Zap className="w-4 h-4" />
@@ -156,6 +159,32 @@ export function Sidebar() {
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">GPT-4 Extraction Active</p>
           </div>
+        </div>
+
+        {/* User Card with mapped Logout button */}
+        <div className="pt-2 border-t theme-border flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <div className="w-7 h-7 rounded-lg bg-blue-600/15 border border-blue-500/30 flex items-center justify-center font-bold text-xs text-blue-600 dark:text-blue-400 shrink-0">
+              {user?.first_name ? user.first_name[0] : user?.username?.[0]?.toUpperCase() || 'U'}
+            </div>
+            <div className="overflow-hidden leading-tight text-left">
+              <p className="text-xs font-semibold theme-text-primary truncate">
+                {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.username || 'Branch User'}
+              </p>
+              <p className="text-[10px] text-slate-400 truncate">
+                {user?.role || (user?.is_admin ? 'Admin' : 'Branch Officer')}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => logout()}
+            title="Log Out (Sign Out)"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-500 hover:text-red-500 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all active:scale-95 shrink-0"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Logout</span>
+          </button>
         </div>
       </div>
     </div>

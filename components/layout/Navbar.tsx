@@ -137,26 +137,27 @@ export function Navbar() {
           <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
         </button>
 
-        {/* User Profile Menu */}
+        {/* User Profile & Logout */}
         <div className="flex items-center gap-2 sm:gap-2.5 pl-2 sm:pl-3 border-l theme-border">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-blue-500 flex items-center justify-center font-bold text-xs text-white shadow-md shadow-blue-500/20 shrink-0">
-            {user?.first_name ? user.first_name[0] : user?.username?.[0]?.toUpperCase() || 'A'}
+            {user?.first_name ? user.first_name[0] : user?.username?.[0]?.toUpperCase() || 'U'}
           </div>
           <div className="hidden lg:block text-left leading-tight">
             <p className="text-xs font-semibold theme-text-primary truncate max-w-[120px]">
-              {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.username || 'User'}
+              {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.username || 'Branch User'}
             </p>
             <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-              {user?.is_admin ? 'Super Admin' : 'Legal Investigator'}
+              {user?.role || (user?.is_admin ? 'Super Admin' : 'Branch Officer')}
             </p>
           </div>
 
           <button
-            onClick={logout}
-            title="Sign Out"
-            className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+            onClick={() => logout()}
+            title="Log Out (Sign Out)"
+            className="flex items-center gap-1.5 p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-all active:scale-95 border border-transparent hover:border-red-500/20"
           >
             <LogOut className="w-4 h-4" />
+            <span className="hidden xl:inline text-xs font-medium text-red-500/80">Logout</span>
           </button>
         </div>
       </div>

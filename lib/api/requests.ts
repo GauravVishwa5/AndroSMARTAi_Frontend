@@ -47,18 +47,28 @@ export const requestsApi = {
     return response.data;
   },
 
+  updateRequestStatus: async (requestId: string, status: string, reason?: string) => {
+    const response = await apiClient.patch(`/api/request/${requestId}/status`, {
+      status,
+      reason,
+    });
+    return response.data;
+  },
+
   // Document Verification
-  verifyDocument: async (requestId: string, documentId: string, status: 'clear' | 'rejected') => {
+  verifyDocument: async (requestId: string, documentId: string, status: 'clear' | 'rejected', reason?: string) => {
     const response = await apiClient.patch(
       `/api/request/${requestId}/documents/${encodeURIComponent(documentId)}/verify`,
-      null,
-      { params: { status } }
+      { status, reason }
     );
     return response.data;
   },
 
-  verifyAllDocuments: async (requestId: string) => {
-    const response = await apiClient.patch(`/api/request/${requestId}/documents/verify-all`);
+  verifyAllDocuments: async (requestId: string, status: 'clear' | 'rejected' = 'clear', reason?: string) => {
+    const response = await apiClient.patch(`/api/request/${requestId}/documents/verify-all`, {
+      status,
+      reason,
+    });
     return response.data;
   },
 
