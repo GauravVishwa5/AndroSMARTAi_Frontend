@@ -34,8 +34,21 @@ import {
   Camera,
   Upload,
   X,
+  Maximize2,
+  Copy,
+  Check,
+  Search,
+  FileSearch,
 } from 'lucide-react';
 import { SitePhotoInspection } from '@/components/survey/SitePhotoInspection';
+import { DocumentPreviewModal } from '@/components/documents/DocumentPreviewModal';
+import { DocumentUploadModal } from '@/components/documents/DocumentUploadModal';
+import { FlowOfTitleTimeline } from '@/components/workspace/FlowOfTitleTimeline';
+import { OcrDataGrid } from '@/components/workspace/OcrDataGrid';
+import { IgrRegistrySearch } from '@/components/workspace/IgrRegistrySearch';
+import { FieldSiteSurvey } from '@/components/workspace/FieldSiteSurvey';
+import { EncumbranceFlags } from '@/components/workspace/EncumbranceFlags';
+import { TsrLiveEditor } from '@/components/workspace/TsrLiveEditor';
 import { requestsApi } from '@/lib/api/requests';
 
 export default function RequestWorkspacePage() {
@@ -55,8 +68,13 @@ export default function RequestWorkspacePage() {
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusFeedback, setStatusFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
-  // Documents state
+  // Documents & Preview State
   const [selectedDocIndex, setSelectedDocIndex] = useState(0);
+  const [leftPanelTab, setLeftPanelTab] = useState<'VIEWER' | 'RAW_TEXT' | 'FIELDS'>('VIEWER');
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [copiedRawText, setCopiedRawText] = useState(false);
+  const [rawTextSearch, setRawTextSearch] = useState('');
+  const [rotation, setRotation] = useState(0);
 
   // Modals state
   const [showEditModal, setShowEditModal] = useState(false);
@@ -82,9 +100,6 @@ export default function RequestWorkspacePage() {
 
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isReuploadMode, setIsReuploadMode] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadDocType, setUploadDocType] = useState('Sale Deed');
 
   const loadDetails = async () => {
     setIsLoading(true);
@@ -163,43 +178,7 @@ export default function RequestWorkspacePage() {
 
   const handleOpenUploadModal = (isReupload: boolean = false) => {
     setIsReuploadMode(isReupload);
-    setUploadFile(null);
-    setUploadDocType(isReupload && currentDoc?.type ? currentDoc.type : 'Sale Deed');
     setShowUploadModal(true);
-  };
-
-  const handleUploadDocument = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!uploadFile) return;
-
-    setIsUploading(true);
-    try {
-      if (isReuploadMode && currentDoc?.id) {
-        await requestsApi.replaceDocument(requestId, currentDoc.id, uploadFile);
-        setStatusFeedback({
-          type: 'success',
-          message: `Document "${currentDoc.name}" successfully re-uploaded & replaced!`,
-        });
-      } else {
-        await requestsApi.uploadNewDocuments(requestId, [uploadFile], [uploadDocType]);
-        setStatusFeedback({
-          type: 'success',
-          message: `New document "${uploadFile.name}" successfully uploaded to request!`,
-        });
-      }
-      setShowUploadModal(false);
-      setUploadFile(null);
-      await loadDetails();
-      setTimeout(() => setStatusFeedback(null), 5000);
-    } catch (err: any) {
-      console.error('Failed to upload document:', err);
-      setStatusFeedback({
-        type: 'error',
-        message: err?.response?.data?.detail || 'Failed to upload document to server',
-      });
-    } finally {
-      setIsUploading(false);
-    }
   };
 
   const handleUpdateStatus = async (newStatus: 'Verified' | 'Rejected') => {
@@ -235,6 +214,8 @@ export default function RequestWorkspacePage() {
     ocrStatus: d.ocr_status || 'done',
     date: d.uploaded_at || 'Recent',
     fileUrl: typeof d.file_url === 'string' ? d.file_url : (Array.isArray(d.file_url) ? d.file_url[0] : '#'),
+    rawText: d.raw_text || d.full_text || '',
+    ocrMeta: d.ocr_meta || {},
     extracted: {
       vendor: requestData?.advocateName || 'Previous Landholder',
       vendee: requestData?.ownerName || requestData?.applicantName || 'Borrower',
@@ -254,6 +235,8 @@ export default function RequestWorkspacePage() {
       ocrStatus: 'done',
       date: 'Aug 30, 2026',
       fileUrl: '#',
+      rawText: 'MORTGAGE DEED AGREEMENT\nThis Deed of Mortgage is made on 31st August 2026.\nBetween Borrower: Mr. Rahul Sharma\nAnd Lender: State Bank of India\nProperty Description: Flat No 402, 4th Floor, Survey No 142/3, CTS No 589, Village Borivali.\nLoan Amount: Rs. 75,00,000/-',
+      ocrMeta: { total_pages: 1, char_count: 245 },
       extracted: {
         vendor: 'Sunil K. Sharma',
         vendee: requestData?.ownerName || 'Ajay Kumar',
@@ -412,11 +395,12 @@ export default function RequestWorkspacePage() {
 
       {/* Main Split-Screen Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[680px]">
-        {/* Left Column (5 Cols): Document Viewer & OCR Inspector */}
+        {/* Left Column (5 Cols): Real Document Viewer & Raw OCR Inspector */}
         <div className="lg:col-span-5 flex flex-col rounded-2xl theme-surface border overflow-hidden shadow-sm">
           {/* Document Switcher Header with Upload / Reupload Controls */}
           <div className="p-3 border-b theme-border bg-slate-50 dark:bg-slate-950/60 flex flex-col gap-2.5">
             <div className="flex items-center justify-between gap-2">
+              {/* Document Tabs */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 flex-1">
                 {docs.map((doc, idx) => (
                   <button
@@ -430,6 +414,13 @@ export default function RequestWorkspacePage() {
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span>{doc.type}</span>
+                    {doc.ocrStatus && (
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          doc.ocrStatus === 'done' ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'
+                        }`}
+                      />
+                    )}
                   </button>
                 ))}
               </div>
@@ -437,7 +428,10 @@ export default function RequestWorkspacePage() {
               {/* Upload & Reupload Action Buttons */}
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
-                  onClick={() => handleOpenUploadModal(false)}
+                  onClick={() => {
+                    setIsReuploadMode(false);
+                    setShowUploadModal(true);
+                  }}
                   title="Upload New Document"
                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all active:scale-95"
                 >
@@ -446,7 +440,10 @@ export default function RequestWorkspacePage() {
                 </button>
 
                 <button
-                  onClick={() => handleOpenUploadModal(true)}
+                  onClick={() => {
+                    setIsReuploadMode(true);
+                    setShowUploadModal(true);
+                  }}
                   title="Re-upload / Replace Current Document"
                   className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg theme-card border text-xs font-semibold theme-text-secondary hover:theme-text-primary hover:border-blue-500 transition-all active:scale-95"
                 >
@@ -456,291 +453,413 @@ export default function RequestWorkspacePage() {
               </div>
             </div>
 
-            {/* Document Controls & Zoom */}
+            {/* Left Panel View Mode Switcher (Viewer vs Raw OCR Text) */}
             <div className="flex items-center justify-between border-t theme-border pt-2 text-xs">
-              <span className="text-[11px] theme-text-muted truncate max-w-[220px]">
-                {currentDoc.name}
-              </span>
-              <div className="flex items-center gap-1">
+              <div className="flex items-center p-0.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-[11px] font-semibold">
                 <button
-                  onClick={() => setZoomLevel((prev) => Math.max(75, prev - 10))}
-                  className="p-1 rounded theme-card border theme-text-primary text-xs"
-                  title="Zoom Out"
+                  onClick={() => setLeftPanelTab('VIEWER')}
+                  className={`px-2.5 py-1 rounded-md transition-all ${
+                    leftPanelTab === 'VIEWER'
+                      ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400'
+                  }`}
                 >
-                  <ZoomOut className="w-3.5 h-3.5" />
+                  Document View
                 </button>
-                <span className="text-[10px] font-mono theme-text-muted px-1">{zoomLevel}%</span>
                 <button
-                  onClick={() => setZoomLevel((prev) => Math.min(150, prev + 10))}
-                  className="p-1 rounded theme-card border theme-text-primary text-xs"
-                  title="Zoom In"
+                  onClick={() => setLeftPanelTab('RAW_TEXT')}
+                  className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${
+                    leftPanelTab === 'RAW_TEXT'
+                      ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400'
+                  }`}
                 >
-                  <ZoomIn className="w-3.5 h-3.5" />
+                  <Sparkles className="w-3 h-3 text-indigo-500" />
+                  <span>Raw OCR Text</span>
+                </button>
+                <button
+                  onClick={() => setLeftPanelTab('FIELDS')}
+                  className={`px-2.5 py-1 rounded-md transition-all ${
+                    leftPanelTab === 'FIELDS'
+                      ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                      : 'text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  Fields
+                </button>
+              </div>
+
+              {/* Viewport Zoom & Fullscreen Controls */}
+              <div className="flex items-center gap-1">
+                {leftPanelTab === 'VIEWER' && (
+                  <>
+                    <button
+                      onClick={() => setZoomLevel((prev) => Math.max(50, prev - 15))}
+                      className="p-1 rounded theme-card border theme-text-primary text-xs"
+                      title="Zoom Out"
+                    >
+                      <ZoomOut className="w-3 h-3" />
+                    </button>
+                    <span className="text-[10px] font-mono theme-text-muted px-0.5">{zoomLevel}%</span>
+                    <button
+                      onClick={() => setZoomLevel((prev) => Math.min(200, prev + 15))}
+                      className="p-1 rounded theme-card border theme-text-primary text-xs"
+                      title="Zoom In"
+                    >
+                      <ZoomIn className="w-3 h-3" />
+                    </button>
+                    <button
+                      onClick={() => setRotation((r) => (r + 90) % 360)}
+                      className="p-1 rounded theme-card border theme-text-primary text-xs"
+                      title="Rotate 90deg"
+                    >
+                      <RotateCw className="w-3 h-3" />
+                    </button>
+                  </>
+                )}
+
+                <button
+                  onClick={() => setShowPreviewModal(true)}
+                  className="p-1.5 rounded theme-card border text-blue-600 dark:text-blue-400 hover:border-blue-500 transition-colors"
+                  title="Full Screen Document & Raw Text Preview"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             </div>
           </div>
 
-          {/* High-Resolution Document Canvas Simulator */}
-          <div className="flex-1 p-4 bg-slate-100 dark:bg-slate-950/90 overflow-y-auto flex items-center justify-center min-h-[480px]">
-            <div
-              style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}
-              className="w-full max-w-sm rounded-xl theme-card border p-5 shadow-xl space-y-4 transition-transform duration-200"
-            >
-              {/* Document Header Stamp */}
-              <div className="border-b theme-border pb-3 text-center space-y-1">
-                <div className="inline-block px-2.5 py-0.5 rounded bg-blue-500/20 border border-blue-500/40 text-[10px] font-bold text-blue-600 dark:text-blue-300 uppercase tracking-wider">
-                  Government Revenue Registration Record
-                </div>
-                <h4 className="text-xs font-bold theme-text-primary truncate">{currentDoc.name}</h4>
-                <p className="text-[10px] theme-text-muted font-mono">
-                  Type: {currentDoc.type} &bull; Reg: {currentDoc.extracted.regNo}
-                </p>
+          {/* Left Panel Body: Tab Content */}
+          <div className="flex-1 p-3 bg-slate-100/70 dark:bg-slate-950/90 overflow-hidden flex flex-col min-h-[500px]">
+            {/* SUB-TAB 1: Real Interactive Document Previewer */}
+            {leftPanelTab === 'VIEWER' && (
+              <div className="flex-1 flex flex-col items-center justify-center overflow-auto p-1">
+                {currentDoc.fileUrl && currentDoc.fileUrl !== '#' ? (
+                  currentDoc.name.toLowerCase().endsWith('.pdf') ||
+                  currentDoc.fileUrl.toLowerCase().includes('.pdf') ? (
+                    <div
+                      style={{
+                        transform: `scale(${zoomLevel / 100}) rotate(${rotation}deg)`,
+                        transformOrigin: 'top center',
+                      }}
+                      className="w-full h-full min-h-[480px] transition-transform duration-200"
+                    >
+                      <iframe
+                        src={`${currentDoc.fileUrl}#toolbar=1&navpanes=0`}
+                        title={currentDoc.name}
+                        className="w-full h-full min-h-[500px] rounded-xl border theme-border bg-white shadow-md"
+                      />
+                    </div>
+                  ) : currentDoc.name.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/) ||
+                    currentDoc.fileUrl.toLowerCase().match(/\.(jpg|jpeg|png|webp)/) ? (
+                    <div
+                      style={{
+                        transform: `scale(${zoomLevel / 100}) rotate(${rotation}deg)`,
+                        transformOrigin: 'center center',
+                      }}
+                      className="transition-transform duration-200 p-2"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={currentDoc.fileUrl}
+                        alt={currentDoc.name}
+                        className="max-h-[500px] max-w-full rounded-xl object-contain shadow-lg border theme-border"
+                      />
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center space-y-3 theme-card rounded-2xl border shadow-sm max-w-sm">
+                      <FileText className="w-10 h-10 text-blue-500 mx-auto" />
+                      <h4 className="text-xs font-bold theme-text-primary">{currentDoc.name}</h4>
+                      <p className="text-[11px] theme-text-muted">Document uploaded to cloud storage</p>
+                      <div className="flex items-center justify-center gap-2 pt-2">
+                        <a
+                          href={currentDoc.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-colors"
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                          <span>Open File</span>
+                        </a>
+                        <button
+                          onClick={() => setShowPreviewModal(true)}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-xl border theme-card text-xs font-semibold theme-text-primary hover:border-blue-500 transition-colors"
+                        >
+                          <Eye className="w-3.5 h-3.5 text-blue-500" />
+                          <span>Inspect Raw Text</span>
+                        </button>
+                      </div>
+                    </div>
+                  )
+                ) : (
+                  <div className="p-8 text-center space-y-3 theme-card rounded-2xl border shadow-sm max-w-sm">
+                    <FileSearch className="w-10 h-10 text-slate-400 mx-auto" />
+                    <h4 className="text-xs font-bold theme-text-primary">{currentDoc.name}</h4>
+                    <p className="text-[11px] theme-text-muted">
+                      No cloud URL attached yet. Upload the original scan to enable interactive PDF viewing.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setIsReuploadMode(true);
+                        setShowUploadModal(true);
+                      }}
+                      className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-semibold shadow-sm hover:bg-blue-500 transition-colors"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload File</span>
+                    </button>
+                  </div>
+                )}
               </div>
+            )}
 
-              {/* OCR Bounding Box Callouts */}
-              <div className="space-y-2.5 text-[11px]">
-                <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/30">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-0.5">
-                    Vendor (Transferor)
-                  </span>
-                  <p className="font-semibold theme-text-primary">{currentDoc.extracted.vendor}</p>
+            {/* SUB-TAB 2: Extracted Raw OCR Text Inspector */}
+            {leftPanelTab === 'RAW_TEXT' && (
+              <div className="flex-1 flex flex-col rounded-xl theme-card border overflow-hidden shadow-xs">
+                {/* Search & Copy Toolbar */}
+                <div className="p-2.5 border-b theme-border bg-slate-50 dark:bg-slate-950/50 flex items-center justify-between gap-2">
+                  <div className="relative flex-1">
+                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={rawTextSearch}
+                      onChange={(e) => setRawTextSearch(e.target.value)}
+                      placeholder="Filter keywords in extracted text..."
+                      className="w-full pl-8 pr-2.5 py-1 rounded-lg border theme-border bg-white dark:bg-slate-900 text-xs theme-text-primary placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (currentDoc.rawText) {
+                        navigator.clipboard.writeText(currentDoc.rawText);
+                        setCopiedRawText(true);
+                        setTimeout(() => setCopiedRawText(false), 2000);
+                      }
+                    }}
+                    disabled={!currentDoc.rawText}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border theme-border bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:border-blue-500 transition-all disabled:opacity-50 shrink-0"
+                    title="Copy full raw text"
+                  >
+                    {copiedRawText ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className="text-emerald-600 dark:text-emerald-400 text-[11px]">Copied!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-slate-400" />
+                        <span className="text-[11px]">Copy</span>
+                      </>
+                    )}
+                  </button>
                 </div>
 
-                <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block mb-0.5">
-                    Vendee (Purchaser / Borrower)
-                  </span>
-                  <p className="font-semibold theme-text-primary">{currentDoc.extracted.vendee}</p>
+                {/* Raw Text Content */}
+                <div className="flex-1 p-3 overflow-auto bg-slate-50/40 dark:bg-slate-950/30 font-mono text-[11px] leading-relaxed theme-text-primary whitespace-pre-wrap select-text">
+                  {currentDoc.rawText ? (
+                    rawTextSearch.trim() ? (
+                      currentDoc.rawText
+                        .split('\n')
+                        .filter((line: string) => line.toLowerCase().includes(rawTextSearch.toLowerCase()))
+                        .join('\n') || 'No matching lines found for search term.'
+                    ) : (
+                      currentDoc.rawText
+                    )
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 space-y-2">
+                      <Sparkles className="w-8 h-8 opacity-40 text-indigo-400" />
+                      <p className="text-xs font-semibold theme-text-secondary">No Raw Text Extracted</p>
+                      <p className="text-[10px] text-slate-500">
+                        Raw text is extracted and stored in the database automatically during upload.
+                      </p>
+                      <button
+                        onClick={() => {
+                          setIsReuploadMode(true);
+                          setShowUploadModal(true);
+                        }}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-blue-600 text-white text-[11px] font-semibold hover:bg-blue-500 transition-colors mt-2"
+                      >
+                        <RefreshCw className="w-3 h-3" />
+                        <span>Re-upload & OCR</span>
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                <div className="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block mb-0.5">
-                    Consideration & Stamp Duty
-                  </span>
-                  <p className="font-semibold theme-text-primary">{currentDoc.extracted.consideration}</p>
-                </div>
-
-                <div className="p-2 rounded-lg theme-surface border">
-                  <span className="text-[9px] font-bold uppercase tracking-wider theme-text-secondary block mb-0.5">
-                    Schedule Property Description
-                  </span>
-                  <p className="text-[10px] leading-relaxed theme-text-primary">{currentDoc.extracted.propertyDesc}</p>
+                {/* Raw Text Status Footer */}
+                <div className="px-3 py-1.5 border-t theme-border bg-slate-50 dark:bg-slate-950/50 flex items-center justify-between text-[10px] theme-text-muted font-mono">
+                  <span>Status: {currentDoc.ocrStatus?.toUpperCase() || 'DONE'}</span>
+                  <span>{currentDoc.rawText?.length || 0} characters</span>
                 </div>
               </div>
+            )}
 
-              <div className="text-center pt-2 flex items-center justify-center gap-2">
-                <span className="inline-flex items-center gap-1 text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">
-                  <Sparkles className="w-3 h-3" /> GPT-4 Legal OCR Active
-                </span>
+            {/* SUB-TAB 3: Structured Bounding Box & Fields */}
+            {leftPanelTab === 'FIELDS' && (
+              <div className="flex-1 p-3 overflow-y-auto space-y-3 theme-card rounded-xl border">
+                <div className="flex items-center justify-between pb-2 border-b theme-border">
+                  <h4 className="text-xs font-bold theme-text-primary">Extracted Document Entities</h4>
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                    {currentDoc.type}
+                  </span>
+                </div>
+
+                <div className="space-y-2.5 text-xs">
+                  <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/30">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-0.5">
+                      Vendor (Transferor)
+                    </span>
+                    <p className="font-semibold theme-text-primary">{currentDoc.extracted.vendor}</p>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block mb-0.5">
+                      Vendee (Purchaser / Borrower)
+                    </span>
+                    <p className="font-semibold theme-text-primary">{currentDoc.extracted.vendee}</p>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block mb-0.5">
+                      Consideration & Stamp Duty
+                    </span>
+                    <p className="font-semibold theme-text-primary">{currentDoc.extracted.consideration}</p>
+                  </div>
+
+                  <div className="p-2.5 rounded-xl theme-surface border">
+                    <span className="text-[9px] font-bold uppercase tracking-wider theme-text-secondary block mb-0.5">
+                      Schedule Property Description
+                    </span>
+                    <p className="text-[11px] leading-relaxed theme-text-primary">{currentDoc.extracted.propertyDesc}</p>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
         {/* Right Column (7 Cols): Multi-Tab Investigation Suite */}
         <div className="lg:col-span-7 flex flex-col rounded-2xl theme-surface border overflow-hidden shadow-sm">
-          {/* Tab Navigation Header */}
-          <div className="border-b theme-border bg-slate-50 dark:bg-slate-950/60 p-2 flex items-center gap-1 overflow-x-auto">
-            {[
-              { id: 'TIMELINE', label: 'Flow of Title Timeline', icon: GitBranch },
-              { id: 'EXTRACTED_OCR', label: 'OCR Data Grid', icon: FileSpreadsheet },
-              { id: 'IGR_SEARCH', label: 'IGR Registry Search', icon: Database },
-              { id: 'SITE_SURVEY', label: 'Field Site Survey', icon: Camera },
-              { id: 'DISCREPANCIES', label: 'Encumbrance Flags', icon: AlertTriangle },
-              { id: 'TSR_REPORT', label: 'TSR / Live Editor', icon: FileCheck2 },
-            ].map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`px-3 py-2 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                      : 'theme-text-secondary hover:theme-text-primary hover:bg-slate-200 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{tab.label}</span>
-                </button>
-              );
-            })}
+          {/* Compact Tab Navigation Header */}
+          <div className="border-b theme-border bg-slate-50/80 dark:bg-slate-950/70 backdrop-blur-sm p-2 flex items-center justify-between gap-2 overflow-x-auto">
+            {/* Compact Segmented Pills */}
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-200/60 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-xs font-semibold">
+              {[
+                { id: 'TIMELINE', shortLabel: 'Timeline', label: 'Flow of Title Timeline', icon: GitBranch },
+                { id: 'EXTRACTED_OCR', shortLabel: 'OCR Grid', label: 'OCR Data Grid', icon: FileSpreadsheet },
+                { id: 'IGR_SEARCH', shortLabel: 'IGR Search', label: 'IGR Registry Search', icon: Database },
+                { id: 'SITE_SURVEY', shortLabel: 'Site Survey', label: 'Field Site Survey', icon: Camera },
+                { id: 'DISCREPANCIES', shortLabel: 'Flags', label: 'Encumbrance Flags', icon: AlertTriangle },
+                { id: 'TSR_REPORT', shortLabel: 'TSR Editor', label: 'TSR / Live Editor', icon: FileCheck2 },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id as any)}
+                    title={tab.label}
+                    className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap active:scale-95 ${
+                      isActive
+                        ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30'
+                        : 'theme-text-secondary hover:theme-text-primary hover:bg-slate-300/50 dark:hover:bg-slate-800/60'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span>{tab.shortLabel}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Quick Dropdown on smaller views */}
+            <div className="sm:hidden shrink-0">
+              <select
+                value={activeTab}
+                onChange={(e) => setActiveTab(e.target.value as any)}
+                className="px-2.5 py-1.5 rounded-lg border theme-border theme-card text-xs font-bold theme-text-primary focus:outline-none focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="TIMELINE">🌿 Flow of Title Timeline</option>
+                <option value="EXTRACTED_OCR">📊 OCR Data Grid</option>
+                <option value="IGR_SEARCH">🏛️ IGR Registry Search</option>
+                <option value="SITE_SURVEY">📍 Field Site Survey</option>
+                <option value="DISCREPANCIES">⚠️ Encumbrance Flags</option>
+                <option value="TSR_REPORT">📝 TSR / Live Editor</option>
+              </select>
+            </div>
           </div>
 
           {/* Tab Content Body */}
           <div className="flex-1 p-5 overflow-y-auto">
             {/* Tab 1: Flow-of-Title Timeline Graph */}
             {activeTab === 'TIMELINE' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-bold theme-text-primary">30-Year Unbroken Chain of Title</h3>
-                    <p className="text-xs theme-text-secondary">Sequential ownership history and title devolution graph</p>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                    Chain Verified
-                  </span>
-                </div>
-
-                <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-blue-500/40">
-                  {/* Node 1: Parent Allotment */}
-                  <div className="relative group">
-                    <div className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-blue-500 border-2 border-white dark:border-slate-900 shadow-sm" />
-                    <div className="p-4 rounded-xl theme-card border space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold theme-text-primary">1998 &mdash; Original Allotment</span>
-                        <span className="theme-text-muted font-mono">Reg: #1249</span>
-                      </div>
-                      <p className="text-xs theme-text-secondary">
-                        Housing Development Society &rarr; <strong className="text-blue-600 dark:text-blue-400">Sunil K. Sharma</strong>
-                      </p>
-                      <p className="text-[11px] theme-text-muted">
-                        Consideration: Rs. 18,50,000 &bull; Sub-Registrar Record Verified
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Node 2: Current Sale Deed */}
-                  <div className="relative group">
-                    <div className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-white dark:border-slate-900 shadow-sm" />
-                    <div className="p-4 rounded-xl theme-card border border-emerald-500/30 space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold theme-text-primary">2020 &mdash; Absolute Registered Sale Deed</span>
-                        <span className="text-emerald-600 dark:text-emerald-400 font-mono">Reg: #8472</span>
-                      </div>
-                      <p className="text-xs theme-text-secondary">
-                        Sunil K. Sharma &rarr; <strong className="text-emerald-600 dark:text-emerald-400">{ownerName} (Current Borrower)</strong>
-                      </p>
-                      <p className="text-[11px] theme-text-muted">
-                        Consideration: Rs. 85,00,000 &bull; Stamp Duty Paid &bull; SRO Verified
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Node 3: Current Mortgage Proposed */}
-                  <div className="relative group">
-                    <div className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-indigo-500 border-2 border-white dark:border-slate-900 shadow-sm" />
-                    <div className="p-4 rounded-xl bg-indigo-500/5 dark:bg-indigo-950/20 border border-indigo-500/30 space-y-1">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold theme-text-primary">2026 &mdash; Proposed Equitable Mortgage</span>
-                        <span className="text-indigo-600 dark:text-indigo-400 font-mono">{bankBranch}</span>
-                      </div>
-                      <p className="text-xs theme-text-secondary">
-                        Home Loan Facility: <strong className="text-indigo-600 dark:text-indigo-300">Rs. 65,00,000</strong>
-                      </p>
-                      <p className="text-[11px] theme-text-muted">
-                        Title clear for creation of primary charge via deposit of original title deeds.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <FlowOfTitleTimeline
+                requestId={requestId}
+                ownerName={ownerName}
+                propertyName={propName}
+                flatNumber={flatNo}
+                bankBranch={bankBranch}
+                docs={docs}
+                onSelectDoc={(idx) => {
+                  setSelectedDocIndex(idx);
+                  setLeftPanelTab('VIEWER');
+                }}
+              />
             )}
 
-            {/* Tab 2: OCR Extracted Fields */}
+            {/* Tab 2: OCR Extracted Fields Matrix */}
             {activeTab === 'EXTRACTED_OCR' && (
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold theme-text-primary">Structured OCR Entity Extraction</h3>
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  {Object.entries(currentDoc.extracted).map(([key, val]) => (
-                    <div key={key} className="p-3 rounded-xl theme-card border">
-                      <span className="text-[10px] font-bold uppercase tracking-wider theme-text-secondary block mb-1">
-                        {key.replace(/([A-Z])/g, ' $1')}
-                      </span>
-                      <span className="font-semibold theme-text-primary">{val}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <OcrDataGrid
+                requestId={requestId}
+                docs={docs}
+                selectedDocIndex={selectedDocIndex}
+                onSelectDoc={(idx) => setSelectedDocIndex(idx)}
+              />
             )}
 
             {/* Tab 3: IGR Search Match */}
             {activeTab === 'IGR_SEARCH' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-bold theme-text-primary">IGR Registry Cross-Verification</h3>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                    Live Record Match (100%)
-                  </span>
-                </div>
-                <div className="p-4 rounded-xl theme-card border space-y-2 text-xs">
-                  <div className="flex justify-between border-b theme-border pb-2">
-                    <span className="theme-text-secondary">Portal Queried:</span>
-                    <span className="theme-text-primary font-medium">State IGR Online Registry</span>
-                  </div>
-                  <div className="flex justify-between border-b theme-border pb-2">
-                    <span className="theme-text-secondary">Registration Reference:</span>
-                    <span className="font-mono text-blue-600 dark:text-blue-400 font-bold">{cts}</span>
-                  </div>
-                  <div className="flex justify-between border-b theme-border pb-2">
-                    <span className="theme-text-secondary">Owner Recorded in SRO:</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">{ownerName}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="theme-text-secondary">Encumbrance Recorded:</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">NIL (Unencumbered)</span>
-                  </div>
-                </div>
-              </div>
+              <IgrRegistrySearch
+                requestId={requestId}
+                stateName={requestData?.state || 'Delhi'}
+                ctsNumber={cts}
+                ownerName={ownerName}
+                fromYear={requestData?.from_year || 2001}
+              />
             )}
 
             {/* Tab 4: Discrepancy & Encumbrance Flags */}
             {activeTab === 'DISCREPANCIES' && (
-              <div className="space-y-4">
-                <h3 className="text-sm font-bold theme-text-primary">Encumbrance & Discrepancy Audit</h3>
-                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-3">
-                  <ShieldCheck className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="text-xs font-bold text-emerald-800 dark:text-emerald-300">No Legal Impediments Detected</h4>
-                    <p className="text-[11px] text-slate-700 dark:text-slate-300 mt-0.5">
-                      Property is free from prior mortgages, pending lis pendens litigations, or municipal tax attachments.
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <EncumbranceFlags
+                requestId={requestId}
+                ownerName={ownerName}
+                propertyName={propName}
+              />
             )}
 
             {/* Tab 5: Field Site Survey */}
             {activeTab === 'SITE_SURVEY' && (
-              <div className="space-y-4">
-                <SitePhotoInspection
-                  requestId={requestId}
-                  propertyName={`${propName}, ${location}`}
-                />
-              </div>
+              <FieldSiteSurvey
+                requestId={requestId}
+                propertyName={propName}
+                location={location}
+              />
             )}
 
             {/* Tab 6: Live TSR Report */}
             {activeTab === 'TSR_REPORT' && (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-bold theme-text-primary">Title Search Report (TSR) Generator</h3>
-                    <p className="text-xs theme-text-secondary">Institutional Bank Format &mdash; {bankBranch}</p>
-                  </div>
-                  <button
-                    onClick={() => alert('Downloading Official Signed TSR Document (DOCX)...')}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    <span>Download DOCX</span>
-                  </button>
-                </div>
-
-                <div className="p-5 rounded-xl theme-card border space-y-3 text-xs leading-relaxed theme-text-secondary">
-                  <div className="text-center border-b theme-border pb-3">
-                    <h4 className="text-sm font-bold theme-text-primary">LEGAL TITLE SEARCH REPORT (TSR)</h4>
-                    <p className="text-[11px] theme-text-muted font-mono">File Ref: TSR-2026-{requestId} &bull; Date: 31-Aug-2026</p>
-                  </div>
-                  <p>
-                    <strong>1. Opinion on Title:</strong> In our professional legal opinion, the Title of the Mortgagor/Borrower <strong className="theme-text-primary">{ownerName}</strong> to the schedule property described hereunder is <strong>CLEAR, VALID, MARKETABLE, AND UNENCUMBERED</strong>.
-                  </p>
-                  <p>
-                    <strong>2. Creation of Charge:</strong> The Bank ({bankBranch}) may safely proceed with the creation of an Equitable Mortgage by Deposit of Original Registered Deeds for {propName}, {flatNo}.
-                  </p>
-                </div>
-              </div>
+              <TsrLiveEditor
+                requestId={requestId}
+                requestData={requestData}
+                ownerName={ownerName}
+                propertyName={propName}
+                flatNumber={flatNo}
+                bankBranch={bankBranch}
+                advocateName={requestData?.advocateName || requestData?.advocate_name || 'Adv. Suresh Verma'}
+                ctsNumber={cts}
+                docs={docs}
+              />
             )}
           </div>
         </div>
@@ -925,94 +1044,37 @@ export default function RequestWorkspacePage() {
         </div>
       )}
 
-      {/* ── MODAL 2: Upload / Re-upload Document ─────────────── */}
-      {showUploadModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-          <div className="w-full max-w-lg p-6 rounded-2xl theme-surface border shadow-2xl space-y-5 animate-scaleUp">
-            <div className="flex items-center justify-between border-b theme-border pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-600 dark:text-blue-400">
-                  {isReuploadMode ? <RefreshCw className="w-5 h-5" /> : <Upload className="w-5 h-5" />}
-                </div>
-                <div>
-                  <h3 className="text-base font-bold theme-text-primary">
-                    {isReuploadMode ? 'Re-upload / Replace Document' : 'Upload New Title Document'}
-                  </h3>
-                  <p className="text-xs theme-text-secondary">
-                    {isReuploadMode
-                      ? `Replace ${currentDoc?.name}`
-                      : `Add document to ${requestId}`}
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowUploadModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 theme-card border transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+      {/* ── MODAL 2: Enhanced Drag-and-Drop Document Upload ─────────────── */}
+      <DocumentUploadModal
+        isOpen={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        isReupload={isReuploadMode}
+        currentDocName={currentDoc?.name}
+        onUpload={async (files, docTypes) => {
+          if (isReuploadMode && currentDoc?.id) {
+            await requestsApi.replaceDocument(requestId, currentDoc.id, files[0]);
+            setStatusFeedback({
+              type: 'success',
+              message: `Document "${currentDoc.name}" successfully re-uploaded & replaced!`,
+            });
+          } else {
+            await requestsApi.uploadNewDocuments(requestId, files, docTypes);
+            setStatusFeedback({
+              type: 'success',
+              message: `${files.length} document(s) successfully uploaded to request!`,
+            });
+          }
+          await loadDetails();
+          setTimeout(() => setStatusFeedback(null), 5000);
+        }}
+      />
 
-            <form onSubmit={handleUploadDocument} className="space-y-4 text-xs">
-              <div>
-                <label className="block font-semibold theme-text-primary mb-1">Document Type *</label>
-                <select
-                  value={uploadDocType}
-                  onChange={(e) => setUploadDocType(e.target.value)}
-                  className="w-full theme-input border rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="Sale Deed">Sale Deed (Absolute Registered)</option>
-                  <option value="Parent Deed">Parent Chain Deed</option>
-                  <option value="Mutation Extract (7/12)">Mutation Extract (7/12 / 8A)</option>
-                  <option value="Property Card">Property Card (CTS Extract)</option>
-                  <option value="Society NOC">Society NOC / Share Certificate</option>
-                  <option value="Index II Search">Index II / Encumbrance Certificate</option>
-                  <option value="Electricity Bill">Utility / Electricity Bill</option>
-                  <option value="Builder Agreement">Builder Buyer Agreement</option>
-                  <option value="Other Document">Other Legal Supporting Document</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-semibold theme-text-primary mb-1">Select File (PDF or Image) *</label>
-                <div className="border-2 border-dashed theme-border rounded-xl p-6 text-center hover:border-blue-500 transition-colors bg-slate-50 dark:bg-slate-900/40">
-                  <Upload className="w-8 h-8 text-blue-500 mx-auto mb-2 opacity-80" />
-                  <input
-                    type="file"
-                    required
-                    accept=".pdf,.png,.jpg,.jpeg,.tiff"
-                    onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-                    className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer"
-                  />
-                  {uploadFile && (
-                    <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-2">
-                      Selected: {uploadFile.name} ({(uploadFile.size / 1024 / 1024).toFixed(2)} MB)
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-2.5 pt-4 border-t theme-border">
-                <button
-                  type="button"
-                  onClick={() => setShowUploadModal(false)}
-                  className="px-4 py-2.5 rounded-xl border theme-card font-semibold theme-text-secondary hover:theme-text-primary transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={!uploadFile || isUploading}
-                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-md active:scale-95 transition-all disabled:opacity-50"
-                >
-                  {isUploading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                  <span>{isReuploadMode ? 'Replace Document' : 'Upload Document'}</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* ── MODAL 3: Fullscreen Document & Raw OCR Text Inspector ──────── */}
+      <DocumentPreviewModal
+        isOpen={showPreviewModal}
+        onClose={() => setShowPreviewModal(false)}
+        document={currentDoc}
+      />
     </div>
   );
 }

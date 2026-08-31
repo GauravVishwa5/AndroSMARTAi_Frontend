@@ -238,3 +238,21 @@ body {
   animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* ── Clean Legal Print Stylesheet ────────────────────────────── */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  nav, aside, header, footer, button, .no-print, [role="navigation"] {
+    display: none !important;
+  }
+
+  .theme-surface, .theme-card, .theme-canvas {
+    background: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+}
+

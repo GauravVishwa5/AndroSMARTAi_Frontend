@@ -198,11 +198,16 @@ export default function NewRequestPage() {
       const res = await requestsApi.createRequest(payload);
       const reqId = res.id || `REQ-${res.raw_id || '1'}`;
 
-      // 2. Upload Documents & Enqueue Celery OCR if files attached
+      // 2. Upload Documents to S3 & Postgres
       if (uploadedFiles.length > 0) {
         const files = uploadedFiles.map((u) => u.file);
         const docTypes = uploadedFiles.map((u) => u.docType);
-        await documentsApi.queueOcrAndUpload(reqId, files, docTypes).catch(() => null);
+        try {
+          await requestsApi.uploadNewDocuments(reqId, files, docTypes);
+        } catch (uploadErr) {
+          console.warn('Upload via uploadNewDocuments failed, falling back to queueOcrAndUpload:', uploadErr);
+          await documentsApi.queueOcrAndUpload(reqId, files, docTypes).catch(() => null);
+        }
       }
 
       router.push(`/requests/${reqId}`);
