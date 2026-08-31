@@ -32,6 +32,35 @@ export const requestsApi = {
     return response.data;
   },
 
+  updateRequest: async (requestId: string, payload: Partial<BankForm>): Promise<BankForm> => {
+    const response = await apiClient.post('/api/new-request', {
+      ...payload,
+      request_id: requestId,
+      id: requestId,
+    });
+    return response.data;
+  },
+
+  uploadNewDocuments: async (requestId: string, files: File[], docTypes?: string[]) => {
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append('documents', file);
+    });
+    if (docTypes && docTypes.length > 0) {
+      docTypes.forEach((dt) => {
+        formData.append('doc_types', dt);
+      });
+    }
+    const response = await apiClient.post(
+      `/api/upload-documents/${encodeURIComponent(requestId)}`,
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      }
+    );
+    return response.data;
+  },
+
   getBranchStats: async () => {
     const response = await apiClient.get('/api/v1/branch/dashboard-stats');
     return response.data;

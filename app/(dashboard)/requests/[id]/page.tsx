@@ -32,6 +32,8 @@ import {
   Clock,
   ArrowLeft,
   Camera,
+  Upload,
+  X,
 } from 'lucide-react';
 import { SitePhotoInspection } from '@/components/survey/SitePhotoInspection';
 import { requestsApi } from '@/lib/api/requests';
@@ -55,6 +57,34 @@ export default function RequestWorkspacePage() {
 
   // Documents state
   const [selectedDocIndex, setSelectedDocIndex] = useState(0);
+
+  // Modals state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    propertyName: '',
+    flatNumber: '',
+    ownerName: '',
+    applicantName: '',
+    bankName: '',
+    Bank_branch: '',
+    address: '',
+    state: '',
+    city: '',
+    village: '',
+    pinCode: '',
+    ctsNumber: '',
+    from_year: 2001,
+    advocateName: '',
+    searchName: '',
+    caseType: 'General',
+  });
+
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [isReuploadMode, setIsReuploadMode] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadDocType, setUploadDocType] = useState('Sale Deed');
 
   const loadDetails = async () => {
     setIsLoading(true);
@@ -86,6 +116,92 @@ export default function RequestWorkspacePage() {
     }
   }, [requestId]);
 
+  const handleOpenEditModal = () => {
+    setEditFormData({
+      propertyName: requestData?.propertyName || requestData?.property_name || 'Deepali Residency',
+      flatNumber: requestData?.flatNumber || requestData?.flat_number || '235',
+      ownerName: requestData?.ownerName || requestData?.owner_name || 'Ajay Kumar',
+      applicantName: requestData?.applicantName || requestData?.applicant_name || requestData?.ownerName || 'Ajay Kumar',
+      bankName: requestData?.bankName || requestData?.bank_name || 'Axis Bank',
+      Bank_branch: requestData?.Bank_branch || requestData?.bank_branch || 'Pitampura Branch',
+      address: requestData?.address || 'Pitampura, New Delhi',
+      state: requestData?.state || 'Delhi',
+      city: requestData?.city || 'New Delhi',
+      village: requestData?.village || '',
+      pinCode: requestData?.pinCode || requestData?.pin_code || '110034',
+      ctsNumber: requestData?.ctsNumber || requestData?.ctsnumber || 'CTS-1029',
+      from_year: requestData?.from_year || 2001,
+      advocateName: requestData?.advocateName || requestData?.advocate_name || 'Adv. Suresh Verma',
+      searchName: requestData?.searchName || requestData?.search_name || 'Title Search 2026',
+      caseType: requestData?.caseType || requestData?.case_type || 'General',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleSaveEditForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingEdit(true);
+    try {
+      await requestsApi.updateRequest(requestId, editFormData);
+      setStatusFeedback({
+        type: 'success',
+        message: 'Property details updated and saved successfully to database!',
+      });
+      setShowEditModal(false);
+      await loadDetails();
+      setTimeout(() => setStatusFeedback(null), 5000);
+    } catch (err: any) {
+      console.error('Failed to update form:', err);
+      setStatusFeedback({
+        type: 'error',
+        message: err?.response?.data?.detail || 'Failed to save property changes',
+      });
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const handleOpenUploadModal = (isReupload: boolean = false) => {
+    setIsReuploadMode(isReupload);
+    setUploadFile(null);
+    setUploadDocType(isReupload && currentDoc?.type ? currentDoc.type : 'Sale Deed');
+    setShowUploadModal(true);
+  };
+
+  const handleUploadDocument = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadFile) return;
+
+    setIsUploading(true);
+    try {
+      if (isReuploadMode && currentDoc?.id) {
+        await requestsApi.replaceDocument(requestId, currentDoc.id, uploadFile);
+        setStatusFeedback({
+          type: 'success',
+          message: `Document "${currentDoc.name}" successfully re-uploaded & replaced!`,
+        });
+      } else {
+        await requestsApi.uploadNewDocuments(requestId, [uploadFile], [uploadDocType]);
+        setStatusFeedback({
+          type: 'success',
+          message: `New document "${uploadFile.name}" successfully uploaded to request!`,
+        });
+      }
+      setShowUploadModal(false);
+      setUploadFile(null);
+      await loadDetails();
+      setTimeout(() => setStatusFeedback(null), 5000);
+    } catch (err: any) {
+      console.error('Failed to upload document:', err);
+      setStatusFeedback({
+        type: 'error',
+        message: err?.response?.data?.detail || 'Failed to upload document to server',
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   const handleUpdateStatus = async (newStatus: 'Verified' | 'Rejected') => {
     setIsUpdatingStatus(true);
     setStatusFeedback(null);
@@ -99,7 +215,6 @@ export default function RequestWorkspacePage() {
       setTimeout(() => setStatusFeedback(null), 5000);
     } catch (err: any) {
       console.error('Failed to update status on backend API:', err);
-      // Fallback
       setRequestStatus(newStatus);
       setStatusFeedback({
         type: 'success',
@@ -115,7 +230,7 @@ export default function RequestWorkspacePage() {
   const docs = (Array.isArray(rawDocs) && rawDocs.length > 0) ? rawDocs.map((d: any, idx: number) => ({
     id: d.doc_id || `doc-${idx + 1}`,
     name: d.file_name || `Document_${idx + 1}.pdf`,
-    type: d.document_type || 'Property Deed',
+    type: d.document_type || d.type || 'Property Deed',
     status: (d.verification_status || 'clear') as 'clear' | 'rejected' | 'pending',
     ocrStatus: d.ocr_status || 'done',
     date: d.uploaded_at || 'Recent',
@@ -199,7 +314,7 @@ export default function RequestWorkspacePage() {
           </div>
           <button
             onClick={() => setStatusFeedback(null)}
-            className="text-xs opacity-70 hover:opacity-100"
+            className="text-xs opacity-70 hover:opacity-100 font-bold"
           >
             &times;
           </button>
@@ -216,7 +331,7 @@ export default function RequestWorkspacePage() {
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">
                 {requestId}
               </span>
@@ -246,8 +361,18 @@ export default function RequestWorkspacePage() {
           </div>
         </div>
 
-        {/* Quick Review Actions */}
-        <div className="grid grid-cols-1 sm:flex items-center gap-2 sm:gap-2.5 w-full md:w-auto">
+        {/* Quick Review Actions + Edit Form Button */}
+        <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-2.5 w-full md:w-auto">
+          {/* Edit Form Button */}
+          <button
+            onClick={handleOpenEditModal}
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border theme-card text-xs font-semibold theme-text-primary hover:border-blue-500 hover:text-blue-500 transition-all active:scale-95 shadow-sm"
+            title="Edit Property & Case Details"
+          >
+            <Edit3 className="w-4 h-4 text-blue-500" />
+            <span>Edit Form</span>
+          </button>
+
           <button
             onClick={() => handleUpdateStatus('Verified')}
             disabled={isUpdatingStatus}
@@ -276,7 +401,7 @@ export default function RequestWorkspacePage() {
 
           <button
             onClick={() => setActiveTab('TSR_REPORT')}
-            className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/25 transition-all active:scale-95"
+            className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/25 transition-all active:scale-95 col-span-2 sm:col-span-1"
           >
             <FileText className="w-4 h-4" />
             <span>Generate TSR</span>
@@ -289,47 +414,75 @@ export default function RequestWorkspacePage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[680px]">
         {/* Left Column (5 Cols): Document Viewer & OCR Inspector */}
         <div className="lg:col-span-5 flex flex-col rounded-2xl theme-surface border overflow-hidden shadow-sm">
-          {/* Document Switcher Header */}
-          <div className="p-3 border-b theme-border bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-              {docs.map((doc, idx) => (
+          {/* Document Switcher Header with Upload / Reupload Controls */}
+          <div className="p-3 border-b theme-border bg-slate-50 dark:bg-slate-950/60 flex flex-col gap-2.5">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 flex-1">
+                {docs.map((doc, idx) => (
+                  <button
+                    key={doc.id}
+                    onClick={() => setSelectedDocIndex(idx)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                      selectedDocIndex === idx
+                        ? 'bg-blue-600 text-white shadow-sm'
+                        : 'theme-text-secondary hover:theme-text-primary hover:bg-slate-200 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>{doc.type}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Upload & Reupload Action Buttons */}
+              <div className="flex items-center gap-1.5 shrink-0">
                 <button
-                  key={doc.id}
-                  onClick={() => setSelectedDocIndex(idx)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                    selectedDocIndex === idx
-                      ? 'bg-blue-600 text-white shadow-sm'
-                      : 'theme-text-secondary hover:theme-text-primary hover:bg-slate-200 dark:hover:bg-slate-800'
-                  }`}
+                  onClick={() => handleOpenUploadModal(false)}
+                  title="Upload New Document"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all active:scale-95"
                 >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>{doc.type}</span>
+                  <Upload className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Upload</span>
                 </button>
-              ))}
+
+                <button
+                  onClick={() => handleOpenUploadModal(true)}
+                  title="Re-upload / Replace Current Document"
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg theme-card border text-xs font-semibold theme-text-secondary hover:theme-text-primary hover:border-blue-500 transition-all active:scale-95"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Re-upload</span>
+                </button>
+              </div>
             </div>
 
-            {/* Zoom Controls */}
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setZoomLevel((prev) => Math.max(75, prev - 10))}
-                className="p-1 rounded theme-card border theme-text-primary text-xs"
-                title="Zoom Out"
-              >
-                <ZoomOut className="w-3.5 h-3.5" />
-              </button>
-              <span className="text-[10px] font-mono theme-text-muted px-1">{zoomLevel}%</span>
-              <button
-                onClick={() => setZoomLevel((prev) => Math.min(150, prev + 10))}
-                className="p-1 rounded theme-card border theme-text-primary text-xs"
-                title="Zoom In"
-              >
-                <ZoomIn className="w-3.5 h-3.5" />
-              </button>
+            {/* Document Controls & Zoom */}
+            <div className="flex items-center justify-between border-t theme-border pt-2 text-xs">
+              <span className="text-[11px] theme-text-muted truncate max-w-[220px]">
+                {currentDoc.name}
+              </span>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setZoomLevel((prev) => Math.max(75, prev - 10))}
+                  className="p-1 rounded theme-card border theme-text-primary text-xs"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-[10px] font-mono theme-text-muted px-1">{zoomLevel}%</span>
+                <button
+                  onClick={() => setZoomLevel((prev) => Math.min(150, prev + 10))}
+                  className="p-1 rounded theme-card border theme-text-primary text-xs"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
           </div>
 
           {/* High-Resolution Document Canvas Simulator */}
-          <div className="flex-1 p-4 bg-slate-100 dark:bg-slate-950/90 overflow-y-auto flex items-center justify-center">
+          <div className="flex-1 p-4 bg-slate-100 dark:bg-slate-950/90 overflow-y-auto flex items-center justify-center min-h-[480px]">
             <div
               style={{ transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }}
               className="w-full max-w-sm rounded-xl theme-card border p-5 shadow-xl space-y-4 transition-transform duration-200"
@@ -337,11 +490,11 @@ export default function RequestWorkspacePage() {
               {/* Document Header Stamp */}
               <div className="border-b theme-border pb-3 text-center space-y-1">
                 <div className="inline-block px-2.5 py-0.5 rounded bg-blue-500/20 border border-blue-500/40 text-[10px] font-bold text-blue-600 dark:text-blue-300 uppercase tracking-wider">
-                  Government of NCT of Delhi &mdash; Revenue Dept
+                  Government Revenue Registration Record
                 </div>
-                <h4 className="text-xs font-bold theme-text-primary">{currentDoc.name}</h4>
+                <h4 className="text-xs font-bold theme-text-primary truncate">{currentDoc.name}</h4>
                 <p className="text-[10px] theme-text-muted font-mono">
-                  Reg No: {currentDoc.extracted.regNo} &bull; SRO: {currentDoc.extracted.sro}
+                  Type: {currentDoc.type} &bull; Reg: {currentDoc.extracted.regNo}
                 </p>
               </div>
 
@@ -376,9 +529,9 @@ export default function RequestWorkspacePage() {
                 </div>
               </div>
 
-              <div className="text-center pt-2">
+              <div className="text-center pt-2 flex items-center justify-center gap-2">
                 <span className="inline-flex items-center gap-1 text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">
-                  <Sparkles className="w-3 h-3" /> GPT-4 Legal OCR Verified
+                  <Sparkles className="w-3 h-3" /> GPT-4 Legal OCR Active
                 </span>
               </div>
             </div>
@@ -397,7 +550,6 @@ export default function RequestWorkspacePage() {
               { id: 'DISCREPANCIES', label: 'Encumbrance Flags', icon: AlertTriangle },
               { id: 'TSR_REPORT', label: 'TSR / Live Editor', icon: FileCheck2 },
             ].map((tab) => {
-
               const Icon = tab.icon;
               return (
                 <button
@@ -437,14 +589,14 @@ export default function RequestWorkspacePage() {
                     <div className="absolute -left-6 top-1 w-3.5 h-3.5 rounded-full bg-blue-500 border-2 border-white dark:border-slate-900 shadow-sm" />
                     <div className="p-4 rounded-xl theme-card border space-y-1">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-bold theme-text-primary">1998 &mdash; Original Allotment (DDA)</span>
+                        <span className="font-bold theme-text-primary">1998 &mdash; Original Allotment</span>
                         <span className="theme-text-muted font-mono">Reg: #1249</span>
                       </div>
                       <p className="text-xs theme-text-secondary">
-                        DLF Housing Development &rarr; <strong className="text-blue-600 dark:text-blue-400">Sunil K. Sharma</strong>
+                        Housing Development Society &rarr; <strong className="text-blue-600 dark:text-blue-400">Sunil K. Sharma</strong>
                       </p>
                       <p className="text-[11px] theme-text-muted">
-                        Consideration: Rs. 18,50,000 &bull; SRO VI Delhi
+                        Consideration: Rs. 18,50,000 &bull; Sub-Registrar Record Verified
                       </p>
                     </div>
                   </div>
@@ -458,10 +610,10 @@ export default function RequestWorkspacePage() {
                         <span className="text-emerald-600 dark:text-emerald-400 font-mono">Reg: #8472</span>
                       </div>
                       <p className="text-xs theme-text-secondary">
-                        Sunil K. Sharma &rarr; <strong className="text-emerald-600 dark:text-emerald-400">Ajay Kumar (Current Borrower)</strong>
+                        Sunil K. Sharma &rarr; <strong className="text-emerald-600 dark:text-emerald-400">{ownerName} (Current Borrower)</strong>
                       </p>
                       <p className="text-[11px] theme-text-muted">
-                        Consideration: Rs. 85,00,000 &bull; Stamp Duty Paid: Rs. 5,10,000 &bull; SRO VI-A Pitampura
+                        Consideration: Rs. 85,00,000 &bull; Stamp Duty Paid &bull; SRO Verified
                       </p>
                     </div>
                   </div>
@@ -472,7 +624,7 @@ export default function RequestWorkspacePage() {
                     <div className="p-4 rounded-xl bg-indigo-500/5 dark:bg-indigo-950/20 border border-indigo-500/30 space-y-1">
                       <div className="flex items-center justify-between text-xs">
                         <span className="font-bold theme-text-primary">2026 &mdash; Proposed Equitable Mortgage</span>
-                        <span className="text-indigo-600 dark:text-indigo-400 font-mono">Axis Bank</span>
+                        <span className="text-indigo-600 dark:text-indigo-400 font-mono">{bankBranch}</span>
                       </div>
                       <p className="text-xs theme-text-secondary">
                         Home Loan Facility: <strong className="text-indigo-600 dark:text-indigo-300">Rs. 65,00,000</strong>
@@ -515,15 +667,15 @@ export default function RequestWorkspacePage() {
                 <div className="p-4 rounded-xl theme-card border space-y-2 text-xs">
                   <div className="flex justify-between border-b theme-border pb-2">
                     <span className="theme-text-secondary">Portal Queried:</span>
-                    <span className="theme-text-primary font-medium">Delhi DORIS / SRO Pitampura</span>
+                    <span className="theme-text-primary font-medium">State IGR Online Registry</span>
                   </div>
                   <div className="flex justify-between border-b theme-border pb-2">
-                    <span className="theme-text-secondary">Index II Registration No:</span>
-                    <span className="font-mono text-blue-600 dark:text-blue-400 font-bold">8472 / 2020</span>
+                    <span className="theme-text-secondary">Registration Reference:</span>
+                    <span className="font-mono text-blue-600 dark:text-blue-400 font-bold">{cts}</span>
                   </div>
                   <div className="flex justify-between border-b theme-border pb-2">
                     <span className="theme-text-secondary">Owner Recorded in SRO:</span>
-                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">Ajay Kumar</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold">{ownerName}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="theme-text-secondary">Encumbrance Recorded:</span>
@@ -549,24 +701,23 @@ export default function RequestWorkspacePage() {
               </div>
             )}
 
-            {/* Tab 4: Field Site Survey & Geotagged Camera Intake */}
+            {/* Tab 5: Field Site Survey */}
             {activeTab === 'SITE_SURVEY' && (
               <div className="space-y-4">
                 <SitePhotoInspection
                   requestId={requestId}
-                  propertyName="Deepali Residency, Pitampura"
+                  propertyName={`${propName}, ${location}`}
                 />
               </div>
             )}
 
-            {/* Tab 5: Live TSR / WOPI Word Editor */}
+            {/* Tab 6: Live TSR Report */}
             {activeTab === 'TSR_REPORT' && (
-
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-bold theme-text-primary">Title Search Report (TSR) Generator</h3>
-                    <p className="text-xs theme-text-secondary">Institutional Bank Format &mdash; Axis Bank Standard</p>
+                    <p className="text-xs theme-text-secondary">Institutional Bank Format &mdash; {bankBranch}</p>
                   </div>
                   <button
                     onClick={() => alert('Downloading Official Signed TSR Document (DOCX)...')}
@@ -580,13 +731,13 @@ export default function RequestWorkspacePage() {
                 <div className="p-5 rounded-xl theme-card border space-y-3 text-xs leading-relaxed theme-text-secondary">
                   <div className="text-center border-b theme-border pb-3">
                     <h4 className="text-sm font-bold theme-text-primary">LEGAL TITLE SEARCH REPORT (TSR)</h4>
-                    <p className="text-[11px] theme-text-muted font-mono">File Ref: TSR-2026-DL-349 &bull; Date: 30-Aug-2026</p>
+                    <p className="text-[11px] theme-text-muted font-mono">File Ref: TSR-2026-{requestId} &bull; Date: 31-Aug-2026</p>
                   </div>
                   <p>
-                    <strong>1. Opinion on Title:</strong> In our professional legal opinion, the Title of the Mortgagor/Borrower <strong className="theme-text-primary">Mr. Ajay Kumar</strong> to the schedule property described hereunder is <strong>CLEAR, VALID, MARKETABLE, AND UNENCUMBERED</strong>.
+                    <strong>1. Opinion on Title:</strong> In our professional legal opinion, the Title of the Mortgagor/Borrower <strong className="theme-text-primary">{ownerName}</strong> to the schedule property described hereunder is <strong>CLEAR, VALID, MARKETABLE, AND UNENCUMBERED</strong>.
                   </p>
                   <p>
-                    <strong>2. Creation of Charge:</strong> The Bank may safely proceed with the creation of an Equitable Mortgage by Deposit of Original Registered Sale Deed No. 8472 dated 14-Aug-2020 along with parent allotment deed of 1998.
+                    <strong>2. Creation of Charge:</strong> The Bank ({bankBranch}) may safely proceed with the creation of an Equitable Mortgage by Deposit of Original Registered Deeds for {propName}, {flatNo}.
                   </p>
                 </div>
               </div>
@@ -594,6 +745,274 @@ export default function RequestWorkspacePage() {
           </div>
         </div>
       </div>
+
+      {/* ── MODAL 1: Edit Property Request Form ──────────────── */}
+      {showEditModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 rounded-2xl theme-surface border shadow-2xl space-y-5 animate-scaleUp">
+            <div className="flex items-center justify-between border-b theme-border pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-600 dark:text-blue-400">
+                  <Edit3 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold theme-text-primary">Edit Request Form & Property Details</h3>
+                  <p className="text-xs theme-text-secondary">Modify case metadata for {requestId}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 theme-card border transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditForm} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block font-semibold theme-text-primary mb-1">Property Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editFormData.propertyName}
+                    onChange={(e) => setEditFormData({ ...editFormData, propertyName: e.target.value })}
+                    className="w-full theme-input border rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold theme-text-primary mb-1">Flat / Unit Number</label>
+                  <input
+                    type="text"
+                    value={editFormData.flatNumber}
+                    onChange={(e) => setEditFormData({ ...editFormData, flatNumber: e.target.value })}
+                    className="w-full theme-input border rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold theme-text-primary mb-1">Owner / Borrower Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editFormData.ownerName}
+                    onChange={(e) => setEditFormData({ ...editFormData, ownerName: e.target.value })}
+                    className="w-full theme-input border rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold theme-text-primary mb-1">Applicant Name</label>
+                  <input
+                    type="text"
+                    value={editFormData.applicantName}
+                    onChange={(e) => setEditFormData({ ...editFormData, applicantName: e.target.value })}
+                    className="w-full theme-input border rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold theme-text-primary mb-1">Bank Name</label>
+                  <input
+                    type="text"
+                    value={editFormData.bankName}
+                    onChange={(e) => setEditFormData({ ...editFormData, bankName: e.target.value })}
+                    className="w-full theme-input border rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold theme-text-primary mb-1">Bank Branch</label>
+                  <input
+                    type="text"
+                    value={editFormData.Bank_branch}
+                    onChange={(e) => setEditFormData({ ...editFormData, Bank_branch: e.target.value })}
+                    className="w-full theme-input border rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block font-semibold theme-text-primary mb-1">Full Address</label>
+                  <input
+                    type="text"
+                    value={editFormData.address}
+                    onChange={(e) => setEditFormData({ ...editFormData, address: e.target.value })}
+                    className="w-full theme-input border rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold theme-text-primary mb-1">State</label>
+                  <input
+                    type="text"
+                    value={editFormData.state}
+                    onChange={(e) => setEditFormData({ ...editFormData, state: e.target.value })}
+                    className="w-full theme-input border rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold theme-text-primary mb-1">City</label>
+                  <input
+                    type="text"
+                    value={editFormData.city}
+                    onChange={(e) => setEditFormData({ ...editFormData, city: e.target.value })}
+                    className="w-full theme-input border rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold theme-text-primary mb-1">CTS / Survey Number</label>
+                  <input
+                    type="text"
+                    value={editFormData.ctsNumber}
+                    onChange={(e) => setEditFormData({ ...editFormData, ctsNumber: e.target.value })}
+                    className="w-full theme-input border rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold theme-text-primary mb-1">PIN Code</label>
+                  <input
+                    type="text"
+                    value={editFormData.pinCode}
+                    onChange={(e) => setEditFormData({ ...editFormData, pinCode: e.target.value })}
+                    className="w-full theme-input border rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold theme-text-primary mb-1">Advocate Name</label>
+                  <input
+                    type="text"
+                    value={editFormData.advocateName}
+                    onChange={(e) => setEditFormData({ ...editFormData, advocateName: e.target.value })}
+                    className="w-full theme-input border rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold theme-text-primary mb-1">Search From Year</label>
+                  <input
+                    type="number"
+                    value={editFormData.from_year}
+                    onChange={(e) => setEditFormData({ ...editFormData, from_year: Number(e.target.value) || 2001 })}
+                    className="w-full theme-input border rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t theme-border">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2.5 rounded-xl border theme-card font-semibold theme-text-secondary hover:theme-text-primary transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingEdit}
+                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-md active:scale-95 transition-all disabled:opacity-50"
+                >
+                  {isSavingEdit ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                  <span>Save Changes</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL 2: Upload / Re-upload Document ─────────────── */}
+      {showUploadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-lg p-6 rounded-2xl theme-surface border shadow-2xl space-y-5 animate-scaleUp">
+            <div className="flex items-center justify-between border-b theme-border pb-3">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-600 dark:text-blue-400">
+                  {isReuploadMode ? <RefreshCw className="w-5 h-5" /> : <Upload className="w-5 h-5" />}
+                </div>
+                <div>
+                  <h3 className="text-base font-bold theme-text-primary">
+                    {isReuploadMode ? 'Re-upload / Replace Document' : 'Upload New Title Document'}
+                  </h3>
+                  <p className="text-xs theme-text-secondary">
+                    {isReuploadMode
+                      ? `Replace ${currentDoc?.name}`
+                      : `Add document to ${requestId}`}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowUploadModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 theme-card border transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleUploadDocument} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-semibold theme-text-primary mb-1">Document Type *</label>
+                <select
+                  value={uploadDocType}
+                  onChange={(e) => setUploadDocType(e.target.value)}
+                  className="w-full theme-input border rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Sale Deed">Sale Deed (Absolute Registered)</option>
+                  <option value="Parent Deed">Parent Chain Deed</option>
+                  <option value="Mutation Extract (7/12)">Mutation Extract (7/12 / 8A)</option>
+                  <option value="Property Card">Property Card (CTS Extract)</option>
+                  <option value="Society NOC">Society NOC / Share Certificate</option>
+                  <option value="Index II Search">Index II / Encumbrance Certificate</option>
+                  <option value="Electricity Bill">Utility / Electricity Bill</option>
+                  <option value="Builder Agreement">Builder Buyer Agreement</option>
+                  <option value="Other Document">Other Legal Supporting Document</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-semibold theme-text-primary mb-1">Select File (PDF or Image) *</label>
+                <div className="border-2 border-dashed theme-border rounded-xl p-6 text-center hover:border-blue-500 transition-colors bg-slate-50 dark:bg-slate-900/40">
+                  <Upload className="w-8 h-8 text-blue-500 mx-auto mb-2 opacity-80" />
+                  <input
+                    type="file"
+                    required
+                    accept=".pdf,.png,.jpg,.jpeg,.tiff"
+                    onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                    className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer"
+                  />
+                  {uploadFile && (
+                    <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-2">
+                      Selected: {uploadFile.name} ({(uploadFile.size / 1024 / 1024).toFixed(2)} MB)
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-4 border-t theme-border">
+                <button
+                  type="button"
+                  onClick={() => setShowUploadModal(false)}
+                  className="px-4 py-2.5 rounded-xl border theme-card font-semibold theme-text-secondary hover:theme-text-primary transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!uploadFile || isUploading}
+                  className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-md active:scale-95 transition-all disabled:opacity-50"
+                >
+                  {isUploading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  <span>{isReuploadMode ? 'Replace Document' : 'Upload Document'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

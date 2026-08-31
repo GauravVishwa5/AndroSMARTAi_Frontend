@@ -16,6 +16,8 @@ import {
   Sparkles,
   Command,
   Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Logo } from '@/components/ui/Logo';
@@ -23,7 +25,7 @@ import { Logo } from '@/components/ui/Logo';
 export function Navbar() {
   const { user, logout } = useAuthStore();
   const { resolvedTheme, toggleTheme } = useThemeStore();
-  const { toggleMobileMenu } = useUIStore();
+  const { toggleMobileMenu, isSidebarCollapsed, toggleSidebarCollapsed } = useUIStore();
   const pathname = usePathname();
 
   // Generate dynamic breadcrumb segments
@@ -54,9 +56,9 @@ export function Navbar() {
 
   return (
     <header className="h-16 border-b theme-border theme-surface backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 transition-colors">
-      {/* Left: Hamburger (Mobile) + Logo + Breadcrumbs & Search */}
+      {/* Left: Hamburger (Mobile only) + Logo (Mobile only) + Dynamic Breadcrumbs & Global Search */}
       <div className="flex items-center gap-3 sm:gap-4 flex-1 max-w-2xl">
-        {/* Mobile Hamburger Toggle Button */}
+        {/* Mobile Hamburger Toggle Button (< lg) */}
         <button
           onClick={toggleMobileMenu}
           className="lg:hidden p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white theme-card border"
@@ -112,7 +114,7 @@ export function Navbar() {
         {/* Active Branch Indicator (Desktop only) */}
         <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl theme-card border text-xs text-slate-700 dark:text-slate-300 shadow-sm">
           <Building2 className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
-          <span className="truncate max-w-[140px] lg:max-w-[180px]">Axis Bank &mdash; Andheri West</span>
+          <span className="truncate max-w-[140px] lg:max-w-[200px]">Axis Bank &mdash; Andheri West</span>
         </div>
 
         {/* Theme Toggle Button */}
@@ -143,18 +145,18 @@ export function Navbar() {
             {user?.first_name ? user.first_name[0] : user?.username?.[0]?.toUpperCase() || 'U'}
           </div>
           <div className="hidden lg:block text-left leading-tight">
-            <p className="text-xs font-semibold theme-text-primary truncate max-w-[120px]">
+            <p className="text-xs font-semibold theme-text-primary truncate max-w-[150px] xl:max-w-[200px]">
               {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.username || 'Branch User'}
             </p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-              {user?.role || (user?.is_admin ? 'Super Admin' : 'Branch Officer')}
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate max-w-[150px]">
+              {user?.role || (user?.is_admin ? 'Super Admin' : 'Branch User')}
             </p>
           </div>
 
           <button
             onClick={() => logout()}
             title="Log Out (Sign Out)"
-            className="flex items-center gap-1.5 p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-all active:scale-95 border border-transparent hover:border-red-500/20"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-all active:scale-95 border border-transparent hover:border-red-500/20 ml-1"
           >
             <LogOut className="w-4 h-4" />
             <span className="hidden xl:inline text-xs font-medium text-red-500/80">Logout</span>
