@@ -36,6 +36,11 @@ interface IgrRegistryRecord {
 interface IgrRegistrySearchProps {
   requestId: string;
   stateName?: string;
+  sroId?: string;
+  sroName?: string;
+  villageName?: string;
+  districtName?: string;
+  talukaName?: string;
   ctsNumber?: string;
   ownerName?: string;
   fromYear?: number;
@@ -44,6 +49,11 @@ interface IgrRegistrySearchProps {
 export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
   requestId,
   stateName = 'Delhi',
+  sroId = '95',
+  sroName = '',
+  villageName = 'Deepali',
+  districtName = 'Mumbai Suburban',
+  talukaName = '',
   ctsNumber = 'CTS-1029',
   ownerName = 'Gaurav Vishwakarma',
   fromYear = 2001,
@@ -52,9 +62,20 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
   const [selectedState, setSelectedState] = useState<'Delhi' | 'Maharashtra'>(
     isInitialMah ? 'Maharashtra' : 'Delhi'
   );
-  const [sroQuery, setSroQuery] = useState(
-    isInitialMah ? 'SRO Andheri-1 (Mumbai Suburban)' : 'SRO VI-A Pitampura (Delhi)'
-  );
+
+  // Delhi Geographic Master State
+  const [delhiSros, setDelhiSros] = useState<any[]>([]);
+  const [delhiLocalities, setDelhiLocalities] = useState<any[]>([]);
+  const [selectedSroId, setSelectedSroId] = useState<string>(sroId || '95');
+  const [selectedLocality, setSelectedLocality] = useState<string>(villageName || 'Deepali');
+
+  // Maharashtra Geographic Master State
+  const [districts, setDistricts] = useState<any[]>([]);
+  const [selectedDistrict, setSelectedDistrict] = useState<string>(districtName || 'Mumbai Suburban');
+  const [areas, setAreas] = useState<any[]>([]);
+  const [selectedArea, setSelectedArea] = useState<string>(talukaName || villageName || 'Andheri');
+
+  // Common Search Parameters
   const [ctsQuery, setCtsQuery] = useState(ctsNumber || (isInitialMah ? 'CTS-1029' : 'Plot No. 235'));
   const [ownerQuery, setOwnerQuery] = useState(ownerName || 'Gaurav Vishwakarma');
   const [startYear, setStartYear] = useState(fromYear || 2001);
@@ -66,15 +87,75 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
   const [records, setRecords] = useState<IgrRegistryRecord[]>([]);
   const [isLoadingRecords, setIsLoadingRecords] = useState(false);
 
+  // Load Delhi Master SROs
+  React.useEffect(() => {
+    import('@/lib/api/requests').then(({ requestsApi }) => {
+      requestsApi.getDelhiSROs().then((sros) => {
+        const arr = Array.isArray(sros) ? sros : (sros as any)?.items || [];
+        setDelhiSros(arr);
+      }).catch(() => {
+        setDelhiSros([
+          { sro_id: '95', sro_name: 'North West-Rohini (SR VIC)' },
+          { sro_id: '78', sro_name: 'North West Model Town (SR VIA)' },
+        ]);
+      });
+    });
+  }, []);
+
+  // Load Delhi Localities for selected SRO
+  React.useEffect(() => {
+    if (selectedSroId) {
+      import('@/lib/api/requests').then(({ requestsApi }) => {
+        requestsApi.getDelhiLocalities(selectedSroId).then((locs) => {
+          const arr = Array.isArray(locs) ? locs : (locs as any)?.items || [];
+          setDelhiLocalities(arr);
+          if (arr.length > 0 && !arr.some((l: any) => l.locality_name === selectedLocality)) {
+            setSelectedLocality(arr[0].locality_name);
+          }
+        }).catch(() => {
+          setDelhiLocalities([{ locality_name: 'Deepali' }, { locality_name: 'Block-H-4-5 Pitampura' }]);
+        });
+      });
+    }
+  }, [selectedSroId, selectedLocality]);
+
+  // Load Maharashtra Districts
+  React.useEffect(() => {
+    import('@/lib/api/requests').then(({ requestsApi }) => {
+      requestsApi.getDistricts().then((dist) => {
+        const arr = Array.isArray(dist) ? dist : [];
+        setDistricts(arr);
+      }).catch(() => {
+        setDistricts([
+          { id: 1, district_name: 'Mumbai Suburban' },
+          { id: 2, district_name: 'Mumbai City' },
+          { id: 3, district_name: 'Thane' },
+          { id: 4, district_name: 'Pune' },
+        ]);
+      });
+    });
+  }, []);
+
   // Sync props when requestData loads or updates
   React.useEffect(() => {
     if (stateName) {
       const isMah = stateName.toLowerCase().includes('mah');
       const nextState = isMah ? 'Maharashtra' : 'Delhi';
       setSelectedState(nextState);
-      setSroQuery(isMah ? 'SRO Andheri-1 (Mumbai Suburban)' : 'SRO VI-A Pitampura (Delhi)');
     }
   }, [stateName]);
+
+  React.useEffect(() => {
+    if (sroId) setSelectedSroId(sroId);
+  }, [sroId]);
+
+  React.useEffect(() => {
+    if (villageName) setSelectedLocality(villageName);
+  }, [villageName]);
+
+  React.useEffect(() => {
+    if (districtName) setSelectedDistrict(districtName);
+  }, [districtName]);
 
   React.useEffect(() => {
     if (ctsNumber) setCtsQuery(ctsNumber);
@@ -93,7 +174,6 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
     setIsLoadingRecords(true);
     try {
       if (state === 'Delhi') {
-        const res = await igrApi.getScraperHealth().catch(() => null);
         const { data } = await import('@/lib/api/client').then((m) =>
           m.default.get('/api/delhi-igr/records', {
             params: { limit: 50 },
@@ -181,10 +261,10 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
           regNo: '1249',
           bookNo: 'Index-II',
           registrationDate: '22-Mar-1998',
-          sroOffice: 'SRO Borivali / Mumbai Suburban',
-          party1: 'Maharashtra Housing & Area Development Authority (MHADA)',
+          sroOffice: 'SRO Borivali-3 (Mumbai Suburban)',
+          party1: 'MHADA Housing Authority',
           party2: 'Sunil K. Sharma (Original Allottee)',
-          propertyDetails: `Plot/Flat 235, Survey No. 142/3, CTS #${ctsQuery || '1029'}, Borivali, Mumbai`,
+          propertyDetails: `Flat No. 235, Building B-4, Borivali West, Mumbai`,
           consideration: 'Rs. 18,50,000',
           marketValue: 'Rs. 18,50,000',
           encumbranceStatus: 'NIL',
@@ -192,30 +272,30 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
         },
       ] : [
         {
-          id: 'delhi-1',
+          id: 'dl-1',
           year: '2020',
           regNo: '8472',
           bookNo: 'Book-I',
           registrationDate: '14-Aug-2020',
-          sroOffice: 'SRO VI-A Pitampura (Delhi)',
-          party1: 'Sunil K. Sharma (Seller)',
-          party2: `${ownerQuery || 'Gaurav Vishwakarma'} (Purchaser / Current Borrower)`,
-          propertyDetails: `Flat No. 235, Deepali Residency, Plot #235, Pitampura, North West Delhi`,
+          sroOffice: 'SR VI-A - Pitampura (North West Delhi)',
+          party1: 'Sunil K. Sharma (Vendor)',
+          party2: `${ownerQuery || 'Gaurav Vishwakarma'} (Vendee / Mortgagor)`,
+          propertyDetails: `Flat/Unit No. 235, Deepali Residency, Pitampura, North West Delhi`,
           consideration: 'Rs. 85,00,000',
           marketValue: 'Rs. 82,50,000',
           encumbranceStatus: 'NIL',
           isRelevant: true,
         },
         {
-          id: 'delhi-2',
+          id: 'dl-2',
           year: '1998',
           regNo: '1249',
           bookNo: 'Book-I',
           registrationDate: '22-Mar-1998',
-          sroOffice: 'SRO VI New Delhi',
-          party1: 'Delhi Development Authority / Housing Society',
-          party2: 'Sunil K. Sharma (Original Allottee)',
-          propertyDetails: `Plot/Flat 235, Deepali Residency, Pitampura, New Delhi`,
+          sroOffice: 'SR VI - New Delhi',
+          party1: 'Delhi Development Authority (DDA)',
+          party2: 'Sunil K. Sharma (Allottee)',
+          propertyDetails: `Plot No. 235, Block-B, Deepali, Pitampura, New Delhi`,
           consideration: 'Rs. 18,50,000',
           marketValue: 'Rs. 18,50,000',
           encumbranceStatus: 'NIL',
@@ -237,12 +317,10 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
   const handleStateChange = (st: 'Delhi' | 'Maharashtra') => {
     setSelectedState(st);
     if (st === 'Delhi') {
-      setSroQuery('SRO VI-A Pitampura (Delhi)');
       if (ctsQuery.startsWith('CTS-')) {
         setCtsQuery('Plot No. 235');
       }
     } else {
-      setSroQuery('SRO Andheri-1 (Mumbai Suburban)');
       if (!ctsQuery.startsWith('CTS-') && !ctsQuery.startsWith('Survey')) {
         setCtsQuery('CTS-1029');
       }
@@ -256,18 +334,22 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
 
     try {
       if (selectedState === 'Delhi') {
-        setSearchStatus('Querying Delhi IGR (DORIS Portal)...');
+        setSearchStatus(`Querying Delhi IGR (DORIS Portal) for SRO ${selectedSroId} • ${selectedLocality}...`);
         await igrApi.scrapeDelhiV2(requestId, {
+          sro_id: selectedSroId,
+          locality_names: [selectedLocality],
           property_number: ctsQuery,
-          district: 'North West Delhi',
-          village: 'Deepali',
+          from_year: startYear,
+          to_year: endYear,
         });
       } else {
-        setSearchStatus('Querying Maharashtra IGR (e-Search Portal)...');
+        setSearchStatus(`Querying Maharashtra IGR (e-Search Portal) for ${selectedDistrict} • ${selectedArea}...`);
         await igrApi.scrapeMaharashtraV2(requestId, {
+          district: selectedDistrict,
+          area: selectedArea,
           property_number: ctsQuery,
-          district: 'Mumbai Suburban',
-          village: 'Andheri',
+          from_year: startYear,
+          to_year: endYear,
         });
       }
 
@@ -290,55 +372,46 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
     );
   };
 
-  const filteredRecords = records.filter((r) => {
-    if (!filterKeyword.trim()) return true;
-    const kw = filterKeyword.toLowerCase();
-    return (
-      r.regNo.toLowerCase().includes(kw) ||
-      r.party1.toLowerCase().includes(kw) ||
-      r.party2.toLowerCase().includes(kw) ||
-      r.propertyDetails.toLowerCase().includes(kw) ||
-      r.sroOffice.toLowerCase().includes(kw)
+  // Filter records by search keyword
+  const filteredRecords = React.useMemo(() => {
+    if (!filterKeyword.trim()) return records;
+    const kw = filterKeyword.toLowerCase().trim();
+    return records.filter(
+      (r) =>
+        r.regNo.toLowerCase().includes(kw) ||
+        r.party1.toLowerCase().includes(kw) ||
+        r.party2.toLowerCase().includes(kw) ||
+        r.propertyDetails.toLowerCase().includes(kw) ||
+        r.sroOffice.toLowerCase().includes(kw) ||
+        r.year.includes(kw) ||
+        r.consideration.toLowerCase().includes(kw)
     );
-  });
+  }, [records, filterKeyword]);
 
   return (
     <div className="space-y-4 animate-fadeIn">
-      {/* Top Title & SRO Status */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-            <Database className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-              State Sub-Registrar (IGR) Cross-Verification
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Direct live check against Government Land Revenue & Registration Indexes
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Registry Match: 100% Verified</span>
-          </span>
-        </div>
-      </div>
-
-      {/* Search Query Parameter Bar */}
+      {/* ── Search Control Panel ───────────────────────────────────────── */}
       <form
         onSubmit={handleExecuteIgrSearch}
-        className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3 shadow-xs"
+        className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-3.5"
       >
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
-          <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
-            Search Parameters
-          </span>
-          {/* State Switcher */}
-          <div className="flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <Database className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                Land Registry Search Parameters
+              </h3>
+              <p className="text-[11px] text-slate-500">
+                Cascading parameters limited to {selectedState} registry geography
+              </p>
+            </div>
+          </div>
+
+          {/* State Segmented Switcher */}
+          <div className="flex items-center p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold">
             <button
               type="button"
               onClick={() => handleStateChange('Delhi')}
@@ -364,60 +437,136 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
-          <div>
-            <label className="block text-slate-500 mb-1 font-medium">SRO Office Jurisdiction</label>
-            <input
-              type="text"
-              value={sroQuery}
-              onChange={(e) => setSroQuery(e.target.value)}
-              placeholder={selectedState === 'Maharashtra' ? 'e.g. SRO Andheri-1 (Mumbai Suburban)' : 'e.g. SRO VI-A Pitampura (Delhi)'}
-              className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
+        {/* Dynamic Cascading Form Fields Based on Selected State */}
+        {selectedState === 'Delhi' ? (
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 text-xs">
+            {/* Field 1: Delhi SRO Dropdown */}
+            <div className="sm:col-span-2">
+              <label className="block text-slate-500 mb-1 font-medium">Sub-Registrar Office (SRO)</label>
+              <select
+                value={selectedSroId}
+                onChange={(e) => setSelectedSroId(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+              >
+                {delhiSros.map((s: any) => (
+                  <option key={s.sro_id} value={s.sro_id}>
+                    {s.sro_name} {s.locality_count ? `(${s.locality_count} localities)` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-slate-500 mb-1 font-medium">
-              {selectedState === 'Maharashtra' ? 'CTS / Survey / Gat No.' : 'Plot / Khasra / Unit No.'}
-            </label>
-            <input
-              type="text"
-              value={ctsQuery}
-              onChange={(e) => setCtsQuery(e.target.value)}
-              placeholder={selectedState === 'Maharashtra' ? 'e.g. CTS-1029' : 'e.g. Plot No. 235'}
-              className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
-            />
-          </div>
+            {/* Field 2: Delhi Locality Dropdown */}
+            <div>
+              <label className="block text-slate-500 mb-1 font-medium">Locality / Village</label>
+              <select
+                value={selectedLocality}
+                onChange={(e) => setSelectedLocality(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+              >
+                {delhiLocalities.map((l: any, idx: number) => (
+                  <option key={idx} value={l.locality_name}>
+                    {l.locality_name}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-slate-500 mb-1 font-medium">Party / Borrower Name</label>
-            <input
-              type="text"
-              value={ownerQuery}
-              onChange={(e) => setOwnerQuery(e.target.value)}
-              className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-slate-500 mb-1 font-medium">Search Period</label>
-            <div className="flex items-center gap-1.5">
+            {/* Field 3: Plot / Unit */}
+            <div>
+              <label className="block text-slate-500 mb-1 font-medium">Plot / Flat / Unit No.</label>
               <input
-                type="number"
-                value={startYear}
-                onChange={(e) => setStartYear(Number(e.target.value))}
-                className="w-full px-2 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-center font-mono"
-              />
-              <span className="text-slate-400">&ndash;</span>
-              <input
-                type="number"
-                value={endYear}
-                onChange={(e) => setEndYear(Number(e.target.value))}
-                className="w-full px-2 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-center font-mono"
+                type="text"
+                value={ctsQuery}
+                onChange={(e) => setCtsQuery(e.target.value)}
+                placeholder="e.g. Plot No. 235"
+                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
               />
             </div>
+
+            {/* Field 4: Search Period */}
+            <div>
+              <label className="block text-slate-500 mb-1 font-medium">Search Period</label>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number"
+                  value={startYear}
+                  onChange={(e) => setStartYear(Number(e.target.value))}
+                  className="w-full px-2 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-center font-mono"
+                />
+                <span className="text-slate-400">&ndash;</span>
+                <input
+                  type="number"
+                  value={endYear}
+                  onChange={(e) => setEndYear(Number(e.target.value))}
+                  className="w-full px-2 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-center font-mono"
+                />
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 text-xs">
+            {/* Field 1: Maharashtra District Dropdown */}
+            <div className="sm:col-span-2">
+              <label className="block text-slate-500 mb-1 font-medium">District</label>
+              <select
+                value={selectedDistrict}
+                onChange={(e) => setSelectedDistrict(e.target.value)}
+                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+              >
+                {districts.map((d: any) => (
+                  <option key={d.id} value={d.district_name || d.name}>
+                    {d.district_name || d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Field 2: Area / Village Input */}
+            <div>
+              <label className="block text-slate-500 mb-1 font-medium">Taluka / Area</label>
+              <input
+                type="text"
+                value={selectedArea}
+                onChange={(e) => setSelectedArea(e.target.value)}
+                placeholder="e.g. Andheri"
+                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+              />
+            </div>
+
+            {/* Field 3: CTS Number */}
+            <div>
+              <label className="block text-slate-500 mb-1 font-medium">CTS / Survey / Gat No.</label>
+              <input
+                type="text"
+                value={ctsQuery}
+                onChange={(e) => setCtsQuery(e.target.value)}
+                placeholder="e.g. CTS-1029"
+                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+              />
+            </div>
+
+            {/* Field 4: Search Period */}
+            <div>
+              <label className="block text-slate-500 mb-1 font-medium">Search Period</label>
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number"
+                  value={startYear}
+                  onChange={(e) => setStartYear(Number(e.target.value))}
+                  className="w-full px-2 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-center font-mono"
+                />
+                <span className="text-slate-400">&ndash;</span>
+                <input
+                  type="number"
+                  value={endYear}
+                  onChange={(e) => setEndYear(Number(e.target.value))}
+                  className="w-full px-2 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-center font-mono"
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
           <span className="text-[11px] text-slate-500 font-mono">

@@ -71,8 +71,8 @@ export const igrApi = {
   },
 
   getMaharashtraJobs: async () => {
-    const response = await apiClient.get('/jobs').catch(() => ({ data: [] }));
-    return Array.isArray(response.data) ? response.data : [];
+    const response = await apiClient.get('/api/igr-jobs').catch(() => ({ data: { total: 0, items: [] } }));
+    return response.data?.items || (Array.isArray(response.data) ? response.data : []);
   },
 
   // Legacy alias

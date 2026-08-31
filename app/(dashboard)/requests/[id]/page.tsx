@@ -39,6 +39,7 @@ import {
   Check,
   Search,
   FileSearch,
+  Lock,
 } from 'lucide-react';
 import { SitePhotoInspection } from '@/components/survey/SitePhotoInspection';
 import { DocumentPreviewModal } from '@/components/documents/DocumentPreviewModal';
@@ -88,6 +89,9 @@ export default function RequestWorkspacePage() {
     Bank_branch: '',
     address: '',
     state: '',
+    sro_id: '',
+    district: '',
+    taluka: '',
     city: '',
     village: '',
     pinCode: '',
@@ -97,6 +101,36 @@ export default function RequestWorkspacePage() {
     searchName: '',
     caseType: 'General',
   });
+
+  // Masters for Edit Modal
+  const [editDelhiSros, setEditDelhiSros] = useState<any[]>([]);
+  const [editDelhiLocalities, setEditDelhiLocalities] = useState<any[]>([]);
+  const [editDistricts, setEditDistricts] = useState<any[]>([]);
+  const [editTalukas, setEditTalukas] = useState<any[]>([]);
+  const [editVillages, setEditVillages] = useState<any[]>([]);
+
+  // Load masters for edit modal
+  useEffect(() => {
+    requestsApi.getDelhiSROs().then((res) => {
+      const arr = Array.isArray(res) ? res : (res as any)?.items || [];
+      setEditDelhiSros(arr);
+    }).catch(() => {});
+
+    requestsApi.getDistricts().then((res) => {
+      const arr = Array.isArray(res) ? res : [];
+      setEditDistricts(arr);
+    }).catch(() => {});
+  }, []);
+
+  // Fetch localities when SRO changes in edit modal
+  useEffect(() => {
+    if (editFormData.state === 'Delhi' && editFormData.sro_id) {
+      requestsApi.getDelhiLocalities(editFormData.sro_id).then((res) => {
+        const arr = Array.isArray(res) ? res : (res as any)?.items || [];
+        setEditDelhiLocalities(arr);
+      }).catch(() => {});
+    }
+  }, [editFormData.state, editFormData.sro_id]);
 
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isReuploadMode, setIsReuploadMode] = useState(false);
@@ -132,22 +166,27 @@ export default function RequestWorkspacePage() {
   }, [requestId]);
 
   const handleOpenEditModal = () => {
+    const st = requestData?.state || 'Delhi';
+    const sro = requestData?.sro_id || requestData?.sro || '95';
     setEditFormData({
-      propertyName: requestData?.propertyName || requestData?.property_name || 'Deepali Residency',
-      flatNumber: requestData?.flatNumber || requestData?.flat_number || '235',
-      ownerName: requestData?.ownerName || requestData?.owner_name || 'Ajay Kumar',
-      applicantName: requestData?.applicantName || requestData?.applicant_name || requestData?.ownerName || 'Ajay Kumar',
-      bankName: requestData?.bankName || requestData?.bank_name || 'Axis Bank',
-      Bank_branch: requestData?.Bank_branch || requestData?.bank_branch || 'Pitampura Branch',
-      address: requestData?.address || 'Pitampura, New Delhi',
-      state: requestData?.state || 'Delhi',
-      city: requestData?.city || 'New Delhi',
+      propertyName: requestData?.propertyName || requestData?.property_name || '',
+      flatNumber: requestData?.flatNumber || requestData?.flat_number || '',
+      ownerName: requestData?.ownerName || requestData?.owner_name || '',
+      applicantName: requestData?.applicantName || requestData?.applicant_name || requestData?.ownerName || '',
+      bankName: requestData?.bankName || requestData?.bank_name || '',
+      Bank_branch: requestData?.Bank_branch || requestData?.bank_branch || '',
+      address: requestData?.address || '',
+      state: st,
+      sro_id: sro,
+      district: requestData?.district || 'Mumbai Suburban',
+      taluka: requestData?.taluka || '',
+      city: requestData?.city || '',
       village: requestData?.village || '',
-      pinCode: requestData?.pinCode || requestData?.pin_code || '110034',
-      ctsNumber: requestData?.ctsNumber || requestData?.ctsnumber || 'CTS-1029',
+      pinCode: requestData?.pinCode || requestData?.pin_code || '',
+      ctsNumber: requestData?.ctsNumber || requestData?.ctsnumber || '',
       from_year: requestData?.from_year || 2001,
-      advocateName: requestData?.advocateName || requestData?.advocate_name || 'Adv. Suresh Verma',
-      searchName: requestData?.searchName || requestData?.search_name || 'Title Search 2026',
+      advocateName: requestData?.advocateName || requestData?.advocate_name || '',
+      searchName: requestData?.searchName || requestData?.search_name || '',
       caseType: requestData?.caseType || requestData?.case_type || 'General',
     });
     setShowEditModal(true);
@@ -881,6 +920,11 @@ export default function RequestWorkspacePage() {
               <IgrRegistrySearch
                 requestId={requestId}
                 stateName={requestData?.state || 'Delhi'}
+                sroId={requestData?.sro_id || requestData?.sro || '95'}
+                sroName={requestData?.sro_name || ''}
+                villageName={requestData?.village || ''}
+                districtName={requestData?.district || ''}
+                talukaName={requestData?.taluka || ''}
                 ctsNumber={cts}
                 ownerName={ownerName}
                 fromYear={requestData?.from_year || 2001}
@@ -925,7 +969,7 @@ export default function RequestWorkspacePage() {
 
       {/* ── MODAL 1: Edit Property Request Form ──────────────── */}
       {showEditModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-fadeIn">
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 rounded-2xl theme-surface border shadow-2xl space-y-5 animate-scaleUp">
             <div className="flex items-center justify-between border-b theme-border pb-3">
               <div className="flex items-center gap-2">
@@ -1019,14 +1063,106 @@ export default function RequestWorkspacePage() {
                   />
                 </div>
 
-                <div>
-                  <label className="block font-semibold theme-text-primary mb-1">State</label>
-                  <input
-                    type="text"
-                    value={editFormData.state}
-                    onChange={(e) => setEditFormData({ ...editFormData, state: e.target.value })}
-                    className="w-full theme-input border rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500"
-                  />
+                {/* Locked Jurisdiction Fields in Edit Modal */}
+                <div className="sm:col-span-2 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                      Property Registry Jurisdiction
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">
+                      <Lock className="w-2.5 h-2.5" />
+                      Locked on Intake
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold theme-text-secondary mb-1">
+                        State / Land Registry
+                      </label>
+                      <select
+                        disabled
+                        value={editFormData.state}
+                        className="w-full theme-input border rounded-xl px-3 py-2 text-xs opacity-75 bg-slate-100 dark:bg-slate-800/80 cursor-not-allowed text-slate-700 dark:text-slate-300 font-medium"
+                      >
+                        <option value="Delhi">Delhi (DORIS IGR)</option>
+                        <option value="Maharashtra">Maharashtra (e-Search)</option>
+                      </select>
+                    </div>
+
+                    {editFormData.state === 'Delhi' ? (
+                      <>
+                        <div>
+                          <label className="block text-xs font-semibold theme-text-secondary mb-1">
+                            Sub-Registrar Office (SRO)
+                          </label>
+                          <select
+                            disabled
+                            value={editFormData.sro_id}
+                            className="w-full theme-input border rounded-xl px-3 py-2 text-xs opacity-75 bg-slate-100 dark:bg-slate-800/80 cursor-not-allowed text-slate-700 dark:text-slate-300 font-medium truncate"
+                          >
+                            <option value="">-- SRO Office --</option>
+                            {editDelhiSros.map((s: any) => (
+                              <option key={s.sro_id} value={s.sro_id}>
+                                {s.sro_name} {s.locality_count ? `(${s.locality_count})` : ''}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold theme-text-secondary mb-1">
+                            Locality Name
+                          </label>
+                          <select
+                            disabled
+                            value={editFormData.village}
+                            className="w-full theme-input border rounded-xl px-3 py-2 text-xs opacity-75 bg-slate-100 dark:bg-slate-800/80 cursor-not-allowed text-slate-700 dark:text-slate-300 font-medium truncate"
+                          >
+                            <option value="">-- Locality --</option>
+                            {editDelhiLocalities.map((l: any, i: number) => (
+                              <option key={i} value={l.locality_name}>
+                                {l.locality_name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <label className="block text-xs font-semibold theme-text-secondary mb-1">
+                            District
+                          </label>
+                          <select
+                            disabled
+                            value={editFormData.district}
+                            className="w-full theme-input border rounded-xl px-3 py-2 text-xs opacity-75 bg-slate-100 dark:bg-slate-800/80 cursor-not-allowed text-slate-700 dark:text-slate-300 font-medium"
+                          >
+                            <option value="">-- District --</option>
+                            {editDistricts.map((d: any) => (
+                              <option key={d.id} value={d.district_name || d.name}>
+                                {d.district_name || d.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-xs font-semibold theme-text-secondary mb-1">
+                            Taluka / Area
+                          </label>
+                          <input
+                            disabled
+                            type="text"
+                            value={editFormData.taluka || editFormData.village}
+                            className="w-full theme-input border rounded-xl px-3 py-2 text-xs opacity-75 bg-slate-100 dark:bg-slate-800/80 cursor-not-allowed text-slate-700 dark:text-slate-300 font-medium"
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <div>

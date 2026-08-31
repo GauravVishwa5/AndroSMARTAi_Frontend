@@ -158,13 +158,13 @@ export const requestsApi = {
   // Delhi DORIS Masters
   getDelhiSROs: async (): Promise<DelhiSRO[]> => {
     const response = await apiClient.get('/api/delhi-igr/master/sros');
-    return response.data;
+    return response.data?.items || (Array.isArray(response.data) ? response.data : []);
   },
 
   getDelhiLocalities: async (sroId: string): Promise<DelhiLocality[]> => {
     const response = await apiClient.get('/api/delhi-igr/master/localities', {
-      params: { sro_id: sroId },
+      params: { sro_id: sroId, limit: 1000 },
     });
-    return response.data;
+    return response.data?.items || (Array.isArray(response.data) ? response.data : []);
   },
 };

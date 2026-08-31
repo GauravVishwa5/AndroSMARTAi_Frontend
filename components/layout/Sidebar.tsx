@@ -78,6 +78,16 @@ export function Sidebar() {
     },
   ];
 
+  const isItemActive = (href: string) => {
+    if (pathname === href) return true;
+    if (href === '/requests') {
+      const sub = pathname?.replace('/requests', '').replace(/^\//, '').split('/')[0];
+      const dedicatedRoutes = ['new', 'reports', 'search'];
+      return Boolean(pathname?.startsWith('/requests/') && sub && !dedicatedRoutes.includes(sub));
+    }
+    return Boolean(pathname?.startsWith(href + '/') && href !== '/');
+  };
+
   const renderSidebarContent = (isCollapsed: boolean) => (
     <div className="flex flex-col justify-between h-full">
       <div>
@@ -147,7 +157,7 @@ export function Sidebar() {
             .filter((item) => item.show)
             .map((item) => {
               const Icon = item.icon;
-              const isActive = pathname === item.href || (pathname?.startsWith(item.href + '/') && item.href !== '/');
+              const isActive = isItemActive(item.href);
 
               return (
                 <Link
