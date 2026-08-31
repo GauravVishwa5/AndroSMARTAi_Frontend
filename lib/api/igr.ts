@@ -3,17 +3,19 @@ import { IGRTransactionRecord, ScrapeJobResponse } from '@/types/pms';
 
 export const igrApi = {
   // Trigger Delhi Multi-Year Scrape
-  scrapeDelhiV2: async (requestId: string): Promise<ScrapeJobResponse> => {
+  scrapeDelhiV2: async (requestId: string, params?: Record<string, any>): Promise<ScrapeJobResponse> => {
     const response = await apiClient.post('/api/delhi-igr/scrape-delhi-v2', {
       request_id: requestId,
+      ...(params || {}),
     });
     return response.data;
   },
 
   // Trigger Maharashtra Multi-Year Scrape
-  scrapeMaharashtraV2: async (requestId: string): Promise<ScrapeJobResponse> => {
+  scrapeMaharashtraV2: async (requestId: string, params?: Record<string, any>): Promise<ScrapeJobResponse> => {
     const response = await apiClient.post('/api/scrape-all-years-v2', {
       request_id: requestId,
+      ...(params || {}),
     });
     return response.data;
   },
