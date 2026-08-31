@@ -135,7 +135,7 @@ export default function BranchDashboardPage() {
     fetchLiveRequests();
   }, []);
 
-  const displayRequests = requests.length > 0 ? requests : (isLoading ? [] : mockRequests);
+  const displayRequests = isLiveConnected ? requests : (isLoading ? [] : mockRequests);
 
   const filteredRequests = displayRequests.filter((req) => {
     const rId = String(req.id || `REQ-${req.raw_id || ''}`);

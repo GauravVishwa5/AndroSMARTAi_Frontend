@@ -35,7 +35,7 @@ export default function LoginPage() {
       if (res.token && res.user) {
         setAuth(res.user, res.token, (res as any).entitlements || res.module_access || {});
         const role = res.user.role || '';
-        if (role.toLowerCase().includes('admin')) {
+        if (res.user.is_admin || role.toLowerCase().includes('admin')) {
           window.location.href = '/admin';
         } else if (role.toLowerCase().includes('legal')) {
           window.location.href = '/legal';

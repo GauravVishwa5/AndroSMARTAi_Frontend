@@ -96,7 +96,7 @@ export default function RequestsListPage() {
     fetchRequests();
   }, []);
 
-  const displayList = requests.length > 0 ? requests : (isLoading ? [] : fallbackRequests);
+  const displayList = isLiveConnected ? requests : (isLoading ? [] : fallbackRequests);
 
   const filtered = displayList.filter((r) => {
     const rId = String(r.id || `REQ-${r.raw_id || ''}`);
