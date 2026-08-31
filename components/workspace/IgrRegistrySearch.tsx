@@ -45,40 +45,81 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
   requestId,
   stateName = 'Delhi',
   ctsNumber = 'CTS-1029',
-  ownerName = 'Ajay Kumar',
+  ownerName = 'Gaurav Vishwakarma',
   fromYear = 2001,
 }) => {
+  const isInitialMah = (stateName || '').toLowerCase().includes('mah');
   const [selectedState, setSelectedState] = useState<'Delhi' | 'Maharashtra'>(
-    stateName.toLowerCase().includes('mah') ? 'Maharashtra' : 'Delhi'
+    isInitialMah ? 'Maharashtra' : 'Delhi'
   );
-  const [sroQuery, setSroQuery] = useState('SRO VI-A Pitampura');
-  const [ctsQuery, setCtsQuery] = useState(ctsNumber);
-  const [ownerQuery, setOwnerQuery] = useState(ownerName);
-  const [startYear, setStartYear] = useState(fromYear);
+  const [sroQuery, setSroQuery] = useState(
+    isInitialMah ? 'SRO Andheri-1 (Mumbai Suburban)' : 'SRO VI-A Pitampura (Delhi)'
+  );
+  const [ctsQuery, setCtsQuery] = useState(ctsNumber || (isInitialMah ? 'CTS-1029' : 'Plot No. 235'));
+  const [ownerQuery, setOwnerQuery] = useState(ownerName || 'Gaurav Vishwakarma');
+  const [startYear, setStartYear] = useState(fromYear || 2001);
   const [endYear, setEndYear] = useState(2026);
 
   const [isSearching, setIsSearching] = useState(false);
   const [searchStatus, setSearchStatus] = useState<string | null>(null);
 
-  // Live IGR Records
-  const [records, setRecords] = useState<IgrRegistryRecord[]>([
+  // Sync props when requestData loads or updates
+  React.useEffect(() => {
+    if (stateName) {
+      const isMah = stateName.toLowerCase().includes('mah');
+      const nextState = isMah ? 'Maharashtra' : 'Delhi';
+      setSelectedState(nextState);
+      setSroQuery(isMah ? 'SRO Andheri-1 (Mumbai Suburban)' : 'SRO VI-A Pitampura (Delhi)');
+    }
+  }, [stateName]);
+
+  React.useEffect(() => {
+    if (ctsNumber) setCtsQuery(ctsNumber);
+  }, [ctsNumber]);
+
+  React.useEffect(() => {
+    if (ownerName) setOwnerQuery(ownerName);
+  }, [ownerName]);
+
+  React.useEffect(() => {
+    if (fromYear) setStartYear(fromYear);
+  }, [fromYear]);
+
+  // Handle explicit toggle
+  const handleStateChange = (st: 'Delhi' | 'Maharashtra') => {
+    setSelectedState(st);
+    if (st === 'Delhi') {
+      setSroQuery('SRO VI-A Pitampura (Delhi)');
+      if (ctsQuery.startsWith('CTS-')) {
+        setCtsQuery('Plot No. 235');
+      }
+    } else {
+      setSroQuery('SRO Andheri-1 (Mumbai Suburban)');
+      if (!ctsQuery.startsWith('CTS-') && !ctsQuery.startsWith('Survey')) {
+        setCtsQuery('CTS-1029');
+      }
+    }
+  };
+
+  // Dynamic Records based on State
+  const delhiRecords: IgrRegistryRecord[] = [
     {
-      id: 'igr-1',
+      id: 'delhi-1',
       year: '2020',
       regNo: '8472',
       bookNo: 'Book-I',
       registrationDate: '14-Aug-2020',
       sroOffice: 'SRO VI-A Pitampura (Delhi)',
       party1: 'Sunil K. Sharma (Seller)',
-      party2: `${ownerName} (Purchaser / Current Borrower)`,
-      propertyDetails: `Flat No. 235, Deepali Residency, CTS #${ctsNumber}, Pitampura`,
+      party2: `${ownerQuery || 'Gaurav Vishwakarma'} (Purchaser / Current Borrower)`,
+      propertyDetails: `Flat No. 235, Deepali Residency, Plot #235, Pitampura, North West Delhi`,
       consideration: 'Rs. 85,00,000',
       marketValue: 'Rs. 82,50,000',
       encumbranceStatus: 'NIL',
       isRelevant: true,
     },
     {
-      id: 'igr-2',
+      id: 'delhi-2',
       year: '1998',
       regNo: '1249',
       bookNo: 'Book-I',
@@ -86,13 +127,54 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
       sroOffice: 'SRO VI New Delhi',
       party1: 'Delhi Development Authority / Housing Society',
       party2: 'Sunil K. Sharma (Original Allottee)',
-      propertyDetails: `Plot/Flat 235, Deepali Residency, CTS #${ctsNumber}`,
+      propertyDetails: `Plot/Flat 235, Deepali Residency, Pitampura, New Delhi`,
       consideration: 'Rs. 18,50,000',
       marketValue: 'Rs. 18,50,000',
       encumbranceStatus: 'NIL',
       isRelevant: true,
     },
-  ]);
+  ];
+
+  const maharashtraRecords: IgrRegistryRecord[] = [
+    {
+      id: 'mh-1',
+      year: '2020',
+      regNo: '8472',
+      bookNo: 'Index-II',
+      registrationDate: '14-Aug-2020',
+      sroOffice: 'SRO Andheri-1 (Mumbai Suburban)',
+      party1: 'Sunil K. Sharma (Seller)',
+      party2: `${ownerQuery || 'Gaurav Vishwakarma'} (Purchaser / Current Borrower)`,
+      propertyDetails: `Flat No. 235, Sunshine Heights, CTS #${ctsQuery || '1029'}, Andheri West, Mumbai`,
+      consideration: 'Rs. 85,00,000',
+      marketValue: 'Rs. 82,50,000',
+      encumbranceStatus: 'NIL',
+      isRelevant: true,
+    },
+    {
+      id: 'mh-2',
+      year: '1998',
+      regNo: '1249',
+      bookNo: 'Index-II',
+      registrationDate: '22-Mar-1998',
+      sroOffice: 'SRO Borivali / Mumbai Suburban',
+      party1: 'Maharashtra Housing & Area Development Authority (MHADA)',
+      party2: 'Sunil K. Sharma (Original Allottee)',
+      propertyDetails: `Plot/Flat 235, Survey No. 142/3, CTS #${ctsQuery || '1029'}, Borivali, Mumbai`,
+      consideration: 'Rs. 18,50,000',
+      marketValue: 'Rs. 18,50,000',
+      encumbranceStatus: 'NIL',
+      isRelevant: true,
+    },
+  ];
+
+  const [records, setRecords] = useState<IgrRegistryRecord[]>(
+    isInitialMah ? maharashtraRecords : delhiRecords
+  );
+
+  React.useEffect(() => {
+    setRecords(selectedState === 'Maharashtra' ? maharashtraRecords : delhiRecords);
+  }, [selectedState, ownerQuery, ctsQuery]);
 
   const handleExecuteIgrSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,7 +190,7 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
         await igrApi.scrapeMaharashtraV2(requestId).catch(() => null);
       }
 
-      setSearchStatus('IGR Registry Search completed: 2 verified registration entries returned.');
+      setSearchStatus(`IGR Registry Search completed: 2 verified registration entries returned for ${selectedState}.`);
       setTimeout(() => setSearchStatus(null), 4000);
     } catch (err: any) {
       console.warn('IGR Search API response:', err);
@@ -164,22 +246,22 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
           <div className="flex items-center p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-xs font-semibold">
             <button
               type="button"
-              onClick={() => setSelectedState('Delhi')}
+              onClick={() => handleStateChange('Delhi')}
               className={`px-3 py-1 rounded-md transition-all ${
                 selectedState === 'Delhi'
-                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs font-bold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               Delhi IGR (DORIS)
             </button>
             <button
               type="button"
-              onClick={() => setSelectedState('Maharashtra')}
+              onClick={() => handleStateChange('Maharashtra')}
               className={`px-3 py-1 rounded-md transition-all ${
                 selectedState === 'Maharashtra'
-                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400'
+                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs font-bold'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
               }`}
             >
               Maharashtra (e-Search)
@@ -194,16 +276,20 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
               type="text"
               value={sroQuery}
               onChange={(e) => setSroQuery(e.target.value)}
+              placeholder={selectedState === 'Maharashtra' ? 'e.g. SRO Andheri-1 (Mumbai Suburban)' : 'e.g. SRO VI-A Pitampura (Delhi)'}
               className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label className="block text-slate-500 mb-1 font-medium">CTS / Survey / Plot No.</label>
+            <label className="block text-slate-500 mb-1 font-medium">
+              {selectedState === 'Maharashtra' ? 'CTS / Survey / Gat No.' : 'Plot / Khasra / Unit No.'}
+            </label>
             <input
               type="text"
               value={ctsQuery}
               onChange={(e) => setCtsQuery(e.target.value)}
+              placeholder={selectedState === 'Maharashtra' ? 'e.g. CTS-1029' : 'e.g. Plot No. 235'}
               className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
             />
           </div>
