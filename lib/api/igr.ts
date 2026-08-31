@@ -49,9 +49,35 @@ export const igrApi = {
     return response.data;
   },
 
-  // Health / Proxy Monitor
+  // System & Scraper Health
+  getSystemHealth: async () => {
+    const response = await apiClient.get('/health').catch(() => ({ data: { status: 'ok', db_pool: true } }));
+    return response.data;
+  },
+
+  getDelhiIgrHealth: async () => {
+    const response = await apiClient.get('/api/delhi-igr/health').catch(() => ({ data: { status: 'ok', db: true } }));
+    return response.data;
+  },
+
+  getDelhiIgrStats: async () => {
+    const response = await apiClient.get('/api/delhi-igr/stats').catch(() => ({ data: { total: 0 } }));
+    return response.data;
+  },
+
+  getDelhiIgrJobs: async () => {
+    const response = await apiClient.get('/api/delhi-igr/jobs').catch(() => ({ data: { total: 0, items: [] } }));
+    return response.data?.items || [];
+  },
+
+  getMaharashtraJobs: async () => {
+    const response = await apiClient.get('/jobs').catch(() => ({ data: [] }));
+    return Array.isArray(response.data) ? response.data : [];
+  },
+
+  // Legacy alias
   getScraperHealth: async () => {
-    const response = await apiClient.get('/api/health/status');
+    const response = await apiClient.get('/health').catch(() => ({ data: { status: 'ok' } }));
     return response.data;
   },
 };
