@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   FileCheck2,
@@ -19,13 +19,18 @@ import {
   Scale,
   Building2,
   ExternalLink,
+  RefreshCw,
 } from 'lucide-react';
+import { requestsApi } from '@/lib/api/requests';
 
 export default function LegalScrutinyPage() {
   const [activeTab, setActiveTab] = useState<'PENDING' | 'VERIFIED' | 'REJECTED'>('PENDING');
   const [searchQuery, setSearchQuery] = useState('');
+  const [cases, setCases] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLiveConnected, setIsLiveConnected] = useState(false);
 
-  const scrutinyCases = [
+  const fallbackCases = [
     {
       id: 'REQ-349',
       propertyName: 'Deepali Residency',
@@ -44,6 +49,7 @@ export default function LegalScrutinyPage() {
       aiMatchScore: 98,
       riskLevel: 'LOW',
       date: 'Aug 30, 2026',
+      status: 'Pending',
     },
     {
       id: 'REQ-345',
@@ -63,6 +69,7 @@ export default function LegalScrutinyPage() {
       aiMatchScore: 95,
       riskLevel: 'CLEAR',
       date: 'Aug 29, 2026',
+      status: 'Verified',
     },
     {
       id: 'REQ-320',
@@ -81,42 +88,73 @@ export default function LegalScrutinyPage() {
       aiMatchScore: 72,
       riskLevel: 'HIGH',
       date: 'Aug 28, 2026',
-    },
-    {
-      id: 'REQ-308',
-      propertyName: 'Nirman Park Horizon',
-      ownerName: 'Vikram Joshi',
-      city: 'Thane West',
-      state: 'Maharashtra',
-      cts: 'CTS-562',
-      advocate: 'Adv. Anjali Kulkarni',
-      docs: [
-        { name: 'Deed_of_Conveyance.pdf', status: 'clear' },
-        { name: 'Index_II.pdf', status: 'pending' },
-        { name: 'Non_Encumbrance_Cert.pdf', status: 'clear' },
-      ],
-      pendingCount: 1,
-      aiMatchScore: 91,
-      riskLevel: 'LOW',
-      date: 'Aug 26, 2026',
+      status: 'Rejected',
     },
   ];
 
-  const filteredCases = scrutinyCases.filter((c) => {
-    const matchesTab =
-      activeTab === 'PENDING'
-        ? c.pendingCount > 0 && c.riskLevel !== 'HIGH'
-        : activeTab === 'VERIFIED'
-        ? c.pendingCount === 0
-        : c.riskLevel === 'HIGH';
+  const fetchLegalCases = async () => {
+    setIsLoading(true);
+    try {
+      const data = await requestsApi.getRequestsList();
+      if (Array.isArray(data) && data.length > 0) {
+        setCases(data);
+        setIsLiveConnected(true);
+      } else if (Array.isArray(data)) {
+        setCases(data);
+        setIsLiveConnected(true);
+      } else {
+        setCases(fallbackCases);
+        setIsLiveConnected(false);
+      }
+    } catch (err) {
+      console.warn('Could not load legal cases from backend:', err);
+      setCases(fallbackCases);
+      setIsLiveConnected(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    const matchesSearch =
-      c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.propertyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.ownerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.city.toLowerCase().includes(searchQuery.toLowerCase());
+  useEffect(() => {
+    fetchLegalCases();
+  }, []);
 
-    return matchesTab && matchesSearch;
+  const displayCases = cases.length > 0 ? cases : (isLoading ? [] : fallbackCases);
+
+  const pendingList = displayCases.filter((c) => {
+    const s = String(c.status || '').toUpperCase();
+    return s.includes('INVESTIGATION') || s.includes('PENDING') || s.includes('REVIEW');
+  });
+
+  const verifiedList = displayCases.filter((c) => {
+    const s = String(c.status || '').toUpperCase();
+    return s.includes('VERIFIED') || s.includes('COMPLETED') || s.includes('CLEAR');
+  });
+
+  const rejectedList = displayCases.filter((c) => {
+    const s = String(c.status || '').toUpperCase();
+    return s.includes('REJECTED') || s.includes('CLARIFICATION') || s.includes('FLAGGED');
+  });
+
+  const currentTabList =
+    activeTab === 'PENDING'
+      ? pendingList
+      : activeTab === 'VERIFIED'
+      ? verifiedList
+      : rejectedList;
+
+  const filteredCases = currentTabList.filter((c) => {
+    const cId = String(c.id || `REQ-${c.raw_id || ''}`);
+    const cProp = String(c.propertyName || c.property_name || '');
+    const cOwner = String(c.ownerName || c.owner_name || '');
+    const cCity = String(c.district || c.city || c.location || c.address || '');
+
+    return (
+      cId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cProp.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cOwner.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cCity.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   });
 
   return (
@@ -129,146 +167,173 @@ export default function LegalScrutinyPage() {
               <Scale className="w-6 h-6 text-blue-500 dark:text-blue-400" />
               Legal Scrutiny Queue
             </h1>
-            <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30">
-              42 Pending
-            </span>
+            {isLiveConnected ? (
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Live DB
+              </span>
+            ) : (
+              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30">
+                Demo
+              </span>
+            )}
           </div>
           <p className="text-xs theme-text-secondary mt-1">
             Side-by-side title tree verification, AI cross-matching against IGR Maharashtra & Delhi DORIS records.
           </p>
         </div>
 
-        {/* Quick Tab Switcher */}
-        <div className="flex items-center gap-1.5 theme-surface border p-1 rounded-xl overflow-x-auto max-w-full pb-1 sm:pb-1">
+        {/* Controls */}
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => setActiveTab('PENDING')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
-              activeTab === 'PENDING'
-                ? 'bg-blue-600 text-white shadow-md'
-                : 'theme-text-secondary hover:theme-text-primary'
-            }`}
+            onClick={fetchLegalCases}
+            disabled={isLoading}
+            className="p-2 rounded-xl theme-card border theme-text-secondary hover:theme-text-primary transition-colors disabled:opacity-50"
+            title="Refresh"
           >
-            Pending Verification (2)
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
-          <button
-            onClick={() => setActiveTab('VERIFIED')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
-              activeTab === 'VERIFIED'
-                ? 'bg-emerald-600 text-white shadow-md'
-                : 'theme-text-secondary hover:theme-text-primary'
-            }`}
-          >
-            Verified Titles (1)
-          </button>
-          <button
-            onClick={() => setActiveTab('REJECTED')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
-              activeTab === 'REJECTED'
-                ? 'bg-red-600 text-white shadow-md'
-                : 'theme-text-secondary hover:theme-text-primary'
-            }`}
-          >
-            High Risk (1)
-          </button>
+
+          {/* Quick Tab Switcher */}
+          <div className="flex items-center gap-1.5 theme-surface border p-1 rounded-xl overflow-x-auto max-w-full pb-1 sm:pb-1">
+            <button
+              onClick={() => setActiveTab('PENDING')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                activeTab === 'PENDING'
+                  ? 'bg-blue-600 text-white shadow-md'
+                  : 'theme-text-secondary hover:theme-text-primary'
+              }`}
+            >
+              Pending ({pendingList.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('VERIFIED')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                activeTab === 'VERIFIED'
+                  ? 'bg-emerald-600 text-white shadow-md'
+                  : 'theme-text-secondary hover:theme-text-primary'
+              }`}
+            >
+              Verified ({verifiedList.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('REJECTED')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+                activeTab === 'REJECTED'
+                  ? 'bg-red-600 text-white shadow-md'
+                  : 'theme-text-secondary hover:theme-text-primary'
+              }`}
+            >
+              Flagged ({rejectedList.length})
+            </button>
+          </div>
         </div>
       </div>
 
-
       {/* Scrutiny Queue Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {filteredCases.map((item) => (
-          <div
-            key={item.id}
-            className="p-5 rounded-2xl theme-surface border transition-all shadow-sm flex flex-col justify-between group space-y-4"
-          >
-            <div>
-              {/* Card Header: Case ID, Risk Tag, AI Match */}
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">
-                      {item.id}
-                    </span>
-                    <span className="text-xs text-slate-400">&bull;</span>
-                    <span className="text-xs theme-text-muted">{item.date}</span>
-                  </div>
-                  <h3 className="text-base font-bold theme-text-primary group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors mt-1">
-                    {item.propertyName}
-                  </h3>
-                  <p className="text-xs theme-text-secondary mt-0.5">
-                    {item.city} &bull; <span className="font-mono">{item.cts}</span>
-                  </p>
-                </div>
-
-                {/* AI Score Badge */}
-                <div className="text-right">
-                  <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold shadow-sm">
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>{item.aiMatchScore}% Match</span>
-                  </div>
-                  <p className="text-[10px] theme-text-muted mt-1 font-medium">
-                    Advocate: {item.advocate}
-                  </p>
-                </div>
-              </div>
-
-              {/* Deed Checklist */}
-              <div className="mt-4 pt-3 border-t theme-border">
-                <p className="text-[11px] font-semibold theme-text-secondary uppercase tracking-wider mb-2">
-                  Document Chain Verification
-                </p>
-                <div className="grid grid-cols-2 gap-2">
-                  {item.docs.map((doc, idx) => (
-                    <div
-                      key={idx}
-                      className={`px-2.5 py-1.5 rounded-lg border text-xs flex items-center justify-between gap-2 ${
-                        doc.status === 'clear'
-                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-300'
-                          : doc.status === 'rejected'
-                          ? 'bg-red-500/10 border-red-500/20 text-red-700 dark:text-red-300'
-                          : 'bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-300'
-                      }`}
-                    >
-                      <span className="truncate max-w-[130px] font-medium">{doc.name}</span>
-                      {doc.status === 'clear' && <CheckCircle className="w-3.5 h-3.5 shrink-0 text-emerald-500" />}
-                      {doc.status === 'rejected' && <XCircle className="w-3.5 h-3.5 shrink-0 text-red-500" />}
-                      {doc.status === 'pending' && <Clock className="w-3.5 h-3.5 shrink-0 text-amber-500" />}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Bottom Action Footer */}
-            <div className="pt-3 border-t theme-border flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {item.riskLevel === 'CLEAR' && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                    Title Clean & Clear
-                  </span>
-                )}
-                {item.riskLevel === 'LOW' && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30">
-                    Low Risk (1 Doc Pending)
-                  </span>
-                )}
-                {item.riskLevel === 'HIGH' && (
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-700 dark:text-red-400 border border-red-500/30">
-                    Broken Chain of Title
-                  </span>
-                )}
-              </div>
-
-              <Link
-                href={`/requests/${item.id}`}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/25 transition-all group"
-              >
-                <span>Launch Workspace</span>
-                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
-              </Link>
+        {isLoading ? (
+          <div className="col-span-2 py-16 text-center theme-text-muted">
+            <div className="flex flex-col items-center justify-center gap-2">
+              <RefreshCw className="w-6 h-6 animate-spin text-blue-500" />
+              <p>Loading legal verification cases from backend...</p>
             </div>
           </div>
-        ))}
+        ) : filteredCases.length === 0 ? (
+          <div className="col-span-2 py-12 text-center theme-text-muted theme-surface rounded-2xl border p-8">
+            <p>No legal scrutiny cases found in this category.</p>
+          </div>
+        ) : (
+          filteredCases.map((item) => {
+            const reqId = item.id || `REQ-${item.raw_id || ''}`;
+            const propName = item.propertyName || item.property_name || 'Property Record';
+            const flatNo = item.flatNumber || item.flat_number ? `Flat ${item.flatNumber || item.flat_number}` : '';
+            const location = item.district || item.city || item.location || item.address || 'Maharashtra';
+            const owner = item.ownerName || item.owner_name || 'Borrower';
+            const advocate = item.advocateName || item.advocate || 'Assigned Legal Investigator';
+            const searchName = item.searchName || 'Title Search 2026';
+            const dateStr = item.date_raised || item.date || item.created_at || 'Recent';
+            const statusStr = item.status || 'Sent for Investigation';
+
+            return (
+              <div
+                key={reqId}
+                className="p-5 rounded-2xl theme-surface border transition-all shadow-sm flex flex-col justify-between group space-y-4"
+              >
+                <div>
+                  {/* Card Header: Case ID, Risk Tag, AI Match */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">
+                          {reqId}
+                        </span>
+                        <span className="text-xs text-slate-400">&bull;</span>
+                        <span className="text-xs theme-text-muted">{dateStr}</span>
+                      </div>
+                      <h3 className="text-base font-bold theme-text-primary group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors mt-1">
+                        {propName} {flatNo && <span className="font-normal text-slate-400">({flatNo})</span>}
+                      </h3>
+                      <p className="text-xs theme-text-secondary mt-0.5">
+                        {location} &bull; Borrower: <strong className="theme-text-primary">{owner}</strong>
+                      </p>
+                    </div>
+
+                    {/* AI Score Badge */}
+                    <div className="text-right">
+                      <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold shadow-sm">
+                        <Sparkles className="w-3.5 h-3.5" />
+                        <span>AI Cross-Verified</span>
+                      </div>
+                      <p className="text-[10px] theme-text-muted mt-1 font-medium">
+                        {searchName}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Details summary */}
+                  <div className="mt-4 pt-3 border-t theme-border space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="theme-text-secondary">Assigned Advocate:</span>
+                      <span className="font-medium theme-text-primary">{advocate}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="theme-text-secondary">Current Stage:</span>
+                      <span className="font-mono font-semibold theme-text-primary">{statusStr}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom Action Footer */}
+                <div className="pt-3 border-t theme-border flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {statusStr.toLowerCase().includes('clear') || statusStr.toLowerCase().includes('verified') ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+                        Title Clean & Clear
+                      </span>
+                    ) : statusStr.toLowerCase().includes('flagged') || statusStr.toLowerCase().includes('rejected') ? (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-700 dark:text-red-400 border border-red-500/30">
+                        Attention Required
+                      </span>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30">
+                        Scrutiny in Progress
+                      </span>
+                    )}
+                  </div>
+
+                  <Link
+                    href={`/requests/${reqId}`}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/25 transition-all group"
+                  >
+                    <span>Launch Workspace</span>
+                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
+              </div>
+            );
+          })
+        )}
       </div>
     </div>
   );

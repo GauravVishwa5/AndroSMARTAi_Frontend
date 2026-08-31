@@ -42,8 +42,8 @@ export interface BankForm {
   villages?: string[];
   pinCode?: string;
   ctsNumber?: string;
-  propertyNumber?: string[];
-  propertyNumbers?: string;
+  propertyNumber?: string | string[];
+  propertyNumbers?: string | string[];
   from_year?: number;
   stampDuty?: string;
   lodgementReceipt?: string;

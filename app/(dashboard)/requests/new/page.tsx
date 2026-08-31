@@ -174,31 +174,29 @@ export default function NewRequestPage() {
     try {
       // 1. Create BankForm Request
       const payload = {
-        owner_name: formData.ownerName,
-        applicant_name: formData.applicantName || formData.ownerName,
-        property_name: formData.propertyName,
-        bank_name: formData.bankName,
-        bank_branch: formData.Bank_branch,
+        ownerName: formData.ownerName,
+        applicantName: formData.applicantName || formData.ownerName,
+        propertyName: formData.propertyName,
+        bankName: formData.bankName,
+        Bank_branch: formData.Bank_branch,
+        flatNumber: formData.flatNumber,
+        address: formData.address,
         state: formData.state,
         city: formData.city,
         village: formData.village,
-        pincode: formData.pinCode,
-        cts_number: formData.ctsNumber,
-        property_numbers: formData.propertyNumbers,
-        from_year: formData.from_year,
-        case_type: formData.caseType,
-        transaction_type: formData.transactionType,
-        advocate_name: formData.advocateName,
-        search_name: formData.searchName,
+        pinCode: formData.pinCode,
+        ctsNumber: formData.ctsNumber,
+        propertyNumbers: formData.propertyNumbers,
+        from_year: Number(formData.from_year) || 2001,
+        caseType: formData.caseType,
+        transactionType: formData.transactionType,
+        advocateName: formData.advocateName,
+        searchName: formData.searchName,
         category: formData.category,
       };
 
-      const res = await requestsApi.createRequest(payload).catch(() => ({
-        id: `REQ-${Math.floor(100 + Math.random() * 900)}`,
-        success: true,
-      }));
-
-      const reqId = res.id || 'REQ-349';
+      const res = await requestsApi.createRequest(payload);
+      const reqId = res.id || `REQ-${res.raw_id || '1'}`;
 
       // 2. Upload Documents & Enqueue Celery OCR if files attached
       if (uploadedFiles.length > 0) {

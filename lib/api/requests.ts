@@ -11,9 +11,15 @@ import {
 } from '@/types/pms';
 
 export const requestsApi = {
-  getRequestsList: async (): Promise<{ success: boolean; data: any[] }> => {
+  getRequestsList: async (): Promise<any[]> => {
     const response = await apiClient.get('/api/request-list');
-    return response.data;
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    if (response.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    return [];
   },
 
   getRequestDetails: async (requestId: string): Promise<BankForm> => {

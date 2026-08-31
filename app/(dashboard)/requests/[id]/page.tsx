@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -34,7 +34,7 @@ import {
   Camera,
 } from 'lucide-react';
 import { SitePhotoInspection } from '@/components/survey/SitePhotoInspection';
-
+import { requestsApi } from '@/lib/api/requests';
 
 export default function RequestWorkspacePage() {
   const params = useParams();
@@ -45,14 +45,64 @@ export default function RequestWorkspacePage() {
     'TIMELINE' | 'EXTRACTED_OCR' | 'IGR_SEARCH' | 'SITE_SURVEY' | 'DISCREPANCIES' | 'TSR_REPORT'
   >('TIMELINE');
 
-
   // Request State
+  const [requestData, setRequestData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [requestStatus, setRequestStatus] = useState<'Pending' | 'Verified' | 'Rejected'>('Pending');
   const [zoomLevel, setZoomLevel] = useState(100);
 
   // Documents state
   const [selectedDocIndex, setSelectedDocIndex] = useState(0);
-  const docs = [
+
+  useEffect(() => {
+    const loadDetails = async () => {
+      setIsLoading(true);
+      try {
+        const data = await requestsApi.getRequestDetails(requestId);
+        if (data) {
+          setRequestData(data);
+          if (data.status) {
+            const s = String(data.status).toLowerCase();
+            if (s.includes('clear') || s.includes('verified') || s.includes('completed')) {
+              setRequestStatus('Verified');
+            } else if (s.includes('rejected') || s.includes('flagged')) {
+              setRequestStatus('Rejected');
+            } else {
+              setRequestStatus('Pending');
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load request details from API, using default workspace view:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    if (requestId) {
+      loadDetails();
+    }
+  }, [requestId]);
+
+  const rawDocs = requestData?.documents;
+  const docs = (Array.isArray(rawDocs) && rawDocs.length > 0) ? rawDocs.map((d: any, idx: number) => ({
+    id: d.doc_id || `doc-${idx + 1}`,
+    name: d.file_name || `Document_${idx + 1}.pdf`,
+    type: d.document_type || 'Property Deed',
+    status: (d.verification_status || 'clear') as 'clear' | 'rejected' | 'pending',
+    ocrStatus: d.ocr_status || 'done',
+    date: d.uploaded_at || 'Recent',
+    fileUrl: typeof d.file_url === 'string' ? d.file_url : (Array.isArray(d.file_url) ? d.file_url[0] : '#'),
+    extracted: {
+      vendor: requestData?.advocateName || 'Previous Landholder',
+      vendee: requestData?.ownerName || requestData?.applicantName || 'Borrower',
+      date: requestData?.date_of_issue || 'Registered Record',
+      consideration: 'Institutional Mortgage',
+      propertyDesc: `${requestData?.propertyName || 'Property'} ${requestData?.flatNumber ? `Flat ${requestData?.flatNumber}` : ''}, ${requestData?.address || requestData?.city || 'Location'}`,
+      cts: requestData?.ctsNumber || requestData?.ctsnumber || 'CTS-Record',
+      sro: `${requestData?.district || 'SRO District'} Sub-Registrar`,
+      regNo: requestData?.permitnumber || requestData?.permitNumber || `DOC #${requestId}`,
+    },
+  })) : [
     {
       id: 'doc-1',
       name: 'Registered_Sale_Deed_2020.pdf',
@@ -60,13 +110,14 @@ export default function RequestWorkspacePage() {
       status: 'clear' as const,
       ocrStatus: 'done',
       date: 'Aug 30, 2026',
+      fileUrl: '#',
       extracted: {
         vendor: 'Sunil K. Sharma',
-        vendee: 'Ajay Kumar',
+        vendee: requestData?.ownerName || 'Ajay Kumar',
         date: '14-Aug-2020',
         consideration: 'Rs. 85,00,000',
-        propertyDesc: 'House No. 235, Block-B, Deepali, Pitampura, New Delhi',
-        cts: 'CTS-1029',
+        propertyDesc: `${requestData?.propertyName || 'Deepali Residency'}, Flat ${requestData?.flatNumber || '235'}`,
+        cts: requestData?.ctsNumber || 'CTS-1029',
         sro: 'SRO VI-A Pitampura',
         regNo: 'Doc #8472/Book-I',
       },
@@ -78,38 +129,28 @@ export default function RequestWorkspacePage() {
       status: 'clear' as const,
       ocrStatus: 'done',
       date: 'Aug 29, 2026',
+      fileUrl: '#',
       extracted: {
         vendor: 'DDA / DLF Housing Ltd',
         vendee: 'Sunil K. Sharma',
         date: '22-Mar-1998',
         consideration: 'Rs. 18,50,000',
-        propertyDesc: 'Plot No. 235, Deepali Co-op Society, Delhi',
-        cts: 'CTS-1029',
+        propertyDesc: `${requestData?.propertyName || 'Deepali Residency'} Plot 235`,
+        cts: requestData?.ctsNumber || 'CTS-1029',
         sro: 'SRO VI Delhi',
         regNo: 'Doc #1249/Book-I',
       },
     },
-    {
-      id: 'doc-3',
-      name: 'Society_NOC_ShareCert.pdf',
-      type: 'Society NOC',
-      status: 'clear' as const,
-      ocrStatus: 'done',
-      date: 'Aug 28, 2026',
-      extracted: {
-        vendor: 'Deepali Residency CHSL',
-        vendee: 'Ajay Kumar',
-        date: '02-Sep-2020',
-        consideration: 'N/A',
-        propertyDesc: 'Flat 235, Deepali Residency',
-        cts: 'CTS-1029',
-        sro: 'N/A',
-        regNo: 'NOC/2020/094',
-      },
-    },
   ];
 
-  const currentDoc = docs[selectedDocIndex];
+  const currentDoc = docs[Math.min(selectedDocIndex, docs.length - 1)] || docs[0];
+
+  const propName = requestData?.propertyName || requestData?.property_name || 'Deepali Residency';
+  const flatNo = requestData?.flatNumber || requestData?.flat_number ? `Flat ${requestData?.flatNumber || requestData?.flat_number}` : 'Flat 235';
+  const ownerName = requestData?.ownerName || requestData?.owner_name || requestData?.applicantName || 'Ajay Kumar';
+  const cts = requestData?.ctsNumber || requestData?.ctsnumber || 'CTS-1029';
+  const location = requestData?.address || `${requestData?.city || 'Pitampura'}, ${requestData?.state || 'New Delhi'}`;
+  const bankBranch = requestData?.Bank_branch || requestData?.bank_branch || requestData?.bankName || 'Axis Bank Pitampura Branch';
 
   return (
     <div className="space-y-5">
@@ -129,14 +170,14 @@ export default function RequestWorkspacePage() {
               </span>
               <span className="text-slate-400">&bull;</span>
               <h1 className="text-base font-bold theme-text-primary">
-                Deepali Residency &mdash; Flat 235
+                {propName} &mdash; {flatNo}
               </h1>
               <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30">
-                CTS-1029
+                {cts}
               </span>
             </div>
             <p className="text-xs theme-text-secondary mt-0.5">
-              Borrower: <strong className="theme-text-primary">Ajay Kumar</strong> &bull; Pitampura, New Delhi &bull; Axis Bank Pitampura Branch
+              Borrower: <strong className="theme-text-primary">{ownerName}</strong> &bull; {location} &bull; {bankBranch}
             </p>
           </div>
         </div>

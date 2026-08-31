@@ -16,12 +16,18 @@ apiClient.interceptors.request.use(
       const storedToken = localStorage.getItem('andropvs_token');
       if (storedToken) {
         try {
-          const token = JSON.parse(storedToken);
-          if (token?.access_token) {
-            config.headers.Authorization = `Bearer ${token.access_token}`;
+          let accessToken: string | null = null;
+          try {
+            const token = JSON.parse(storedToken);
+            accessToken = typeof token === 'string' ? token : token?.access_token || token?.token;
+          } catch {
+            accessToken = storedToken;
+          }
+          if (accessToken) {
+            config.headers.Authorization = `Bearer ${accessToken}`;
           }
         } catch (e) {
-          // ignore json parse error
+          // ignore
         }
       }
     }
