@@ -137,8 +137,8 @@ export const requestsApi = {
     return response.data;
   },
 
-  getVillages: async (talukaId: number): Promise<Village[]> => {
-    const response = await apiClient.get('/api/villages', { params: { taluka_id: talukaId } });
+  getVillages: async (talukaId?: number, districtId?: number): Promise<Village[]> => {
+    const response = await apiClient.get('/api/villages', { params: { taluka_id: talukaId, district_id: districtId } });
     return response.data;
   },
 

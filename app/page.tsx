@@ -36,13 +36,21 @@ import { Logo } from '@/components/ui/Logo';
 
 export default function HomePage() {
   const router = useRouter();
-  const { isAuthenticated, initializeFromStorage } = useAuthStore();
+  const { isAuthenticated, user, logout, initializeFromStorage } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeHeroTab, setActiveHeroTab] = useState<'TIMELINE' | 'OCR' | 'IGR' | 'TSR'>('TIMELINE');
 
   useEffect(() => {
     initializeFromStorage();
   }, [initializeFromStorage]);
+
+  const userRole = user?.role?.toLowerCase() || '';
+  const isSuperAdmin = user?.is_admin || userRole.includes('admin') || user?.username === 'admin';
+  const isLegalUser = userRole.includes('legal');
+  const dashboardHref = isSuperAdmin ? '/admin' : isLegalUser ? '/legal' : '/branch';
+  const dashboardLabel = isSuperAdmin ? 'Admin Console' : isLegalUser ? 'Legal Scrutiny' : 'Branch Dashboard';
+  const displayName = user?.first_name ? `${user.first_name} ${user.last_name || ''}`.trim() : user?.username || (isSuperAdmin ? 'System Admin' : 'User');
+  const userInitial = user?.first_name?.[0] || user?.username?.[0]?.toUpperCase() || (isSuperAdmin ? 'A' : 'U');
 
   return (
     <div className="min-h-screen theme-canvas flex flex-col justify-between selection:bg-blue-600 selection:text-white">
@@ -63,19 +71,47 @@ export default function HomePage() {
 
         {/* CTA Buttons & Mobile Toggle */}
         <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
-          <Link
-            href="/login"
-            className="hidden sm:inline-flex px-3 sm:px-3.5 py-2 rounded-xl text-xs font-semibold theme-text-secondary hover:theme-text-primary hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/branch"
-            className="flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-blue-600/25 transition-all active:scale-95 whitespace-nowrap shrink-0"
-          >
-            <span>Launch Portal</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          {isAuthenticated ? (
+            <div className="flex items-center gap-2">
+              {/* Authenticated User Pill */}
+              <div className="hidden sm:flex items-center gap-2 px-2.5 py-1.5 rounded-xl theme-card border text-xs leading-tight">
+                <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-bold text-[10px] text-white shadow-xs">
+                  {userInitial}
+                </div>
+                <div className="text-left">
+                  <p className="font-semibold theme-text-primary truncate max-w-[110px]">{displayName}</p>
+                  <p className="text-[9px] text-slate-400 font-mono capitalize">
+                    {user?.role || (isSuperAdmin ? 'Admin' : 'Officer')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Primary Dashboard Link */}
+              <Link
+                href={dashboardHref}
+                className="flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-blue-600/25 transition-all active:scale-95 whitespace-nowrap shrink-0"
+              >
+                <span>{dashboardLabel}</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="hidden sm:inline-flex px-3 sm:px-3.5 py-2 rounded-xl text-xs font-semibold theme-text-secondary hover:theme-text-primary hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/login"
+                className="flex items-center gap-1 sm:gap-1.5 px-3 sm:px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-md shadow-blue-600/25 transition-all active:scale-95 whitespace-nowrap shrink-0"
+              >
+                <span>Launch Portal</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </>
+          )}
 
           {/* Mobile Menu Button */}
           <button
@@ -130,20 +166,40 @@ export default function HomePage() {
           </nav>
 
           <div className="pt-3 border-t theme-border flex items-center justify-between">
-            <Link
-              href="/login"
-              onClick={() => setMobileMenuOpen(false)}
-              className="text-xs font-bold text-blue-600 dark:text-blue-400"
-            >
-              Sign In to Account
-            </Link>
-            <Link
-              href="/requests/new"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold shadow-md"
-            >
-              New Title Request
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-blue-600 text-white font-bold text-xs flex items-center justify-center">
+                    {userInitial}
+                  </div>
+                  <span className="text-xs font-semibold theme-text-primary">{displayName}</span>
+                </div>
+                <Link
+                  href={dashboardHref}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold shadow-md"
+                >
+                  {dashboardLabel}
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-xs font-bold text-blue-600 dark:text-blue-400"
+                >
+                  Sign In to Account
+                </Link>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold shadow-md"
+                >
+                  Launch Portal
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

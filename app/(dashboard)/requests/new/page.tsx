@@ -16,6 +16,10 @@ import {
   ArrowRight,
   ArrowLeft,
   Sparkles,
+  Search,
+  RefreshCw,
+  Edit3,
+  Layers,
 } from 'lucide-react';
 import { DocumentTypesResponse, DelhiSRO, DelhiLocality, GeographicState, District, Taluka, Village } from '@/types/pms';
 
@@ -37,6 +41,10 @@ export default function NewRequestPage() {
     flatNumber: '',
     address: '',
     state: 'Maharashtra', // Default to Maharashtra
+    district_id: '',
+    district: 'Mumbai Suburban',
+    taluka_id: '',
+    taluka: '',
     city: 'Mumbai',
     village: '',
     pinCode: '',
@@ -65,6 +73,11 @@ export default function NewRequestPage() {
   const [villages, setVillages] = useState<Village[]>([]);
   const [delhiSros, setDelhiSros] = useState<DelhiSRO[]>([]);
   const [delhiLocalities, setDelhiLocalities] = useState<DelhiLocality[]>([]);
+
+  // Search & custom village toggle
+  const [villageSearch, setVillageSearch] = useState('');
+  const [isCustomVillage, setIsCustomVillage] = useState(false);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(false);
 
   // Fetch initial masters
   useEffect(() => {
@@ -95,12 +108,15 @@ export default function NewRequestPage() {
     loadMasters();
   }, []);
 
-  // When state changes to Delhi, fetch Delhi SROs
+  // When state changes to Delhi or Maharashtra
   useEffect(() => {
     if (formData.state === 'Delhi') {
       requestsApi
         .getDelhiSROs()
-        .then((sros) => setDelhiSros(sros))
+        .then((sros) => {
+          const arr = Array.isArray(sros) ? sros : (sros as any)?.data || [];
+          setDelhiSros(arr);
+        })
         .catch(() => {
           setDelhiSros([
             { sro_id: '95', sro_name: 'SR VI-A - Pitampura' },
@@ -108,18 +124,95 @@ export default function NewRequestPage() {
           ]);
         });
     } else if (formData.state === 'Maharashtra') {
+      setIsLoadingLocations(true);
       requestsApi
         .getDistricts()
-        .then((dist) => setDistricts(dist))
-        .catch(() => {
-          setDistricts([
-            { id: 1, district_name: 'Mumbai Suburban', state_id: 1 },
-            { id: 2, district_name: 'Pune', state_id: 1 },
-            { id: 3, district_name: 'Thane', state_id: 1 },
-          ]);
-        });
+        .then((dist) => {
+          const distList = Array.isArray(dist) ? dist : [];
+          setDistricts(distList);
+          // If a district is already set or default to first
+          const defaultDist = distList.find((d: any) => (d.district_name || d.name) === 'Mumbai Suburban') || distList[0];
+          if (defaultDist) {
+            const dName = (defaultDist as any).district_name || (defaultDist as any).name;
+            setFormData((prev) => ({
+              ...prev,
+              district_id: String(defaultDist.id),
+              district: dName,
+            }));
+            handleDistrictChange(String(defaultDist.id), dName);
+          }
+        })
+        .catch((err) => {
+          console.warn('Failed to load districts from API', err);
+        })
+        .finally(() => setIsLoadingLocations(false));
     }
   }, [formData.state]);
+
+  // Handle District Change
+  const handleDistrictChange = async (districtId: string, districtName?: string) => {
+    const selectedDist = districts.find((d) => String(d.id) === districtId);
+    const dName = districtName || (selectedDist as any)?.district_name || (selectedDist as any)?.name || '';
+
+    setFormData((prev) => ({
+      ...prev,
+      district_id: districtId,
+      district: dName,
+      taluka_id: '',
+      taluka: '',
+      village: '',
+      city: dName || prev.city,
+    }));
+    setVillageSearch('');
+
+    if (districtId) {
+      setIsLoadingLocations(true);
+      try {
+        const [talukaList, villageList] = await Promise.all([
+          requestsApi.getTalukas(Number(districtId)).catch(() => []),
+          requestsApi.getVillages(undefined, Number(districtId)).catch(() => []),
+        ]);
+        setTalukas(talukaList);
+        setVillages(villageList);
+      } catch (e) {
+        console.warn('Failed to load talukas/villages for district', e);
+      } finally {
+        setIsLoadingLocations(false);
+      }
+    } else {
+      setTalukas([]);
+      setVillages([]);
+    }
+  };
+
+  // Handle Taluka Change
+  const handleTalukaChange = async (talukaId: string) => {
+    const selectedTaluka = talukas.find((t) => String(t.id) === talukaId);
+    const tName = (selectedTaluka as any)?.taluka_name || (selectedTaluka as any)?.name || '';
+
+    setFormData((prev) => ({
+      ...prev,
+      taluka_id: talukaId,
+      taluka: tName,
+      village: '',
+    }));
+    setVillageSearch('');
+
+    if (talukaId) {
+      setIsLoadingLocations(true);
+      try {
+        const villageList = await requestsApi.getVillages(Number(talukaId)).catch(() => []);
+        setVillages(villageList);
+      } catch (e) {
+        console.warn('Failed to load villages for taluka', e);
+      } finally {
+        setIsLoadingLocations(false);
+      }
+    } else if (formData.district_id) {
+      // Fall back to district villages
+      requestsApi.getVillages(undefined, Number(formData.district_id)).then(setVillages).catch(() => []);
+    }
+  };
 
   // When Delhi SRO selected, fetch Localities
   useEffect(() => {
@@ -182,6 +275,8 @@ export default function NewRequestPage() {
         flatNumber: formData.flatNumber,
         address: formData.address,
         state: formData.state,
+        district: formData.district,
+        taluka: formData.taluka,
         city: formData.city,
         village: formData.village,
         pinCode: formData.pinCode,
@@ -411,7 +506,7 @@ export default function NewRequestPage() {
                     className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Select SRO</option>
-                    {delhiSros.map((s) => (
+                    {(Array.isArray(delhiSros) ? delhiSros : []).map((s) => (
                       <option key={s.sro_id} value={s.sro_id}>
                         {s.sro_name}
                       </option>
@@ -429,7 +524,7 @@ export default function NewRequestPage() {
                     className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
                     <option value="">Select Locality</option>
-                    {delhiLocalities.map((l, i) => (
+                    {(Array.isArray(delhiLocalities) ? delhiLocalities : []).map((l, i) => (
                       <option key={i} value={l.locality_name}>
                         {l.locality_name}
                       </option>
@@ -439,29 +534,156 @@ export default function NewRequestPage() {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold theme-text-secondary mb-1.5">District</label>
-                <select
-                  className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {districts.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.district_name}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* 1. District Dropdown */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold theme-text-secondary">
+                      District <span className="text-red-500">*</span>
+                    </label>
+                    <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400">
+                      {districts.length} Districts
+                    </span>
+                  </div>
+                  <select
+                    value={formData.district_id}
+                    onChange={(e) => handleDistrictChange(e.target.value)}
+                    className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">-- Select District --</option>
+                    {districts.map((d: any) => (
+                      <option key={d.id} value={d.id}>
+                        {d.district_name || d.name_en || d.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 2. Taluka Dropdown */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold theme-text-secondary">
+                      Taluka / Sub-District
+                    </label>
+                    <span className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400">
+                      {talukas.length > 0 ? `${talukas.length} Talukas` : 'Select District'}
+                    </span>
+                  </div>
+                  <select
+                    value={formData.taluka_id}
+                    onChange={(e) => handleTalukaChange(e.target.value)}
+                    disabled={!formData.district_id || talukas.length === 0}
+                    className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                  >
+                    <option value="">
+                      {talukas.length > 0 ? '-- Select Taluka --' : '-- No Taluka Split (Urban) --'}
                     </option>
-                  ))}
-                </select>
+                    {talukas.map((t: any) => (
+                      <option key={t.id} value={t.id}>
+                        {t.taluka_name || t.name_en || t.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 3. Village / Locality Dropdown & Switcher */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold theme-text-secondary">
+                      Village / Locality <span className="text-red-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomVillage(!isCustomVillage)}
+                      className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+                    >
+                      <Edit3 className="w-2.5 h-2.5" />
+                      <span>{isCustomVillage ? 'Choose from List' : 'Type Custom'}</span>
+                    </button>
+                  </div>
+
+                  {isCustomVillage ? (
+                    <input
+                      type="text"
+                      value={formData.village}
+                      onChange={(e) => setFormData({ ...formData, village: e.target.value })}
+                      placeholder="e.g. Borivali / Bandra East"
+                      className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <div className="space-y-1.5">
+                      <select
+                        value={formData.village}
+                        onChange={(e) => {
+                          const vName = e.target.value;
+                          const picked = villages.find((v: any) => (v.village_name || v.name_en || v.name) === vName);
+                          setFormData({
+                            ...formData,
+                            village: vName,
+                            pinCode: picked?.pincode || formData.pinCode,
+                          });
+                        }}
+                        disabled={villages.length === 0}
+                        className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                      >
+                        <option value="">
+                          {isLoadingLocations
+                            ? 'Loading villages...'
+                            : villages.length > 0
+                            ? `-- Select Village (${villages.length} available) --`
+                            : '-- Select District / Taluka first --'}
+                        </option>
+                        {(villageSearch.trim()
+                          ? villages.filter((v: any) =>
+                              (v.village_name || v.name_en || v.name || '')
+                                .toLowerCase()
+                                .includes(villageSearch.toLowerCase())
+                            )
+                          : villages.slice(0, 400)
+                        ).map((v: any, idx: number) => {
+                          const vName = v.village_name || v.name_en || v.name;
+                          return (
+                            <option key={`${v.id || idx}-${vName}`} value={vName}>
+                              {vName} {v.pincode ? `(${v.pincode})` : ''}
+                            </option>
+                          );
+                        })}
+                      </select>
+
+                      {/* Quick Filter Search Bar for Village Dropdown if many villages */}
+                      {villages.length > 15 && (
+                        <div className="relative">
+                          <Search className="w-3 h-3 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="text"
+                            value={villageSearch}
+                            onChange={(e) => setVillageSearch(e.target.value)}
+                            placeholder={`Filter ${villages.length} villages in dropdown...`}
+                            className="w-full bg-slate-100 dark:bg-slate-900 border theme-border rounded-lg pl-7 pr-2.5 py-1 text-[11px] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold theme-text-secondary mb-1.5">Village / Locality</label>
-                <input
-                  type="text"
-                  value={formData.village}
-                  onChange={(e) => setFormData({ ...formData, village: e.target.value })}
-                  placeholder="Borivali / Andheri"
-                  className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+              {/* Status info bar */}
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border theme-border flex items-center justify-between text-[11px] theme-text-secondary">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-3.5 h-3.5 text-blue-500" />
+                  <span>
+                    Selected: <strong>{formData.district || 'None'}</strong> &rarr;{' '}
+                    <strong>{formData.taluka || 'All'}</strong> &rarr;{' '}
+                    <strong className="text-blue-600 dark:text-blue-400">{formData.village || 'Not selected'}</strong>
+                  </span>
+                </div>
+                {isLoadingLocations && (
+                  <span className="inline-flex items-center gap-1 text-blue-600 animate-pulse text-[10px]">
+                    <RefreshCw className="w-3 h-3 animate-spin" /> Loading location data...
+                  </span>
+                )}
               </div>
             </div>
           )}
