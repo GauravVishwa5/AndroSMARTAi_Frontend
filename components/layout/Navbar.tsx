@@ -111,10 +111,24 @@ export function Navbar() {
 
       {/* Right Controls */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Active Branch Indicator (Desktop only) */}
+        {/* Active Context / Branch Indicator (Desktop only) */}
         <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl theme-card border text-xs text-slate-700 dark:text-slate-300 shadow-sm">
-          <Building2 className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
-          <span className="truncate max-w-[140px] lg:max-w-[200px]">Axis Bank &mdash; Andheri West</span>
+          {pathname.startsWith('/admin') ? (
+            <>
+              <Sparkles className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+              <span className="font-semibold text-indigo-600 dark:text-indigo-400">System Admin Console</span>
+            </>
+          ) : pathname.startsWith('/legal') ? (
+            <>
+              <Building2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+              <span className="font-semibold text-blue-600 dark:text-blue-400">Legal Scrutiny Cell</span>
+            </>
+          ) : (
+            <>
+              <Building2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+              <span className="truncate max-w-[140px] lg:max-w-[200px]">Axis Bank &mdash; Andheri West</span>
+            </>
+          )}
         </div>
 
         {/* Theme Toggle Button */}
@@ -142,14 +156,28 @@ export function Navbar() {
         {/* User Profile & Logout */}
         <div className="flex items-center gap-2 sm:gap-2.5 pl-2 sm:pl-3 border-l theme-border">
           <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-blue-500 flex items-center justify-center font-bold text-xs text-white shadow-md shadow-blue-500/20 shrink-0">
-            {user?.first_name ? user.first_name[0] : user?.username?.[0]?.toUpperCase() || 'U'}
+            {user?.first_name
+              ? user.first_name[0]
+              : user?.username?.toLowerCase().includes('admin') || pathname.startsWith('/admin')
+              ? 'A'
+              : user?.username?.[0]?.toUpperCase() || 'U'}
           </div>
           <div className="hidden lg:block text-left leading-tight">
             <p className="text-xs font-semibold theme-text-primary truncate max-w-[150px] xl:max-w-[200px]">
-              {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.username || 'Branch User'}
+              {user?.first_name
+                ? `${user.first_name} ${user.last_name || ''}`
+                : user?.username === 'admin' || pathname.startsWith('/admin')
+                ? 'System Administrator'
+                : user?.username || 'Branch Officer'}
             </p>
             <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate max-w-[150px]">
-              {user?.role || (user?.is_admin ? 'Super Admin' : 'Branch User')}
+              {user?.role
+                ? user.role
+                : pathname.startsWith('/admin') || user?.is_admin
+                ? 'Super Admin'
+                : pathname.startsWith('/legal')
+                ? 'Legal Panel Counsel'
+                : 'Branch Officer'}
             </p>
           </div>
 

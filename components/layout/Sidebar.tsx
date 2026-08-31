@@ -212,15 +212,29 @@ export function Sidebar() {
         <div className={`pt-2 border-t theme-border flex items-center ${isCollapsed ? 'justify-center flex-col gap-2' : 'justify-between gap-2'}`}>
           <div className="flex items-center gap-2 overflow-hidden">
             <div className="w-7 h-7 rounded-lg bg-blue-600/15 border border-blue-500/30 flex items-center justify-center font-bold text-xs text-blue-600 dark:text-blue-400 shrink-0">
-              {user?.first_name ? user.first_name[0] : user?.username?.[0]?.toUpperCase() || 'U'}
+              {user?.first_name
+                ? user.first_name[0]
+                : user?.username?.toLowerCase().includes('admin') || pathname.startsWith('/admin')
+                ? 'A'
+                : user?.username?.[0]?.toUpperCase() || 'U'}
             </div>
             {!isCollapsed && (
               <div className="overflow-hidden leading-tight text-left">
                 <p className="text-xs font-semibold theme-text-primary truncate">
-                  {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.username || 'Branch User'}
+                  {user?.first_name
+                    ? `${user.first_name} ${user.last_name || ''}`
+                    : user?.username === 'admin' || pathname.startsWith('/admin')
+                    ? 'System Admin'
+                    : user?.username || 'Branch Officer'}
                 </p>
                 <p className="text-[10px] text-slate-400 truncate">
-                  {user?.role || (user?.is_admin ? 'Admin' : 'Branch Officer')}
+                  {user?.role
+                    ? user.role
+                    : pathname.startsWith('/admin') || user?.is_admin
+                    ? 'Super Admin'
+                    : pathname.startsWith('/legal')
+                    ? 'Legal Counsel'
+                    : 'Branch Officer'}
                 </p>
               </div>
             )}

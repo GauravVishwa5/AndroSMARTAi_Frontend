@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import './globals.css';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 
@@ -30,7 +31,6 @@ export const viewport: Viewport = {
 
 const clientInitScript = `
 (function() {
-  // Theme initialization
   try {
     var stored = localStorage.getItem('andropvs_theme') || 'light';
     var resolved = stored;
@@ -42,12 +42,9 @@ const clientInitScript = `
     document.documentElement.setAttribute('data-theme', resolved);
   } catch (e) {}
 
-  // PWA Service Worker Registration
   if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
     window.addEventListener('load', function() {
-      navigator.serviceWorker.register('/sw.js').catch(function(err) {
-        console.warn('SW registration skipped:', err);
-      });
+      navigator.serviceWorker.register('/sw.js').catch(function() {});
     });
   }
 })();
@@ -61,10 +58,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="light" data-theme="light" suppressHydrationWarning>
       <head>
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <script dangerouslySetInnerHTML={{ __html: clientInitScript }} />
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: clientInitScript }}
+        />
       </head>
       <body className="theme-canvas min-h-screen antialiased selection:bg-blue-600 selection:text-white">
         <QueryProvider>{children}</QueryProvider>
@@ -72,3 +70,4 @@ export default function RootLayout({
     </html>
   );
 }
+
