@@ -121,6 +121,19 @@ export const requestsApi = {
     return response.data;
   },
 
+  // OCR Triggers & Retry
+  retryDocumentOcr: async (requestId: string, documentId: string) => {
+    const response = await apiClient.post(
+      `/api/request/${encodeURIComponent(requestId)}/documents/${encodeURIComponent(documentId)}/ocr`
+    );
+    return response.data;
+  },
+
+  retryAllOcr: async (requestId: string) => {
+    const response = await apiClient.post(`/api/request/${encodeURIComponent(requestId)}/retry-ocr-all`);
+    return response.data;
+  },
+
   // Geography & Masters
   getStates: async (): Promise<GeographicState[]> => {
     const response = await apiClient.get('/api/states');

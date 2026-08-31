@@ -1,6 +1,4 @@
-'use client';
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Download,
@@ -8,6 +6,7 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCw,
+  RefreshCw,
   Copy,
   Check,
   FileText,
@@ -17,7 +16,9 @@ import {
   Sparkles,
   Layers,
   AlertCircle,
+  Play,
 } from 'lucide-react';
+import { requestsApi } from '@/lib/api/requests';
 
 interface DocumentItem {
   id: string;
@@ -38,20 +39,35 @@ interface DocumentPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   document: DocumentItem | null;
+  requestId?: string;
   onDownload?: (doc: DocumentItem) => void;
+  onRetryOcr?: (doc: DocumentItem) => Promise<void> | void;
 }
 
 export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   isOpen,
   onClose,
   document: doc,
+  requestId,
   onDownload,
+  onRetryOcr,
 }) => {
   const [viewMode, setViewMode] = useState<'SPLIT' | 'PREVIEW_ONLY' | 'RAW_TEXT_ONLY'>('SPLIT');
   const [zoomLevel, setZoomLevel] = useState(100);
   const [rotation, setRotation] = useState(0);
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isRetryingOcr, setIsRetryingOcr] = useState(false);
+  const [localRawText, setLocalRawText] = useState<string>('');
+  const [localOcrStatus, setLocalOcrStatus] = useState<string>('');
+  const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (doc) {
+      setLocalRawText(doc.rawText || '');
+      setLocalOcrStatus(doc.ocrStatus || (doc.rawText ? 'done' : 'pending'));
+    }
+  }, [doc]);
 
   if (!isOpen || !doc) return null;
 
@@ -61,21 +77,51 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
     doc.fileUrl.toLowerCase().match(/\.(jpg|jpeg|png|webp)/);
 
   const handleCopyRawText = () => {
-    if (doc.rawText) {
-      navigator.clipboard.writeText(doc.rawText);
+    const textToCopy = localRawText || doc.rawText;
+    if (textToCopy) {
+      navigator.clipboard.writeText(textToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
-  const filteredRawText = () => {
-    if (!doc.rawText) return 'No OCR raw text available for this document yet.';
-    if (!searchQuery.trim()) return doc.rawText;
+  const currentRawText = localRawText || doc.rawText || '';
 
-    const lines = doc.rawText.split('\n');
+  const filteredRawText = () => {
+    if (!currentRawText) return 'No OCR raw text available for this document yet.';
+    if (!searchQuery.trim()) return currentRawText;
+
+    const lines = currentRawText.split('\n');
     return lines
       .filter((line) => line.toLowerCase().includes(searchQuery.toLowerCase()))
       .join('\n');
+  };
+
+  const handleTriggerOcr = async () => {
+    setIsRetryingOcr(true);
+    setFeedbackMsg(null);
+    try {
+      if (requestId) {
+        const res = await requestsApi.retryDocumentOcr(requestId, doc.id);
+        const extracted = res?.document?.raw_text || res?.document?.rawText || '';
+        if (extracted) {
+          setLocalRawText(extracted);
+          setLocalOcrStatus('done');
+          setFeedbackMsg('OCR extraction completed successfully!');
+        } else {
+          setFeedbackMsg('OCR extraction triggered.');
+        }
+      }
+      if (onRetryOcr) {
+        await onRetryOcr(doc);
+      }
+    } catch (err: any) {
+      console.error('Failed to trigger OCR:', err);
+      setFeedbackMsg(err?.response?.data?.detail || 'Failed to run OCR. Please try again.');
+    } finally {
+      setIsRetryingOcr(false);
+      setTimeout(() => setFeedbackMsg(null), 4000);
+    }
   };
 
   return (
@@ -88,35 +134,66 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               <FileText className="w-5 h-5" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-sm font-bold text-slate-900 dark:text-slate-100 truncate">{doc.name}</h2>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 shrink-0">
                   {doc.type}
                 </span>
-                {doc.ocrStatus && (
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
-                      doc.ocrStatus === 'done'
-                        ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30'
-                        : 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
-                    }`}
-                  >
-                    OCR {doc.ocrStatus.toUpperCase()}
-                  </span>
-                )}
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 flex items-center gap-1 ${
+                    localOcrStatus === 'done' || (currentRawText && currentRawText.length > 0)
+                      ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30'
+                      : isRetryingOcr
+                      ? 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30'
+                      : 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
+                  }`}
+                >
+                  {isRetryingOcr ? (
+                    <>
+                      <RefreshCw className="w-3 h-3 animate-spin" />
+                      <span>OCR RUNNING...</span>
+                    </>
+                  ) : localOcrStatus === 'done' || (currentRawText && currentRawText.length > 0) ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-500" />
+                      <span>OCR DONE</span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="w-3 h-3 text-amber-500" />
+                      <span>OCR PENDING</span>
+                    </>
+                  )}
+                </span>
               </div>
               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
-                {doc.ocrMeta?.char_count
+                {currentRawText
+                  ? `${currentRawText.length} characters extracted`
+                  : doc.ocrMeta?.char_count
                   ? `${doc.ocrMeta.char_count} characters extracted`
-                  : doc.rawText
-                  ? `${doc.rawText.length} characters extracted`
                   : 'Document preview & raw text inspection'}
+                {feedbackMsg && (
+                  <span className="ml-2 font-medium text-blue-600 dark:text-blue-400">
+                    • {feedbackMsg}
+                  </span>
+                )}
               </p>
             </div>
           </div>
 
           {/* Controls & Close */}
           <div className="flex items-center gap-2">
+            {/* Retry / Run OCR Button */}
+            <button
+              onClick={handleTriggerOcr}
+              disabled={isRetryingOcr}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm active:scale-95 transition-all disabled:opacity-50"
+              title="Run or retry OCR extraction on this document"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isRetryingOcr ? 'animate-spin' : ''}`} />
+              <span>{isRetryingOcr ? 'Extracting...' : currentRawText ? 'Retry OCR' : 'Run OCR'}</span>
+            </button>
+
             {/* View Mode Toggle */}
             <div className="hidden md:flex items-center p-0.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-xs font-semibold">
               <button
@@ -327,15 +404,27 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
 
               {/* Raw Text Content Box */}
               <div className="flex-1 p-4 overflow-auto bg-slate-50/50 dark:bg-slate-950/40 font-mono text-[11px] leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap select-text">
-                {doc.rawText ? (
+                {currentRawText ? (
                   filteredRawText()
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 space-y-2">
-                    <FileText className="w-8 h-8 opacity-40" />
-                    <p className="text-xs">No raw text extracted for this document yet.</p>
-                    <p className="text-[10px] text-slate-500">
-                      OCR extraction runs automatically when documents are uploaded.
-                    </p>
+                  <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 space-y-3">
+                    <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-500 border border-indigo-100 dark:border-indigo-900/50">
+                      <Sparkles className="w-8 h-8 opacity-80" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">No raw text extracted for this document yet.</p>
+                      <p className="text-[10px] text-slate-500 mt-0.5 max-w-xs">
+                        Click below to run OCR text extraction immediately using the OCR pipeline.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleTriggerOcr}
+                      disabled={isRetryingOcr}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md active:scale-95 transition-all disabled:opacity-50"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isRetryingOcr ? 'animate-spin' : ''}`} />
+                      <span>{isRetryingOcr ? 'Extracting OCR Text...' : 'Run OCR Extraction Now'}</span>
+                    </button>
                   </div>
                 )}
               </div>

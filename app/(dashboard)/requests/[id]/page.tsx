@@ -205,13 +205,45 @@ export default function RequestWorkspacePage() {
     }
   };
 
+  const [isRetryingOcr, setIsRetryingOcr] = useState(false);
+
+  const handleRetryOcr = async (docToRetry?: any) => {
+    setIsRetryingOcr(true);
+    try {
+      const docId = docToRetry?.id || currentDoc?.id;
+      if (docId) {
+        await requestsApi.retryDocumentOcr(requestId, docId);
+        setStatusFeedback({
+          type: 'success',
+          message: 'OCR extraction completed and document updated!',
+        });
+      } else {
+        await requestsApi.retryAllOcr(requestId);
+        setStatusFeedback({
+          type: 'success',
+          message: 'OCR executed for all documents!',
+        });
+      }
+      await loadDetails();
+      setTimeout(() => setStatusFeedback(null), 5000);
+    } catch (err: any) {
+      console.error('OCR trigger failed:', err);
+      setStatusFeedback({
+        type: 'error',
+        message: err?.response?.data?.detail || 'Failed to trigger OCR extraction',
+      });
+    } finally {
+      setIsRetryingOcr(false);
+    }
+  };
+
   const rawDocs = requestData?.documents;
   const docs = (Array.isArray(rawDocs) && rawDocs.length > 0) ? rawDocs.map((d: any, idx: number) => ({
     id: d.doc_id || `doc-${idx + 1}`,
     name: d.file_name || `Document_${idx + 1}.pdf`,
     type: d.document_type || d.type || 'Property Deed',
     status: (d.verification_status || 'clear') as 'clear' | 'rejected' | 'pending',
-    ocrStatus: d.ocr_status || 'done',
+    ocrStatus: d.ocr_status || (d.raw_text && d.raw_text.trim().length > 0 ? 'done' : 'pending'),
     date: d.uploaded_at || 'Recent',
     fileUrl: typeof d.file_url === 'string' ? d.file_url : (Array.isArray(d.file_url) ? d.file_url[0] : '#'),
     rawText: d.raw_text || d.full_text || '',
@@ -629,30 +661,42 @@ export default function RequestWorkspacePage() {
                     />
                   </div>
 
-                  <button
-                    onClick={() => {
-                      if (currentDoc.rawText) {
-                        navigator.clipboard.writeText(currentDoc.rawText);
-                        setCopiedRawText(true);
-                        setTimeout(() => setCopiedRawText(false), 2000);
-                      }
-                    }}
-                    disabled={!currentDoc.rawText}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border theme-border bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:border-blue-500 transition-all disabled:opacity-50 shrink-0"
-                    title="Copy full raw text"
-                  >
-                    {copiedRawText ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-500" />
-                        <span className="text-emerald-600 dark:text-emerald-400 text-[11px]">Copied!</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-3.5 h-3.5 text-slate-400" />
-                        <span className="text-[11px]">Copy</span>
-                      </>
-                    )}
-                  </button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <button
+                      onClick={() => handleRetryOcr(currentDoc)}
+                      disabled={isRetryingOcr}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all disabled:opacity-50 shadow-xs"
+                      title="Run or retry OCR on this document"
+                    >
+                      <RefreshCw className={`w-3 h-3 ${isRetryingOcr ? 'animate-spin' : ''}`} />
+                      <span className="text-[11px]">{isRetryingOcr ? 'OCR...' : currentDoc.rawText ? 'Retry OCR' : 'Run OCR'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (currentDoc.rawText) {
+                          navigator.clipboard.writeText(currentDoc.rawText);
+                          setCopiedRawText(true);
+                          setTimeout(() => setCopiedRawText(false), 2000);
+                        }
+                      }}
+                      disabled={!currentDoc.rawText}
+                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border theme-border bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:border-blue-500 transition-all disabled:opacity-50 shrink-0"
+                      title="Copy full raw text"
+                    >
+                      {copiedRawText ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 text-emerald-500" />
+                          <span className="text-emerald-600 dark:text-emerald-400 text-[11px]">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3.5 h-3.5 text-slate-400" />
+                          <span className="text-[11px]">Copy</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Raw Text Content */}
@@ -667,22 +711,36 @@ export default function RequestWorkspacePage() {
                       currentDoc.rawText
                     )
                   ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 space-y-2">
-                      <Sparkles className="w-8 h-8 opacity-40 text-indigo-400" />
-                      <p className="text-xs font-semibold theme-text-secondary">No Raw Text Extracted</p>
-                      <p className="text-[10px] text-slate-500">
-                        Raw text is extracted and stored in the database automatically during upload.
-                      </p>
-                      <button
-                        onClick={() => {
-                          setIsReuploadMode(true);
-                          setShowUploadModal(true);
-                        }}
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-blue-600 text-white text-[11px] font-semibold hover:bg-blue-500 transition-colors mt-2"
-                      >
-                        <RefreshCw className="w-3 h-3" />
-                        <span>Re-upload & OCR</span>
-                      </button>
+                    <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 space-y-3">
+                      <div className="p-2.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-500 border border-indigo-100 dark:border-indigo-900/50">
+                        <Sparkles className="w-6 h-6 opacity-80" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold theme-text-secondary">No Raw OCR Text Extracted</p>
+                        <p className="text-[10px] text-slate-500 mt-0.5">
+                          Click below to execute the OCR extraction pipeline on this document.
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 pt-1">
+                        <button
+                          onClick={() => handleRetryOcr(currentDoc)}
+                          disabled={isRetryingOcr}
+                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-500 transition-all disabled:opacity-50 shadow-sm"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${isRetryingOcr ? 'animate-spin' : ''}`} />
+                          <span>{isRetryingOcr ? 'Extracting OCR...' : 'Run OCR Extraction Now'}</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setIsReuploadMode(true);
+                            setShowUploadModal(true);
+                          }}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border theme-card text-xs font-semibold theme-text-secondary hover:theme-text-primary transition-colors"
+                        >
+                          <Upload className="w-3 h-3" />
+                          <span>Re-upload</span>
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1074,6 +1132,8 @@ export default function RequestWorkspacePage() {
         isOpen={showPreviewModal}
         onClose={() => setShowPreviewModal(false)}
         document={currentDoc}
+        requestId={requestId}
+        onRetryOcr={handleRetryOcr}
       />
     </div>
   );
