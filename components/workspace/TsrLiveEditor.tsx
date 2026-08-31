@@ -321,27 +321,27 @@ export const TsrLiveEditor: React.FC<TsrLiveEditorProps> = ({
   return (
     <div className="space-y-4 animate-fadeIn">
       {/* Top Header & Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-            <FileCheck2 className="w-5 h-5" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 sm:p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+            <FileCheck2 className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+            <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
               Title Search Report (TSR) & Legal Opinion Editor
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
               Draft, customize, and export institutional bank title search reports
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Bank Template Selector */}
           <select
             value={selectedBankTemplate}
             onChange={(e) => setSelectedBankTemplate(e.target.value)}
-            className="px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 sm:flex-none px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="Axis Bank Format">Axis Bank Format</option>
             <option value="State Bank of India (SBI)">State Bank of India (SBI)</option>
@@ -355,7 +355,7 @@ export const TsrLiveEditor: React.FC<TsrLiveEditorProps> = ({
           <button
             onClick={handleDownloadDocx}
             disabled={isDownloading}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold shadow-xs active:scale-95 transition-all disabled:opacity-50"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold shadow-xs active:scale-95 transition-all disabled:opacity-50"
             title="Download DOCX Report"
           >
             {isDownloading ? (
@@ -368,7 +368,7 @@ export const TsrLiveEditor: React.FC<TsrLiveEditorProps> = ({
 
           <button
             onClick={handlePrintPdf}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md active:scale-95 transition-all"
+            className="flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md active:scale-95 transition-all shrink-0"
             title="Print Official Legal Document as PDF"
           >
             <Printer className="w-3.5 h-3.5" />
@@ -380,52 +380,52 @@ export const TsrLiveEditor: React.FC<TsrLiveEditorProps> = ({
       {/* Live TSR Legal Document Canvas */}
       <form
         onSubmit={handleSaveDraft}
-        className="p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-5 text-xs leading-relaxed"
+        className="p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4 sm:space-y-5 text-xs leading-relaxed overflow-hidden"
       >
         {/* Document Official Header */}
         <div className="text-center border-b border-slate-200 dark:border-slate-800 pb-4 space-y-1">
-          <div className="inline-block px-3 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono font-bold text-[10px] uppercase tracking-wider mb-1">
+          <div className="inline-block px-3 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono font-bold text-[9px] sm:text-[10px] uppercase tracking-wider mb-1">
             CONFIDENTIAL LEGAL WORK PRODUCT &bull; {selectedBankTemplate}
           </div>
-          <h2 className="text-base font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide">
+          <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 uppercase tracking-wide">
             TITLE SEARCH REPORT & ADVOCATE OPINION ON TITLE
           </h2>
-          <p className="text-[11px] text-slate-500 font-mono">
+          <p className="text-[10px] sm:text-[11px] text-slate-500 font-mono">
             Report Ref No: TSR-2026-{requestId} &bull; SRO Search Period: {searchPeriod}
           </p>
         </div>
 
         {/* Particulars Card */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800">
           <div>
-            <span className="text-[10px] font-bold uppercase text-slate-400 block">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-400 block mb-0.5">
               Borrower / Mortgagor
             </span>
-            <p className="font-bold text-slate-900 dark:text-slate-100">{ownerName}</p>
+            <p className="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm">{effectiveOwner}</p>
           </div>
 
           <div>
-            <span className="text-[10px] font-bold uppercase text-slate-400 block">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-400 block mb-0.5">
               Lender Institution & Branch
             </span>
-            <p className="font-bold text-slate-900 dark:text-slate-100">{bankBranch}</p>
+            <p className="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm">{effectiveBank}</p>
           </div>
 
           <div>
-            <span className="text-[10px] font-bold uppercase text-slate-400 block">
+            <span className="text-[9px] sm:text-[10px] font-bold uppercase text-slate-400 block mb-0.5">
               Title Search Panel Advocate
             </span>
-            <p className="font-bold text-blue-600 dark:text-blue-400">{advocateName}</p>
+            <p className="font-bold text-blue-600 dark:text-blue-400 text-xs sm:text-sm">{advocateName}</p>
           </div>
         </div>
 
         {/* Section 1: Property Schedule */}
         <div className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <label className="font-bold text-slate-900 dark:text-slate-100">
+          <div className="flex flex-wrap items-center justify-between gap-1">
+            <label className="font-bold text-slate-900 dark:text-slate-100 text-xs">
               1. SCHEDULE OF THE PROPERTY (DESCRIPTION):
             </label>
-            <span className="text-[10px] text-slate-400 font-mono">Editable Clause</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-400 font-mono">Editable Clause</span>
           </div>
           <textarea
             rows={3}

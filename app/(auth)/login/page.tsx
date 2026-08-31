@@ -151,38 +151,6 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Quick Demo Access Buttons */}
-          <div className="p-3.5 rounded-xl theme-surface border space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-              ⚡ 1-Click Quick Demo Sign-In
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => executeLogin('demo.branch@andropvs.com', 'DemoUser@12345', '/branch')}
-                className="p-2 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/30 text-left transition-all group"
-              >
-                <p className="text-xs font-bold theme-text-primary group-hover:text-blue-600 dark:group-hover:text-blue-300">🏢 Branch</p>
-                <p className="text-[10px] theme-text-muted">Maker Intake</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => executeLogin('demo.legal@andropvs.com', 'DemoUser@12345', '/legal')}
-                className="p-2 rounded-lg bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/30 text-left transition-all group"
-              >
-                <p className="text-xs font-bold theme-text-primary group-hover:text-indigo-600 dark:group-hover:text-indigo-300">⚖️ Legal</p>
-                <p className="text-[10px] theme-text-muted">Scrutiny LSR</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => executeLogin('demo.admin@andropvs.com', 'DemoUser@12345', '/admin')}
-                className="p-2 rounded-lg bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 text-left transition-all group"
-              >
-                <p className="text-xs font-bold theme-text-primary group-hover:text-emerald-600 dark:group-hover:text-emerald-300">🛡️ Admin</p>
-                <p className="text-[10px] theme-text-muted">System Ops</p>
-              </button>
-            </div>
-          </div>
 
           {/* Error Alert */}
           {error && (

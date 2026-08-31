@@ -60,16 +60,16 @@ export function Logo({
       </div>
 
       {(showBadge || subtitle) && (
-        <div className="flex flex-col justify-center">
+        <div className="hidden sm:flex flex-col justify-center shrink-0">
           {showBadge && (
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 px-1.5 py-0.5 rounded font-mono">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 px-1.5 py-0.2 rounded font-mono whitespace-nowrap">
                 PVS v1.0
               </span>
             </div>
           )}
           {subtitle && (
-            <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+            <span className="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5 whitespace-nowrap hidden md:inline-block">
               {subtitle}
             </span>
           )}
