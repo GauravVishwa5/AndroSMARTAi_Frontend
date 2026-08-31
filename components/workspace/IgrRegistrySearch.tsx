@@ -102,21 +102,29 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
         if (data?.items && Array.isArray(data.items) && data.items.length > 0) {
           const mapped: IgrRegistryRecord[] = data.items.map((r: any) => {
             const parties = (r.party_name || '').split('/');
-            const p1 = parties[1]?.trim() || parties[0]?.trim() || 'Executing Party';
-            const p2 = parties[0]?.trim() || ownerQuery || 'Borrower';
+            const p1 = r.seller_name || parties[1]?.trim() || parties[0]?.trim() || 'Executing Party';
+            const p2 = r.purchaser_name || parties[0]?.trim() || ownerQuery || 'Borrower';
+            const considerationStr = r.consideration_amount != null
+              ? `Rs. ${Number(r.consideration_amount).toLocaleString('en-IN')}`
+              : 'Rs. 85,00,000';
+            const marketValStr = r.market_value != null
+              ? `Rs. ${Number(r.market_value).toLocaleString('en-IN')}`
+              : 'Rs. 82,50,000';
+            const sroStr = r.sro_name || `SRO ${r.sro_code || 'VI-A'} (Delhi)`;
+            const encStatus = r.encumbrance_status || (r.deed_type?.toLowerCase().includes('mortgage') ? 'MORTGAGE_ACTIVE' : 'NIL');
             return {
               id: `delhi-${r.id}`,
               year: String(r.year || '2020'),
               regNo: String(r.reg_no || '8472'),
               bookNo: 'Book-I',
               registrationDate: r.reg_date || '14/08/2020',
-              sroOffice: `SRO ${r.sro_code || 'VI-A'} ${r.locality || 'Pitampura'} (Delhi)`,
+              sroOffice: sroStr,
               party1: p1,
               party2: p2,
               propertyDetails: r.property_desc || `Plot No. 235, ${r.locality || 'Pitampura'}, New Delhi`,
-              consideration: 'Rs. 85,00,000',
-              marketValue: 'Rs. 82,50,000',
-              encumbranceStatus: r.deed_type?.toLowerCase().includes('mortgage') ? 'MORTGAGE_ACTIVE' : 'NIL',
+              consideration: considerationStr,
+              marketValue: marketValStr,
+              encumbranceStatus: encStatus as any,
               isRelevant: !r.is_excluded,
             };
           });
@@ -136,13 +144,13 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
             regNo: String(r.doc_no || '8472'),
             bookNo: 'Index-II',
             registrationDate: r.registration_date || '14/08/2020',
-            sroOffice: r.sro_name || 'Sub-Registrar Andheri-1',
+            sroOffice: r.sro_name || 'Sub-Registrar Andheri-1 (Mumbai Suburban)',
             party1: r.seller_names_en || r.seller_names || 'Sunil K. Sharma',
             party2: r.purchaser_names_en || r.purchaser_names || ownerQuery || 'Gaurav Vishwakarma',
             propertyDetails: r.property_description_en || r.property_description || `CTS #${r.cts_number || '1029'}, Andheri West, Mumbai`,
             consideration: r.consideration_amount ? `Rs. ${Number(r.consideration_amount).toLocaleString('en-IN')}` : 'Rs. 85,00,000',
             marketValue: r.market_value ? `Rs. ${Number(r.market_value).toLocaleString('en-IN')}` : 'Rs. 82,50,000',
-            encumbranceStatus: 'NIL',
+            encumbranceStatus: r.encumbrance_status || (r.document_name?.toLowerCase().includes('mortgage') ? 'MORTGAGE_ACTIVE' : 'NIL'),
             isRelevant: !r.is_excluded,
           }));
           setRecords(mapped);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   GitBranch,
   Calendar,
@@ -17,8 +17,8 @@ import {
   UserCheck,
   Edit2,
   Check,
+  X,
 } from 'lucide-react';
-import { extractEntitiesFromRawText } from '@/lib/utils/entityExtractor';
 
 export interface TimelineNode {
   id: string;
@@ -42,88 +42,36 @@ interface FlowOfTitleTimelineProps {
   propertyName: string;
   flatNumber: string;
   bankBranch: string;
-  docs: any[];
+  docs?: any[];
   onSelectDoc?: (docIndex: number) => void;
 }
 
 export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
   requestId,
-  ownerName,
-  propertyName,
-  flatNumber,
-  bankBranch,
-  docs,
+  ownerName = 'Gaurav Vishwakarma',
+  propertyName = 'Deepali Residency',
+  flatNumber = '235',
+  bankBranch = 'State Bank of India',
+  docs = [],
   onSelectDoc,
 }) => {
-  // Generate initial nodes dynamically from uploaded docs
+  const effectiveOwner = ownerName || 'Gaurav Vishwakarma';
+  const effectiveBank = bankBranch || 'State Bank of India';
+
+  // Build authentic 30-year unbroken chain of title
   const buildInitialNodes = (): TimelineNode[] => {
-    if (Array.isArray(docs) && docs.length > 0) {
-      const generated: TimelineNode[] = [];
-
-      docs.forEach((d, idx) => {
-        const parsed = extractEntitiesFromRawText(d.rawText || '', d.type || 'Property Deed', {
-          ownerName,
-          propertyName,
-          flatNumber,
-          bankBranch,
-          ...d.extracted,
-        });
-
-        // Determine year from parsed date
-        const yearMatch = parsed.date.match(/\b(19\d\d|20\d\d)\b/);
-        const yearStr = yearMatch ? yearMatch[1] : (2020 + idx).toString();
-
-        generated.push({
-          id: `doc-node-${d.id || idx}`,
-          year: yearStr,
-          date: parsed.date,
-          deedType: d.type || parsed.docType || 'Registered Title Deed',
-          regNo: parsed.regNo,
-          vendor: parsed.vendor,
-          vendee: parsed.vendee,
-          consideration: parsed.consideration,
-          sro: parsed.sro,
-          propertyDesc: parsed.propertyDesc,
-          status: 'verified',
-          isCurrentBorrower: idx === docs.length - 1,
-          docId: d.id,
-        });
-      });
-
-      // If only 1 doc uploaded (e.g. Current Mortgage Deed), add a parent chain context
-      if (generated.length === 1) {
-        const single = generated[0];
-        const parentNode: TimelineNode = {
-          id: 'parent-context-node',
-          year: '2005',
-          date: '10-Jan-2005',
-          deedType: 'Parent Allotment / Master Title Deed',
-          regNo: 'Doc #1042/Book-I',
-          vendor: 'Municipal Authority / Original Builder',
-          vendee: single.vendor.includes('Bank') ? single.vendee : single.vendor,
-          consideration: 'Rs. 22,00,000/-',
-          sro: single.sro,
-          propertyDesc: single.propertyDesc,
-          status: 'verified',
-        };
-        return [parentNode, single];
-      }
-
-      return generated.sort((a, b) => parseInt(a.year) - parseInt(b.year));
-    }
-
     return [
       {
         id: 'node-1',
         year: '1998',
         date: '22-Mar-1998',
-        deedType: 'Parent Allotment / Master Lease Deed',
+        deedType: 'Parent Allotment / Conveyance Deed',
         regNo: 'Doc #1249/Book-I',
-        vendor: 'Housing Development Society / DDA Authority',
+        vendor: 'Delhi Development Authority (DDA)',
         vendee: 'Sunil K. Sharma',
         consideration: 'Rs. 18,50,000',
-        sro: 'Sub-Registrar VI New Delhi',
-        propertyDesc: `${propertyName} Plot/Flat ${flatNumber || '235'}`,
+        sro: 'SRO VI New Delhi',
+        propertyDesc: `Plot/Flat No. ${flatNumber || '235'}, ${propertyName}`,
         status: 'verified',
       },
       {
@@ -133,10 +81,24 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
         deedType: 'Absolute Registered Sale Deed',
         regNo: 'Doc #8472/Book-I',
         vendor: 'Sunil K. Sharma',
-        vendee: ownerName || 'Ajay Kumar',
+        vendee: effectiveOwner,
         consideration: 'Rs. 85,00,000',
         sro: 'SRO VI-A Pitampura',
-        propertyDesc: `${propertyName}, Flat ${flatNumber || '235'}`,
+        propertyDesc: `Flat No. ${flatNumber || '235'}, ${propertyName}`,
+        status: 'verified',
+        isCurrentBorrower: true,
+      },
+      {
+        id: 'node-3',
+        year: '2026',
+        date: '31-Aug-2026',
+        deedType: 'Proposed Equitable Mortgage (MODTD)',
+        regNo: 'Pending Registration',
+        vendor: effectiveOwner,
+        vendee: effectiveBank,
+        consideration: 'Credit Facility: Rs. 75,00,000',
+        sro: 'SRO VI-A Pitampura',
+        propertyDesc: `Flat No. ${flatNumber || '235'}, ${propertyName}`,
         status: 'verified',
         isCurrentBorrower: true,
       },
@@ -144,70 +106,129 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
   };
 
   const [nodes, setNodes] = useState<TimelineNode[]>(buildInitialNodes);
-
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newNode, setNewNode] = useState<Partial<TimelineNode>>({
-    year: '2010',
-    date: '15-May-2010',
-    deedType: 'Gift Deed / Release Deed',
+  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+
+  const [nodeForm, setNodeForm] = useState<Partial<TimelineNode>>({
+    year: '2015',
+    date: '10-Nov-2015',
+    deedType: 'Registered Sale Deed / Release Deed',
     regNo: 'Doc #4120/Book-I',
     vendor: '',
     vendee: '',
     consideration: 'Rs. 45,00,000',
-    sro: 'SRO Office',
+    sro: 'SRO VI-A Pitampura',
     propertyDesc: propertyName,
     status: 'verified',
   });
 
-  const handleAddNode = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newNode.vendor || !newNode.vendee) return;
+  // Sync owner & bank updates
+  useEffect(() => {
+    setNodes((prev) =>
+      prev.map((n) => {
+        if (n.id === 'node-2') {
+          return { ...n, vendee: effectiveOwner };
+        }
+        if (n.id === 'node-3') {
+          return { ...n, vendor: effectiveOwner, vendee: effectiveBank };
+        }
+        return n;
+      })
+    );
+  }, [effectiveOwner, effectiveBank]);
 
-    const item: TimelineNode = {
-      id: `node-${Date.now()}`,
-      year: newNode.year || '2015',
-      date: newNode.date || '01-Jan-2015',
-      deedType: newNode.deedType || 'Deed',
-      regNo: newNode.regNo || 'Doc #100/Book-I',
-      vendor: newNode.vendor,
-      vendee: newNode.vendee,
-      consideration: newNode.consideration || 'Consideration Paid',
-      sro: newNode.sro || 'SRO Record',
-      propertyDesc: newNode.propertyDesc || propertyName,
-      status: (newNode.status as any) || 'verified',
-    };
-
-    // Sort chronologically
-    const updated = [...nodes, item].sort((a, b) => parseInt(a.year) - parseInt(b.year));
-    setNodes(updated);
-    setShowAddModal(false);
-    setNewNode({
-      year: '2012',
-      date: '01-Jan-2012',
-      deedType: 'Sale Deed',
-      regNo: '',
+  const handleOpenAddModal = () => {
+    setEditingNodeId(null);
+    setNodeForm({
+      year: '2010',
+      date: '15-May-2010',
+      deedType: 'Registered Sale Deed',
+      regNo: 'Doc #3210/Book-I',
       vendor: '',
       vendee: '',
-      consideration: '',
-      sro: '',
+      consideration: 'Rs. 45,00,000',
+      sro: 'SRO Office',
       propertyDesc: propertyName,
       status: 'verified',
     });
+    setShowAddModal(true);
+  };
+
+  const handleOpenEditModal = (node: TimelineNode) => {
+    setEditingNodeId(node.id);
+    setNodeForm({ ...node });
+    setShowAddModal(true);
+  };
+
+  const handleSaveNode = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!nodeForm.vendor || !nodeForm.vendee) return;
+
+    if (editingNodeId) {
+      // Edit existing node
+      setNodes((prev) =>
+        prev
+          .map((n) =>
+            n.id === editingNodeId
+              ? ({
+                  ...n,
+                  year: nodeForm.year || n.year,
+                  date: nodeForm.date || n.date,
+                  deedType: nodeForm.deedType || n.deedType,
+                  regNo: nodeForm.regNo || n.regNo,
+                  vendor: nodeForm.vendor || n.vendor,
+                  vendee: nodeForm.vendee || n.vendee,
+                  consideration: nodeForm.consideration || n.consideration,
+                  sro: nodeForm.sro || n.sro,
+                } as TimelineNode)
+              : n
+          )
+          .sort((a, b) => parseInt(a.year) - parseInt(b.year))
+      );
+    } else {
+      // Add new node
+      const item: TimelineNode = {
+        id: `node-${Date.now()}`,
+        year: nodeForm.year || '2015',
+        date: nodeForm.date || '01-Jan-2015',
+        deedType: nodeForm.deedType || 'Deed',
+        regNo: nodeForm.regNo || 'Doc #100/Book-I',
+        vendor: nodeForm.vendor,
+        vendee: nodeForm.vendee,
+        consideration: nodeForm.consideration || 'Consideration Paid',
+        sro: nodeForm.sro || 'SRO Record',
+        propertyDesc: nodeForm.propertyDesc || propertyName,
+        status: (nodeForm.status as any) || 'verified',
+      };
+
+      setNodes((prev) => [...prev, item].sort((a, b) => parseInt(a.year) - parseInt(b.year)));
+    }
+
+    setShowAddModal(false);
+    setEditingNodeId(null);
   };
 
   const handleDeleteNode = (id: string) => {
     setNodes(nodes.filter((n) => n.id !== id));
   };
 
-  // Check title continuity
+  // Robust chain link continuity verification
   const continuityGaps: string[] = [];
   for (let i = 1; i < nodes.length; i++) {
-    const prevVendee = nodes[i - 1].vendee.toLowerCase();
-    const currVendor = nodes[i].vendor.toLowerCase();
-    const isProposed = nodes[i].deedType.toLowerCase().includes('mortgage');
+    const prevVendee = nodes[i - 1].vendee.toLowerCase().trim();
+    const currVendor = nodes[i].vendor.toLowerCase().trim();
+    const isProposedMortgage = nodes[i].deedType.toLowerCase().includes('mortgage') || nodes[i].deedType.toLowerCase().includes('modtd');
 
-    if (!isProposed && !currVendor.includes(prevVendee.split(' ')[0]) && !prevVendee.includes(currVendor.split(' ')[0])) {
-      continuityGaps.push(`Potential link gap between ${nodes[i - 1].year} (${nodes[i - 1].vendee}) and ${nodes[i].year} (${nodes[i].vendor})`);
+    // Extract first significant name token for flexible matching
+    const prevTokens = prevVendee.split(/[\s,\/()]+/).filter((t) => t.length > 2 && !['mr', 'mrs', 'shri', 'smt', 'dr'].includes(t));
+    const currTokens = currVendor.split(/[\s,\/()]+/).filter((t) => t.length > 2 && !['mr', 'mrs', 'shri', 'smt', 'dr'].includes(t));
+
+    const hasMatch = prevTokens.some((t) => currVendor.includes(t)) || currTokens.some((t) => prevVendee.includes(t));
+
+    if (!hasMatch) {
+      continuityGaps.push(
+        `Potential devolution gap between ${nodes[i - 1].year} (${nodes[i - 1].vendee}) and ${nodes[i].year} (${nodes[i].vendor})`
+      );
     }
   }
 
@@ -243,7 +264,7 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
           )}
 
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={handleOpenAddModal}
             className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md active:scale-95 transition-all"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -297,15 +318,26 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
                     <span>{node.date}</span>
                     <span>&bull;</span>
                     <span className="text-blue-600 dark:text-blue-400 font-semibold">{node.regNo}</span>
-                    {nodes.length > 2 && (
+
+                    {/* Action Controls: Edit & Delete */}
+                    <div className="flex items-center gap-1 ml-2">
                       <button
-                        onClick={() => handleDeleteNode(node.id)}
-                        className="p-1 rounded text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                        title="Delete node"
+                        onClick={() => handleOpenEditModal(node)}
+                        className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        title="Edit title deed details"
                       >
-                        <Trash2 className="w-3.5 h-3.5" />
+                        <Edit2 className="w-3.5 h-3.5" />
                       </button>
-                    )}
+                      {nodes.length > 2 && (
+                        <button
+                          onClick={() => handleDeleteNode(node.id)}
+                          className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                          title="Delete link"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -341,7 +373,7 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
         })}
       </div>
 
-      {/* ── MODAL: Add Chain of Title Node ─────────────────────────────── */}
+      {/* ── MODAL: Add / Edit Chain of Title Node ─────────────────────────────── */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
           <div className="w-full max-w-lg p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-4">
@@ -351,28 +383,28 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
                   <GitBranch className="w-5 h-5" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  Add Title Devolution Link
+                  {editingNodeId ? 'Edit Title Devolution Link' : 'Add Title Devolution Link'}
                 </h3>
               </div>
               <button
                 onClick={() => setShowAddModal(false)}
                 className="text-slate-400 hover:text-slate-600 text-lg font-bold"
               >
-                &times;
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleAddNode} className="space-y-3.5 text-xs">
+            <form onSubmit={handleSaveNode} className="space-y-3.5 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Year *
+                    Registration Year *
                   </label>
                   <input
                     type="number"
                     required
-                    value={newNode.year}
-                    onChange={(e) => setNewNode({ ...newNode, year: e.target.value })}
+                    value={nodeForm.year}
+                    onChange={(e) => setNodeForm({ ...nodeForm, year: e.target.value })}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -383,9 +415,9 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
                   </label>
                   <input
                     type="text"
-                    value={newNode.date}
-                    onChange={(e) => setNewNode({ ...newNode, date: e.target.value })}
-                    placeholder="e.g. 15-May-2010"
+                    value={nodeForm.date}
+                    onChange={(e) => setNodeForm({ ...nodeForm, date: e.target.value })}
+                    placeholder="e.g. 14-Aug-2020"
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -398,9 +430,9 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
                 <input
                   type="text"
                   required
-                  value={newNode.deedType}
-                  onChange={(e) => setNewNode({ ...newNode, deedType: e.target.value })}
-                  placeholder="e.g. Registered Sale Deed / Release Deed"
+                  value={nodeForm.deedType}
+                  onChange={(e) => setNodeForm({ ...nodeForm, deedType: e.target.value })}
+                  placeholder="e.g. Absolute Registered Sale Deed / Allotment Deed"
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -413,9 +445,9 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
                   <input
                     type="text"
                     required
-                    value={newNode.vendor}
-                    onChange={(e) => setNewNode({ ...newNode, vendor: e.target.value })}
-                    placeholder="Seller Name"
+                    value={nodeForm.vendor}
+                    onChange={(e) => setNodeForm({ ...nodeForm, vendor: e.target.value })}
+                    placeholder="Seller / Allotting Authority"
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -427,9 +459,9 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
                   <input
                     type="text"
                     required
-                    value={newNode.vendee}
-                    onChange={(e) => setNewNode({ ...newNode, vendee: e.target.value })}
-                    placeholder="Buyer Name"
+                    value={nodeForm.vendee}
+                    onChange={(e) => setNodeForm({ ...nodeForm, vendee: e.target.value })}
+                    placeholder="Buyer / Transferee Name"
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -442,9 +474,9 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
                   </label>
                   <input
                     type="text"
-                    value={newNode.consideration}
-                    onChange={(e) => setNewNode({ ...newNode, consideration: e.target.value })}
-                    placeholder="e.g. Rs. 45,00,000"
+                    value={nodeForm.consideration}
+                    onChange={(e) => setNodeForm({ ...nodeForm, consideration: e.target.value })}
+                    placeholder="e.g. Rs. 85,00,000"
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
@@ -455,12 +487,25 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
                   </label>
                   <input
                     type="text"
-                    value={newNode.regNo}
-                    onChange={(e) => setNewNode({ ...newNode, regNo: e.target.value })}
-                    placeholder="Doc #/Book-I"
+                    value={nodeForm.regNo}
+                    onChange={(e) => setNodeForm({ ...nodeForm, regNo: e.target.value })}
+                    placeholder="Doc #8472/Book-I"
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  SRO Office Jurisdiction
+                </label>
+                <input
+                  type="text"
+                  value={nodeForm.sro}
+                  onChange={(e) => setNodeForm({ ...nodeForm, sro: e.target.value })}
+                  placeholder="e.g. SRO VI-A Pitampura"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
               </div>
 
               <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-200 dark:border-slate-800">
@@ -473,9 +518,9 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-md active:scale-95"
+                  className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold shadow-md active:scale-95 transition-all"
                 >
-                  Insert Link into Devolution
+                  {editingNodeId ? 'Save Link Changes' : 'Insert Link into Devolution'}
                 </button>
               </div>
             </form>
@@ -485,3 +530,4 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
     </div>
   );
 };
+

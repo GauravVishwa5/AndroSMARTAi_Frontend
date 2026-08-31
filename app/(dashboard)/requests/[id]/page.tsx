@@ -418,8 +418,8 @@ export default function RequestWorkspacePage() {
             onClick={() => setActiveTab('TSR_REPORT')}
             className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/25 transition-all active:scale-95 col-span-2 sm:col-span-1"
           >
-            <FileText className="w-4 h-4" />
-            <span>Generate TSR</span>
+            <FileCheck2 className="w-4 h-4" />
+            <span>View TSR Report</span>
           </button>
         </div>
       </div>
@@ -809,7 +809,7 @@ export default function RequestWorkspacePage() {
                 { id: 'IGR_SEARCH', shortLabel: 'IGR Search', label: 'IGR Registry Search', icon: Database },
                 { id: 'SITE_SURVEY', shortLabel: 'Site Survey', label: 'Field Site Survey', icon: Camera },
                 { id: 'DISCREPANCIES', shortLabel: 'Flags', label: 'Encumbrance Flags', icon: AlertTriangle },
-                { id: 'TSR_REPORT', shortLabel: 'TSR Editor', label: 'TSR / Live Editor', icon: FileCheck2 },
+                { id: 'TSR_REPORT', shortLabel: 'TSR Report', label: 'Title Search Report (TSR) & View Report', icon: FileCheck2 },
               ].map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;

@@ -12,7 +12,6 @@ import {
   ShieldAlert,
   PlusCircle,
   Sparkles,
-  Zap,
   X,
   LogOut,
   ChevronLeft,
@@ -184,30 +183,8 @@ export function Sidebar() {
         </nav>
       </div>
 
-      {/* Footer Area: AI Status & User / Logout */}
+      {/* Footer Area: User / Logout */}
       <div className="p-3 border-t theme-border space-y-2">
-        {!isCollapsed ? (
-          <div className="p-3 rounded-xl bg-gradient-to-br from-indigo-500/10 to-blue-500/5 dark:from-indigo-950/40 dark:to-slate-900/60 border border-indigo-500/20 flex items-start gap-3">
-            <div className="w-7 h-7 rounded-lg bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center shrink-0 text-indigo-600 dark:text-indigo-400 mt-0.5">
-              <Zap className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <p className="text-xs font-bold text-indigo-700 dark:text-indigo-200">AI Title Scrutiny</p>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
-              </div>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">GPT-4 Extraction Active</p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex justify-center" title="AI Title Scrutiny: Active">
-            <div className="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400 relative">
-              <Zap className="w-4 h-4" />
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            </div>
-          </div>
-        )}
-
         {/* User Card with Logout Button */}
         <div className={`pt-2 border-t theme-border flex items-center ${isCollapsed ? 'justify-center flex-col gap-2' : 'justify-between gap-2'}`}>
           <div className="flex items-center gap-2 overflow-hidden">
