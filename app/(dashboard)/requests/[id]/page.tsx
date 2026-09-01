@@ -50,6 +50,7 @@ import { IgrRegistrySearch } from '@/components/workspace/IgrRegistrySearch';
 import { FieldSiteSurvey } from '@/components/workspace/FieldSiteSurvey';
 import { EncumbranceFlags } from '@/components/workspace/EncumbranceFlags';
 import { TsrLiveEditor } from '@/components/workspace/TsrLiveEditor';
+import { DocumentViewer, ActiveHighlightEntity } from '@/components/workspace/DocumentViewer';
 import { requestsApi } from '@/lib/api/requests';
 
 export default function RequestWorkspacePage() {
@@ -60,6 +61,10 @@ export default function RequestWorkspacePage() {
   const [activeTab, setActiveTab] = useState<
     'TIMELINE' | 'EXTRACTED_OCR' | 'IGR_SEARCH' | 'SITE_SURVEY' | 'DISCREPANCIES' | 'TSR_REPORT'
   >('TIMELINE');
+
+  // Interactive Entity Highlighting State (Syncs OCR Grid <-> Document Viewer)
+  const [activeHighlightEntity, setActiveHighlightEntity] = useState<ActiveHighlightEntity | null>(null);
+  const [translatedEntitiesMap, setTranslatedEntitiesMap] = useState<{ [docId: string]: any }>({});
 
   // Request State
   const [requestData, setRequestData] = useState<any>(null);
@@ -602,86 +607,26 @@ export default function RequestWorkspacePage() {
 
           {/* Left Panel Body: Tab Content */}
           <div className="flex-1 p-3 bg-slate-100/70 dark:bg-slate-950/90 overflow-hidden flex flex-col min-h-[500px]">
-            {/* SUB-TAB 1: Real Interactive Document Previewer */}
+            {/* SUB-TAB 1: Real Interactive Document Previewer with OCR Highlighting */}
             {leftPanelTab === 'VIEWER' && (
-              <div className="flex-1 flex flex-col items-center justify-center overflow-auto p-1">
-                {currentDoc.fileUrl && currentDoc.fileUrl !== '#' ? (
-                  currentDoc.name.toLowerCase().endsWith('.pdf') ||
-                  currentDoc.fileUrl.toLowerCase().includes('.pdf') ? (
-                    <div
-                      style={{
-                        transform: `scale(${zoomLevel / 100}) rotate(${rotation}deg)`,
-                        transformOrigin: 'top center',
-                      }}
-                      className="w-full h-full min-h-[480px] transition-transform duration-200"
-                    >
-                      <iframe
-                        src={`${currentDoc.fileUrl}#toolbar=1&navpanes=0`}
-                        title={currentDoc.name}
-                        className="w-full h-full min-h-[500px] rounded-xl border theme-border bg-white shadow-md"
-                      />
-                    </div>
-                  ) : currentDoc.name.toLowerCase().match(/\.(jpg|jpeg|png|webp)$/) ||
-                    currentDoc.fileUrl.toLowerCase().match(/\.(jpg|jpeg|png|webp)/) ? (
-                    <div
-                      style={{
-                        transform: `scale(${zoomLevel / 100}) rotate(${rotation}deg)`,
-                        transformOrigin: 'center center',
-                      }}
-                      className="transition-transform duration-200 p-2"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={currentDoc.fileUrl}
-                        alt={currentDoc.name}
-                        className="max-h-[500px] max-w-full rounded-xl object-contain shadow-lg border theme-border"
-                      />
-                    </div>
-                  ) : (
-                    <div className="p-8 text-center space-y-3 theme-card rounded-2xl border shadow-sm max-w-sm">
-                      <FileText className="w-10 h-10 text-blue-500 mx-auto" />
-                      <h4 className="text-xs font-bold theme-text-primary">{currentDoc.name}</h4>
-                      <p className="text-[11px] theme-text-muted">Document uploaded to cloud storage</p>
-                      <div className="flex items-center justify-center gap-2 pt-2">
-                        <a
-                          href={currentDoc.fileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-colors"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                          <span>Open File</span>
-                        </a>
-                        <button
-                          onClick={() => setShowPreviewModal(true)}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-xl border theme-card text-xs font-semibold theme-text-primary hover:border-blue-500 transition-colors"
-                        >
-                          <Eye className="w-3.5 h-3.5 text-blue-500" />
-                          <span>Inspect Raw Text</span>
-                        </button>
-                      </div>
-                    </div>
-                  )
-                ) : (
-                  <div className="p-8 text-center space-y-3 theme-card rounded-2xl border shadow-sm max-w-sm">
-                    <FileSearch className="w-10 h-10 text-slate-400 mx-auto" />
-                    <h4 className="text-xs font-bold theme-text-primary">{currentDoc.name}</h4>
-                    <p className="text-[11px] theme-text-muted">
-                      No cloud URL attached yet. Upload the original scan to enable interactive PDF viewing.
-                    </p>
-                    <button
-                      onClick={() => {
-                        setIsReuploadMode(true);
-                        setShowUploadModal(true);
-                      }}
-                      className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-semibold shadow-sm hover:bg-blue-500 transition-colors"
-                    >
-                      <Upload className="w-3.5 h-3.5" />
-                      <span>Upload File</span>
-                    </button>
-                  </div>
-                )}
-              </div>
+              <DocumentViewer
+                doc={currentDoc}
+                activeHighlight={activeHighlightEntity}
+                onClearHighlight={() => setActiveHighlightEntity(null)}
+                onSelectEntityFromDoc={(key, value) => {
+                  setActiveHighlightEntity({ key, label: key, value });
+                }}
+                onOpenRawTextTab={() => setLeftPanelTab('RAW_TEXT')}
+                onDocumentTranslated={(transText, transEnts) => {
+                  const docKey = currentDoc?.id || (currentDoc as any)?.doc_id || `doc-${selectedDocIndex}`;
+                  if (transEnts) {
+                    setTranslatedEntitiesMap((prev) => ({ ...prev, [docKey]: transEnts }));
+                  }
+                  if (currentDoc) {
+                    (currentDoc as any).translated_text = transText;
+                  }
+                }}
+              />
             )}
 
             {/* SUB-TAB 2: Extracted Raw OCR Text Inspector */}
@@ -803,32 +748,84 @@ export default function RequestWorkspacePage() {
                 </div>
 
                 <div className="space-y-2.5 text-xs">
-                  <div className="p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/30">
+                  <div
+                    onClick={() =>
+                      setActiveHighlightEntity({
+                        key: 'vendor',
+                        label: 'Vendor (Transferor)',
+                        value: currentDoc.extracted?.vendor || 'State Bank of India',
+                      })
+                    }
+                    className={`p-2.5 rounded-xl cursor-pointer transition-all ${
+                      activeHighlightEntity?.key === 'vendor'
+                        ? 'bg-blue-500/20 border-2 border-blue-500 shadow-xs'
+                        : 'bg-blue-500/10 border border-blue-500/30 hover:border-blue-500'
+                    }`}
+                  >
                     <span className="text-[9px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-0.5">
                       Vendor (Transferor)
                     </span>
-                    <p className="font-semibold theme-text-primary">{currentDoc.extracted.vendor}</p>
+                    <p className="font-semibold theme-text-primary">{currentDoc.extracted?.vendor}</p>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                  <div
+                    onClick={() =>
+                      setActiveHighlightEntity({
+                        key: 'vendee',
+                        label: 'Vendee (Purchaser / Borrower)',
+                        value: currentDoc.extracted?.vendee || 'Mr. Rahul Sharma',
+                      })
+                    }
+                    className={`p-2.5 rounded-xl cursor-pointer transition-all ${
+                      activeHighlightEntity?.key === 'vendee'
+                        ? 'bg-emerald-500/20 border-2 border-emerald-500 shadow-xs'
+                        : 'bg-emerald-500/10 border border-emerald-500/30 hover:border-emerald-500'
+                    }`}
+                  >
                     <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block mb-0.5">
                       Vendee (Purchaser / Borrower)
                     </span>
-                    <p className="font-semibold theme-text-primary">{currentDoc.extracted.vendee}</p>
+                    <p className="font-semibold theme-text-primary">{currentDoc.extracted?.vendee}</p>
                   </div>
 
-                  <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                  <div
+                    onClick={() =>
+                      setActiveHighlightEntity({
+                        key: 'consideration',
+                        label: 'Consideration & Stamp Duty',
+                        value: currentDoc.extracted?.consideration || 'Rs. 75,00,000/-',
+                      })
+                    }
+                    className={`p-2.5 rounded-xl cursor-pointer transition-all ${
+                      activeHighlightEntity?.key === 'consideration'
+                        ? 'bg-amber-500/20 border-2 border-amber-500 shadow-xs'
+                        : 'bg-amber-500/10 border border-amber-500/30 hover:border-amber-500'
+                    }`}
+                  >
                     <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block mb-0.5">
                       Consideration & Stamp Duty
                     </span>
-                    <p className="font-semibold theme-text-primary">{currentDoc.extracted.consideration}</p>
+                    <p className="font-semibold theme-text-primary">{currentDoc.extracted?.consideration}</p>
                   </div>
 
-                  <div className="p-2.5 rounded-xl theme-surface border">
+                  <div
+                    onClick={() =>
+                      setActiveHighlightEntity({
+                        key: 'propertyDesc',
+                        label: 'Schedule Property Description',
+                        value: currentDoc.extracted?.propertyDesc || 'Flat No 402, 4th Floor',
+                      })
+                    }
+                    className={`p-2.5 rounded-xl theme-surface border cursor-pointer transition-all ${
+                      activeHighlightEntity?.key === 'propertyDesc'
+                        ? 'border-2 border-blue-500 shadow-xs'
+                        : 'hover:border-blue-400'
+                    }`}
+                  >
                     <span className="text-[9px] font-bold uppercase tracking-wider theme-text-secondary block mb-0.5">
                       Schedule Property Description
                     </span>
-                    <p className="text-[11px] leading-relaxed theme-text-primary">{currentDoc.extracted.propertyDesc}</p>
+                    <p className="text-[11px] leading-relaxed theme-text-primary">{currentDoc.extracted?.propertyDesc}</p>
                   </div>
                 </div>
               </div>
@@ -912,6 +909,20 @@ export default function RequestWorkspacePage() {
                 docs={docs}
                 selectedDocIndex={selectedDocIndex}
                 onSelectDoc={(idx) => setSelectedDocIndex(idx)}
+                selectedEntityKey={activeHighlightEntity?.key}
+                translatedEntities={
+                  translatedEntitiesMap[
+                    docs[selectedDocIndex]?.id ||
+                    (docs[selectedDocIndex] as any)?.doc_id ||
+                    `doc-${selectedDocIndex}`
+                  ]
+                }
+                onSelectEntity={(entity) => {
+                  setActiveHighlightEntity(entity);
+                  if (leftPanelTab !== 'VIEWER' && leftPanelTab !== 'RAW_TEXT') {
+                    setLeftPanelTab('VIEWER');
+                  }
+                }}
               />
             )}
 

@@ -167,4 +167,26 @@ export const requestsApi = {
     });
     return response.data?.items || (Array.isArray(response.data) ? response.data : []);
   },
+
+  // Document & Text Translation
+  translateText: async (text: string, sourceLang: string = 'auto', targetLang: string = 'en', docType?: string) => {
+    const response = await apiClient.post('/api/translate', {
+      text,
+      source_lang: sourceLang,
+      target_lang: targetLang,
+      doc_type: docType,
+    });
+    return response.data;
+  },
+
+  translateDocument: async (requestId: string, docId: string, sourceLang: string = 'auto', targetLang: string = 'en') => {
+    const response = await apiClient.post(
+      `/api/request/${encodeURIComponent(requestId)}/documents/${encodeURIComponent(docId)}/translate`,
+      null,
+      {
+        params: { source_lang: sourceLang, target_lang: targetLang },
+      }
+    );
+    return response.data;
+  },
 };
