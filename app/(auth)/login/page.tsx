@@ -48,6 +48,8 @@ export default function LoginPage() {
       } else {
         setError(res.message || 'Login failed. Please verify credentials.');
       }
+    } catch (err: any) {
+      console.error('Login error:', err);
       setError(
         err?.response?.data?.detail || err?.message || 'Authentication failed. Please check your email, password, and backend connection.'
       );
