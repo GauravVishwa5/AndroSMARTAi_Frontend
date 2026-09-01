@@ -1,9 +1,17 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+// If running in browser on HTTPS (e.g. Vercel) and backend is plain HTTP, use relative proxy to avoid Mixed Content block
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    if (window.location.protocol === 'https:' && process.env.NEXT_PUBLIC_API_URL?.startsWith('http://')) {
+      return ''; // Uses Next.js rewrites proxy automatically
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+};
 
 export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
