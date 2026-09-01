@@ -29,6 +29,7 @@ export interface User {
   is_sso_user?: boolean;
   sso_provider?: string | null;
   is_admin: boolean;
+  is_superuser?: boolean;
   organization_id?: string | null;
   department_id?: string | null;
   role_id?: string | null;

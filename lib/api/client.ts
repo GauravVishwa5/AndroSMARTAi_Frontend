@@ -1,13 +1,12 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-// If running in browser on HTTPS (e.g. Vercel) and backend is plain HTTP, use relative proxy to avoid Mixed Content block
+// Route all browser requests through Next.js server proxy (prevents CORS and mixed content)
 const getBaseUrl = () => {
   if (typeof window !== 'undefined') {
-    if (window.location.protocol === 'https:' && process.env.NEXT_PUBLIC_API_URL?.startsWith('http://')) {
-      return ''; // Uses Next.js rewrites proxy automatically
-    }
+    return ''; // In browser, relative URLs '/api/...' automatically use Next.js rewrites proxy
   }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+  const rawUrl = process.env.BACKEND_INTERNAL_URL || process.env.NEXT_PUBLIC_API_URL || 'http://18.212.228.237:8000';
+  return rawUrl.replace(/\/+$/, '');
 };
 
 export const apiClient = axios.create({

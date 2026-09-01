@@ -53,8 +53,7 @@ export function Logo({
           alt="AndroSMARTAi Logo"
           width={dimensions.width}
           height={dimensions.height}
-          style={{ width: 'auto', height: `${dimensions.height}px` }}
-          className="object-contain transition-transform duration-200 hover:scale-[1.02]"
+          className="w-auto h-auto object-contain transition-transform duration-200 hover:scale-[1.02]"
           priority
         />
       </div>
