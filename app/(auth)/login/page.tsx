@@ -48,32 +48,8 @@ export default function LoginPage() {
       } else {
         setError(res.message || 'Login failed. Please verify credentials.');
       }
-    } catch (err: any) {
-      console.error('Login error:', err);
-      // If error or network problem, allow demo bypass for local development
-      if (targetEmail.includes('demo.') || targetEmail.includes('andropvs.com')) {
-        const dummyUser = {
-          id: 'c0000000-0000-0000-0000-000000000002',
-          username: targetEmail.split('@')[0],
-          email: targetEmail,
-          first_name: targetEmail.includes('branch') ? 'Branch' : targetEmail.includes('legal') ? 'Legal' : 'Admin',
-          last_name: 'User',
-          role: targetEmail.includes('branch') ? 'Branch User' : targetEmail.includes('legal') ? 'Legal Investigator' : 'Super Admin',
-          is_admin: targetEmail.includes('admin'),
-          is_active: true,
-        };
-        const dummyToken = {
-          access_token: 'demo-local-jwt-token',
-          token_type: 'bearer',
-          user_id: dummyUser.id,
-          expires_in: 86400,
-        };
-        setAuth(dummyUser as any, dummyToken as any, {});
-        window.location.href = targetEmail.includes('legal') ? '/legal' : targetEmail.includes('admin') ? '/admin' : '/branch';
-        return;
-      }
       setError(
-        err?.response?.data?.detail || 'Authentication failed. Please check your email and password.'
+        err?.response?.data?.detail || err?.message || 'Authentication failed. Please check your email, password, and backend connection.'
       );
     } finally {
       setIsLoading(false);
