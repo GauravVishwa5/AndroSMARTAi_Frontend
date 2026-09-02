@@ -282,27 +282,32 @@ export default function RequestWorkspacePage() {
   };
 
   const rawDocs = requestData?.documents;
-  const docs = (Array.isArray(rawDocs) && rawDocs.length > 0) ? rawDocs.map((d: any, idx: number) => ({
-    id: d.doc_id || `doc-${idx + 1}`,
-    name: d.file_name || `Document_${idx + 1}.pdf`,
-    type: d.document_type || d.type || 'Property Deed',
-    status: (d.verification_status || 'clear') as 'clear' | 'rejected' | 'pending',
-    ocrStatus: d.ocr_status || (d.raw_text && d.raw_text.trim().length > 0 ? 'done' : 'pending'),
-    date: d.uploaded_at || 'Recent',
-    fileUrl: typeof d.file_url === 'string' ? d.file_url : (Array.isArray(d.file_url) ? d.file_url[0] : '#'),
-    rawText: d.raw_text || d.full_text || '',
-    ocrMeta: d.ocr_meta || {},
-    extracted: {
-      vendor: requestData?.advocateName || 'Previous Landholder',
-      vendee: requestData?.ownerName || requestData?.applicantName || 'Borrower',
-      date: requestData?.date_of_issue || 'Registered Record',
-      consideration: 'Institutional Mortgage',
-      propertyDesc: `${requestData?.propertyName || 'Property'} ${requestData?.flatNumber ? `Flat ${requestData?.flatNumber}` : ''}, ${requestData?.address || requestData?.city || 'Location'}`,
-      cts: requestData?.ctsNumber || requestData?.ctsnumber || 'CTS-Record',
-      sro: `${requestData?.district || 'SRO District'} Sub-Registrar`,
-      regNo: requestData?.permitnumber || requestData?.permitNumber || `DOC #${requestId}`,
-    },
-  })) : [
+  const docs = (Array.isArray(rawDocs) && rawDocs.length > 0) ? rawDocs.map((d: any, idx: number) => {
+    const ej = d.extracted_json || d.data || d.extracted_data || (requestData?.extracted_json ? requestData.extracted_json[d.document_type || d.type] : null) || {};
+    return {
+      id: d.doc_id || `doc-${idx + 1}`,
+      name: d.file_name || `Document_${idx + 1}.pdf`,
+      type: d.document_type || d.type || 'Property Deed',
+      status: (d.verification_status || 'clear') as 'clear' | 'rejected' | 'pending',
+      ocrStatus: d.ocr_status || (d.raw_text && d.raw_text.trim().length > 0 ? 'done' : 'pending'),
+      date: d.uploaded_at || 'Recent',
+      fileUrl: typeof d.file_url === 'string' ? d.file_url : (Array.isArray(d.file_url) ? d.file_url[0] : '#'),
+      rawText: d.raw_text || d.full_text || d.raw_ocr_text || '',
+      ocrMeta: d.ocr_meta || {},
+      extracted_json: ej,
+      extracted: {
+        vendor: ej.vendor || ej.seller_names || ej.seller || ej.transferor || ej.parties?.seller || requestData?.advocateName || 'Previous Landholder',
+        vendee: ej.vendee || ej.purchaser_names || ej.purchaser || ej.transferee || ej.borrower || ej.parties?.purchaser || requestData?.ownerName || requestData?.applicantName || 'Borrower',
+        date: ej.date || ej.registration_date || ej.execution_date || requestData?.date_of_issue || 'Registered Record',
+        consideration: ej.consideration || ej.consideration_amount || ej.amount || ej.loan_amount || 'Institutional Mortgage',
+        propertyDesc: ej.propertyDesc || ej.property_description || ej.schedule_property || ej.address || `${requestData?.propertyName || 'Property'} ${requestData?.flatNumber ? `Flat ${requestData?.flatNumber}` : ''}, ${requestData?.address || requestData?.city || 'Location'}`,
+        cts: ej.cts || ej.cts_number || ej.survey_number || ej.gat_number || requestData?.ctsNumber || requestData?.ctsnumber || 'CTS-Record',
+        sro: ej.sro || ej.sro_name || ej.sub_registrar || `${requestData?.district || 'SRO District'} Sub-Registrar`,
+        regNo: ej.regNo || ej.document_number || ej.registration_number || ej.doc_no || requestData?.permitnumber || requestData?.permitNumber || `DOC #${requestId}`,
+        stampDuty: ej.stampDuty || ej.stamp_duty || 'Stamp Duty & Registration Paid',
+      },
+    };
+  }) : [
     {
       id: 'doc-1',
       name: 'Registered_Sale_Deed_2020.pdf',

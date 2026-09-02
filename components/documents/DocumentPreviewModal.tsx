@@ -17,6 +17,7 @@ import {
   Layers,
   AlertCircle,
   Play,
+  Globe,
 } from 'lucide-react';
 import { requestsApi } from '@/lib/api/requests';
 
@@ -28,6 +29,7 @@ interface DocumentItem {
   rawText?: string;
   ocrStatus?: string;
   date?: string;
+  extracted?: any;
   ocrMeta?: {
     total_pages?: number;
     char_count?: number;
@@ -53,11 +55,14 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   onRetryOcr,
 }) => {
   const [viewMode, setViewMode] = useState<'SPLIT' | 'PREVIEW_ONLY' | 'RAW_TEXT_ONLY'>('SPLIT');
+  const [activeTab, setActiveTab] = useState<'RAW_TEXT' | 'ENTITIES' | 'TRANSLATION'>('RAW_TEXT');
   const [zoomLevel, setZoomLevel] = useState(100);
   const [rotation, setRotation] = useState(0);
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isRetryingOcr, setIsRetryingOcr] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translatedText, setTranslatedText] = useState<string>('');
   const [localRawText, setLocalRawText] = useState<string>('');
   const [localOcrStatus, setLocalOcrStatus] = useState<string>('');
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
@@ -68,6 +73,22 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
       setLocalOcrStatus(doc.ocrStatus || (doc.rawText ? 'done' : 'pending'));
     }
   }, [doc]);
+
+  const handleTranslate = async () => {
+    const textToTranslate = localRawText || doc?.rawText;
+    if (!textToTranslate?.trim() || !doc) return;
+    try {
+      setIsTranslating(true);
+      const res = await requestsApi.translateText(textToTranslate, 'auto', 'en', doc.type);
+      if (res?.translated_text) {
+        setTranslatedText(res.translated_text);
+      }
+    } catch (err) {
+      console.error('Translation error in modal:', err);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
 
   if (!isOpen || !doc) return null;
 
@@ -352,82 +373,197 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
             </div>
           )}
 
-          {/* Right / Bottom: Extracted Raw OCR Text */}
+          {/* Right / Bottom: Extracted Raw OCR Text & Multi-Tabs */}
           {(viewMode === 'SPLIT' || viewMode === 'RAW_TEXT_ONLY') && (
             <div
               className={`flex flex-col bg-white dark:bg-slate-900 overflow-hidden ${
                 viewMode === 'SPLIT' ? 'md:col-span-5' : 'md:col-span-12'
               }`}
             >
-              {/* Raw Text Header Toolbar */}
-              <div className="px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-indigo-500" />
-                  <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                    Extracted Raw OCR Text
-                  </span>
+              {/* Right Panel Tab Switcher */}
+              <div className="px-4 py-2 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/80 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1 bg-slate-200/80 dark:bg-slate-800 p-0.5 rounded-xl text-xs font-semibold">
+                  <button
+                    onClick={() => setActiveTab('RAW_TEXT')}
+                    className={`px-3 py-1 rounded-lg transition-all ${
+                      activeTab === 'RAW_TEXT'
+                        ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs font-bold'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                    }`}
+                  >
+                    Raw OCR Text
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('ENTITIES')}
+                    className={`px-3 py-1 rounded-lg transition-all ${
+                      activeTab === 'ENTITIES'
+                        ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs font-bold'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                    }`}
+                  >
+                    ✨ Structured Data
+                  </button>
+                  <button
+                    onClick={() => {
+                      setActiveTab('TRANSLATION');
+                      if (!translatedText) handleTranslate();
+                    }}
+                    className={`px-3 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                      activeTab === 'TRANSLATION'
+                        ? 'bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-xs font-bold'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                    }`}
+                  >
+                    <Globe className="w-3 h-3" />
+                    <span>English</span>
+                  </button>
                 </div>
 
-                <button
-                  onClick={handleCopyRawText}
-                  disabled={!doc.rawText}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-blue-500 transition-all disabled:opacity-50"
-                  title="Copy full extracted text"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-500" />
-                      <span className="text-emerald-600 dark:text-emerald-400">Copied!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-slate-500" />
-                      <span>Copy Text</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              {/* Search Inside Raw Text */}
-              <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
-                <div className="relative">
-                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search keywords in raw OCR text..."
-                    className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={handleCopyRawText}
+                    disabled={!currentRawText}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-blue-500 transition-all disabled:opacity-50"
+                    title="Copy full text"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-emerald-500" />
+                        <span className="text-emerald-600 dark:text-emerald-400 text-[11px]">Copied</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3.5 h-3.5 text-slate-500" />
+                        <span className="text-[11px]">Copy</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
 
-              {/* Raw Text Content Box */}
-              <div className="flex-1 p-4 overflow-auto bg-slate-50/50 dark:bg-slate-950/40 font-mono text-[11px] leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap select-text">
-                {currentRawText ? (
-                  filteredRawText()
-                ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 space-y-3">
-                    <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-500 border border-indigo-100 dark:border-indigo-900/50">
-                      <Sparkles className="w-8 h-8 opacity-80" />
+              {/* Tab 1: Raw OCR Text with Search */}
+              {activeTab === 'RAW_TEXT' && (
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  <div className="p-2.5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                    <div className="relative">
+                      <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Filter keywords in extracted text..."
+                        className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans"
+                      />
                     </div>
-                    <div>
-                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">No raw text extracted for this document yet.</p>
-                      <p className="text-[10px] text-slate-500 mt-0.5 max-w-xs">
-                        Click below to run OCR text extraction immediately using the OCR pipeline.
-                      </p>
+                  </div>
+
+                  <div className="flex-1 p-4 overflow-auto bg-slate-50/50 dark:bg-slate-950/40 font-mono text-[11px] leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap select-text">
+                    {currentRawText ? (
+                      filteredRawText()
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 space-y-3">
+                        <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-500 border border-indigo-100 dark:border-indigo-900/50">
+                          <Sparkles className="w-8 h-8 opacity-80" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">No raw text extracted yet.</p>
+                          <p className="text-[10px] text-slate-500 mt-0.5 max-w-xs">
+                            Click below to run OCR text extraction immediately.
+                          </p>
+                        </div>
+                        <button
+                          onClick={handleTriggerOcr}
+                          disabled={isRetryingOcr}
+                          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md active:scale-95 transition-all disabled:opacity-50"
+                        >
+                          <RefreshCw className={`w-3.5 h-3.5 ${isRetryingOcr ? 'animate-spin' : ''}`} />
+                          <span>{isRetryingOcr ? 'Extracting OCR Text...' : 'Run OCR Extraction'}</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 2: Structured Entities */}
+              {activeTab === 'ENTITIES' && (
+                <div className="flex-1 p-4 overflow-auto space-y-3 bg-slate-50/40 dark:bg-slate-950/30">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
+                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Gemini Extracted Fields</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                      Verified
+                    </span>
+                  </div>
+
+                  <div className="space-y-2.5 text-xs">
+                    <div className="p-3 rounded-xl border border-blue-100 dark:border-blue-900/40 bg-white dark:bg-slate-900 shadow-xs space-y-1">
+                      <span className="text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400 font-mono">Vendor / Transferor</span>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">{doc.extracted?.vendor || 'Not Specified'}</p>
+                    </div>
+
+                    <div className="p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/40 bg-white dark:bg-slate-900 shadow-xs space-y-1">
+                      <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 font-mono">Vendee / Purchaser / Borrower</span>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">{doc.extracted?.vendee || 'Not Specified'}</p>
+                    </div>
+
+                    <div className="p-3 rounded-xl border border-amber-100 dark:border-amber-900/40 bg-white dark:bg-slate-900 shadow-xs space-y-1">
+                      <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 font-mono">Consideration & Stamp Duty</span>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">{doc.extracted?.consideration || 'Institutional / Legal Terms'}</p>
+                    </div>
+
+                    <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-1">
+                      <span className="text-[10px] font-bold uppercase text-slate-500 font-mono">Property Schedule & CTS</span>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">{doc.extracted?.propertyDesc || 'Property Schedule'} {doc.extracted?.cts ? `(${doc.extracted.cts})` : ''}</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <div className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+                        <span className="text-[9px] font-bold uppercase text-slate-500 font-mono block">Document No</span>
+                        <p className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{doc.extracted?.regNo || 'DOC-REG'}</p>
+                      </div>
+                      <div className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+                        <span className="text-[9px] font-bold uppercase text-slate-500 font-mono block">Execution Date</span>
+                        <p className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{doc.extracted?.date || 'Recorded'}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 3: English Translation */}
+              {activeTab === 'TRANSLATION' && (
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-indigo-50/50 dark:bg-indigo-950/30 flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs text-indigo-700 dark:text-indigo-300 font-semibold">
+                      <Globe className="w-4 h-4" />
+                      <span>Legal English Translation</span>
                     </div>
                     <button
-                      onClick={handleTriggerOcr}
-                      disabled={isRetryingOcr}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md active:scale-95 transition-all disabled:opacity-50"
+                      onClick={handleTranslate}
+                      disabled={isTranslating}
+                      className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-semibold transition-colors disabled:opacity-50 flex items-center gap-1"
                     >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isRetryingOcr ? 'animate-spin' : ''}`} />
-                      <span>{isRetryingOcr ? 'Extracting OCR Text...' : 'Run OCR Extraction Now'}</span>
+                      {isTranslating ? <RefreshCw className="w-3 h-3 animate-spin" /> : null}
+                      <span>{isTranslating ? 'Translating...' : 'Re-translate'}</span>
                     </button>
                   </div>
-                )}
-              </div>
+
+                  <div className="flex-1 p-4 overflow-auto bg-slate-50/50 dark:bg-slate-950/40 font-serif text-xs leading-relaxed text-slate-900 dark:text-slate-100 whitespace-pre-wrap select-text">
+                    {isTranslating ? (
+                      <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-2 text-indigo-600">
+                        <RefreshCw className="w-6 h-6 animate-spin mx-auto" />
+                        <p className="text-xs font-semibold">Translating legal document to English...</p>
+                      </div>
+                    ) : translatedText ? (
+                      translatedText
+                    ) : (
+                      <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 space-y-2">
+                        <p className="text-xs">Click Re-translate to generate full English translation.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

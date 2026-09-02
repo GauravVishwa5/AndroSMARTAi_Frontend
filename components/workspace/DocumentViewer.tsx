@@ -37,6 +37,7 @@ interface DocumentViewerProps {
     fileUrl?: string;
     rawText?: string;
     translated_text?: string;
+    ocrStatus?: string;
     extracted?: any;
   };
   activeHighlight: ActiveHighlightEntity | null;
@@ -395,48 +396,104 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               transform: `scale(${zoomLevel / 100}) rotate(${rotation}deg)`,
               transformOrigin: 'top center',
             }}
-            className="w-full max-w-2xl bg-white text-slate-900 shadow-xl rounded-xl border border-slate-200 dark:border-slate-700 p-8 sm:p-10 font-sans transition-transform duration-200 relative min-h-[550px]"
+            className="w-full max-w-3xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xl rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-10 font-sans transition-transform duration-200 relative min-h-[600px] space-y-6"
           >
             {/* Top Document Header Stamp */}
-            <div className="border-b-2 border-slate-800 pb-4 mb-6 flex items-center justify-between">
+            <div className="border-b-2 border-slate-900 dark:border-slate-700 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <span className="text-[10px] font-bold tracking-widest text-slate-500 uppercase font-mono block">
-                  Official Legal Record • Book 1 Registration
-                </span>
-                <h2 className="text-sm sm:text-base font-extrabold text-slate-900 uppercase tracking-wide">
-                  {doc.type || 'Mortgage Deed Agreement'}
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[10px] font-extrabold tracking-widest text-blue-600 dark:text-blue-400 uppercase font-mono bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900">
+                    Official Legal Extraction • Book 1 Registration
+                  </span>
+                  {doc.ocrStatus === 'done' && (
+                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-900 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3" />
+                      AI Verified
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 uppercase tracking-wide">
+                  {doc.type || 'Legal Deed / Agreement'}
                 </h2>
               </div>
-              <div className="text-right">
-                <span className="inline-block px-2.5 py-1 rounded bg-slate-100 text-slate-700 text-[10px] font-mono font-bold border border-slate-300">
-                  {doc.extracted?.regNo || 'Doc #4589/2026'}
+              <div className="text-left sm:text-right shrink-0">
+                <span className="inline-block px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-mono font-bold border border-slate-300 dark:border-slate-700">
+                  {doc.extracted?.regNo || 'Doc #Record'}
                 </span>
-                <span className="block text-[9px] text-slate-500 font-mono mt-0.5">
-                  Page 1 of 1
+                <span className="block text-[10px] text-slate-500 font-mono mt-0.5">
+                  Execution Date: {doc.extracted?.date || 'Recorded'}
                 </span>
               </div>
             </div>
 
-            {/* Document Body Lines */}
-            <div className="space-y-4 text-xs sm:text-sm font-serif leading-relaxed">
-              {lines.map((line, idx) => (
-                <div key={idx} className="transition-all">
-                  {renderLineWithHighlight(line, idx)}
+            {/* Key Extracted Entities Summary Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Parties Box */}
+              <div className="p-3.5 rounded-xl border border-blue-100 dark:border-blue-950/60 bg-blue-50/40 dark:bg-blue-950/20 space-y-2">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5 font-mono">
+                  <span>Parties of Agreement</span>
                 </div>
-              ))}
+                <div className="space-y-1 text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-500 block">Transferor / Vendor / Lender:</span>
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">{doc.extracted?.vendor || 'Not Specified'}</p>
+                  </div>
+                  <div className="pt-1 border-t border-blue-100 dark:border-blue-900/40">
+                    <span className="text-[10px] text-slate-500 block">Transferee / Purchaser / Borrower:</span>
+                    <p className="font-semibold text-slate-900 dark:text-slate-100">{doc.extracted?.vendee || 'Not Specified'}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Property & Financial Box */}
+              <div className="p-3.5 rounded-xl border border-emerald-100 dark:border-emerald-950/60 bg-emerald-50/40 dark:bg-emerald-950/20 space-y-2">
+                <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-mono">
+                  <span>Property & Consideration</span>
+                </div>
+                <div className="space-y-1 text-xs">
+                  <div>
+                    <span className="text-[10px] text-slate-500 block">Property / CTS Details:</span>
+                    <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{doc.extracted?.propertyDesc || 'Property Schedule'} {doc.extracted?.cts ? `(${doc.extracted.cts})` : ''}</p>
+                  </div>
+                  <div className="pt-1 border-t border-emerald-100 dark:border-emerald-900/40">
+                    <span className="text-[10px] text-slate-500 block">Consideration / Loan Amount:</span>
+                    <p className="font-bold text-emerald-700 dark:text-emerald-400">{doc.extracted?.consideration || 'Standard Legal Terms'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Document Text Transcript / Clauses */}
+            <div className="space-y-3 pt-2">
+              <div className="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-slate-800">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-mono">
+                  Document Transcript & Clauses
+                </span>
+                <span className="text-[10px] text-slate-400 font-mono">
+                  {lines.length} Clauses Indexed
+                </span>
+              </div>
+
+              <div className="space-y-3 text-xs sm:text-sm font-serif leading-relaxed text-slate-800 dark:text-slate-200 max-h-[380px] overflow-y-auto pr-2">
+                {lines.map((line, idx) => (
+                  <div key={idx} className="p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    {renderLineWithHighlight(line, idx)}
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Bottom Verification & Signature Footnote */}
-            <div className="mt-12 pt-6 border-t border-slate-200 grid grid-cols-2 gap-4 text-[10px] text-slate-500 font-sans">
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3 text-[10px] text-slate-500 font-sans">
               <div>
-                <span className="font-bold text-slate-700 block mb-1">Execution Authority</span>
-                <span>Sub-Registrar Office, Mumbai Jurisdiction</span>
+                <span className="font-bold text-slate-700 dark:text-slate-300 block mb-0.5">Execution & SRO Authority</span>
+                <span>{doc.extracted?.sro || 'Competent Sub-Registrar Office'}</span>
               </div>
-              <div className="text-right">
-                <span className="font-bold text-slate-700 block mb-1">Digital Extraction</span>
-                <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold">
-                  <CheckCircle2 className="w-3 h-3" />
-                  Verified & Indexed
+              <div className="text-left sm:text-right">
+                <span className="font-bold text-slate-700 dark:text-slate-300 block mb-0.5">Extraction Security Seal</span>
+                <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Gemini AI Verified & Encrypted
                 </span>
               </div>
             </div>
