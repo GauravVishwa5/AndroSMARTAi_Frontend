@@ -54,9 +54,15 @@ export interface DocumentItem {
   };
 }
 
+export interface ActiveHighlightEntity {
+  key: string;
+  label: string;
+  value: string;
+}
+
 interface DocumentViewerProps {
   doc: DocumentItem | null;
-  activeHighlight?: { key: string; label: string; value: string } | null;
+  activeHighlight?: ActiveHighlightEntity | null;
   onClearHighlight?: () => void;
   onSelectEntityFromDoc?: (key: string, value: string) => void;
   onDocumentTranslated?: (translatedText: string, translatedEntities?: Record<string, string>) => void;

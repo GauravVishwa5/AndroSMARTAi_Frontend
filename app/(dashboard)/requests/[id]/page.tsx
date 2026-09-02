@@ -69,7 +69,7 @@ export default function RequestWorkspacePage() {
   // Request State
   const [requestData, setRequestData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [requestStatus, setRequestStatus] = useState<'Pending' | 'Verified' | 'Rejected'>('Pending');
+  const [requestStatus, setRequestStatus] = useState<'Pending' | 'Verified' | 'Rejected' | 'In Progress'>('Pending');
   const [zoomLevel, setZoomLevel] = useState(100);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusFeedback, setStatusFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -122,8 +122,7 @@ export default function RequestWorkspacePage() {
     }).catch(() => {});
 
     requestsApi.getDistricts().then((res) => {
-      const arr = Array.isArray(res) ? res : [];
-      setEditDistricts(arr);
+      setEditDistricts(Array.isArray(res) ? res : []);
     }).catch(() => {});
   }, []);
 
@@ -150,8 +149,10 @@ export default function RequestWorkspacePage() {
           const s = String(data.status).toLowerCase();
           if (s.includes('clear') || s.includes('verified') || s.includes('completed')) {
             setRequestStatus('Verified');
-          } else if (s.includes('rejected') || s.includes('flagged')) {
+          } else if (s.includes('reject') || s.includes('flag')) {
             setRequestStatus('Rejected');
+          } else if (s.includes('progress') || s.includes('investig')) {
+            setRequestStatus('In Progress');
           } else {
             setRequestStatus('Pending');
           }
