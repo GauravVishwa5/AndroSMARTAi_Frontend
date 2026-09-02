@@ -18,6 +18,8 @@ import {
   Languages,
   Loader2,
   Globe,
+  Search,
+  Copy,
 } from 'lucide-react';
 import { requestsApi } from '@/lib/api/requests';
 
@@ -57,7 +59,9 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
 }) => {
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [rotation, setRotation] = useState<number>(0);
-  const [viewMode, setViewMode] = useState<'DOCUMENT' | 'PDF_EMBED'>('DOCUMENT');
+  const [viewMode, setViewMode] = useState<'DOCUMENT' | 'PDF_EMBED' | 'RAW_TEXT'>('DOCUMENT');
+  const [rawSearchQuery, setRawSearchQuery] = useState<string>('');
+  const [copiedRaw, setCopiedRaw] = useState<boolean>(false);
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [isTranslated, setIsTranslated] = useState<boolean>(false);
   const [translatedText, setTranslatedText] = useState<string | null>(doc.translated_text || null);
@@ -278,6 +282,18 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               <span>Native PDF</span>
             </button>
           )}
+
+          <button
+            onClick={() => setViewMode('RAW_TEXT')}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all ${
+              viewMode === 'RAW_TEXT'
+                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+            <span>Raw OCR Text</span>
+          </button>
         </div>
 
         {/* Middle: Active Highlighting Banner or Translation Toggle */}
@@ -366,7 +382,73 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
         ref={scrollContainerRef}
         className="flex-1 p-4 sm:p-6 overflow-auto bg-slate-100 dark:bg-slate-950 flex justify-center items-start min-h-[450px]"
       >
-        {viewMode === 'PDF_EMBED' && doc.fileUrl && doc.fileUrl !== '#' ? (
+        {viewMode === 'RAW_TEXT' ? (
+          /* Clean Searchable Raw OCR Text View */
+          <div className="w-full max-w-3xl flex flex-col rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden min-h-[500px]">
+            {/* Search & Copy Header */}
+            <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between gap-3">
+              <div className="relative flex-1">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={rawSearchQuery}
+                  onChange={(e) => setRawSearchQuery(e.target.value)}
+                  placeholder="Filter keywords in extracted text..."
+                  className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans"
+                />
+              </div>
+
+              <button
+                onClick={() => {
+                  const text = doc.rawText || '';
+                  if (text) {
+                    navigator.clipboard.writeText(text);
+                    setCopiedRaw(true);
+                    setTimeout(() => setCopiedRaw(false), 2000);
+                  }
+                }}
+                disabled={!doc.rawText}
+                className="whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-blue-500 transition-all disabled:opacity-50 shrink-0"
+              >
+                {copiedRaw ? (
+                  <>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                    <span className="text-emerald-600 dark:text-emerald-400">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-slate-500" />
+                    <span>Copy Text</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Raw Text Content */}
+            <div className="flex-1 p-5 overflow-auto font-mono text-xs leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap select-text bg-slate-50/40 dark:bg-slate-950/30">
+              {doc.rawText ? (
+                rawSearchQuery.trim() ? (
+                  doc.rawText
+                    .split('\n')
+                    .filter((line: string) => line.toLowerCase().includes(rawSearchQuery.toLowerCase()))
+                    .join('\n') || 'No matching lines found for search term.'
+                ) : (
+                  doc.rawText
+                )
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-400 space-y-3">
+                  <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-500 border border-indigo-100 dark:border-indigo-900/50">
+                    <Sparkles className="w-8 h-8 opacity-80" />
+                  </div>
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">No Raw OCR Text Available</p>
+                  <p className="text-[11px] text-slate-500 max-w-xs">
+                    OCR extraction has not yet produced text for this document.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : viewMode === 'PDF_EMBED' && doc.fileUrl && doc.fileUrl !== '#' ? (
           <div
             style={{
               transform: `scale(${zoomLevel / 100}) rotate(${rotation}deg)`,

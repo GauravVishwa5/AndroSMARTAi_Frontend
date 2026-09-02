@@ -476,365 +476,90 @@ export default function RequestWorkspacePage() {
 
       {/* Main Split-Screen Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[680px]">
-        {/* Left Column (5 Cols): Real Document Viewer & Raw OCR Inspector */}
+        {/* Left Column (5 Cols): Real Document & OCR Viewer */}
         <div className="lg:col-span-5 flex flex-col rounded-2xl theme-surface border overflow-hidden shadow-sm">
-          {/* Document Switcher Header with Upload / Reupload Controls */}
-          <div className="p-3 border-b theme-border bg-slate-50 dark:bg-slate-950/60 flex flex-col gap-2.5">
-            <div className="flex items-center justify-between gap-2">
-              {/* Document Tabs */}
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 flex-1">
-                {docs.map((doc, idx) => (
-                  <button
-                    key={doc.id}
-                    onClick={() => setSelectedDocIndex(idx)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                      selectedDocIndex === idx
-                        ? 'bg-blue-600 text-white shadow-sm'
-                        : 'theme-text-secondary hover:theme-text-primary hover:bg-slate-200 dark:hover:bg-slate-800'
-                    }`}
-                  >
-                    <FileText className="w-3.5 h-3.5" />
-                    <span>{doc.type}</span>
-                    {doc.ocrStatus && (
-                      <span
-                        className={`w-2 h-2 rounded-full ${
-                          doc.ocrStatus === 'done' ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'
-                        }`}
-                      />
-                    )}
-                  </button>
-                ))}
-              </div>
-
-              {/* Upload & Reupload Action Buttons */}
-              <div className="flex items-center gap-1.5 shrink-0">
+          {/* Document Switcher Header with Upload / Reupload Controls & Maximize */}
+          <div className="p-3 border-b theme-border bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between gap-2">
+            {/* Document Tabs */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 flex-1 scrollbar-none">
+              {docs.map((doc, idx) => (
                 <button
-                  onClick={() => {
-                    setIsReuploadMode(false);
-                    setShowUploadModal(true);
-                  }}
-                  title="Upload New Document"
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all active:scale-95"
+                  key={doc.id}
+                  onClick={() => setSelectedDocIndex(idx)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
+                    selectedDocIndex === idx
+                      ? 'bg-blue-600 text-white shadow-sm font-semibold'
+                      : 'theme-text-secondary hover:theme-text-primary hover:bg-slate-200 dark:hover:bg-slate-800'
+                  }`}
                 >
-                  <Upload className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Upload</span>
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{doc.type}</span>
+                  {doc.ocrStatus && (
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        doc.ocrStatus === 'done' ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'
+                      }`}
+                    />
+                  )}
                 </button>
-
-                <button
-                  onClick={() => {
-                    setIsReuploadMode(true);
-                    setShowUploadModal(true);
-                  }}
-                  title="Re-upload / Replace Current Document"
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg theme-card border text-xs font-semibold theme-text-secondary hover:theme-text-primary hover:border-blue-500 transition-all active:scale-95"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">Re-upload</span>
-                </button>
-              </div>
+              ))}
             </div>
 
-            {/* Left Panel View Mode Switcher (Viewer vs Raw OCR Text) */}
-            <div className="flex items-center justify-between border-t theme-border pt-2 text-xs">
-              <div className="flex items-center p-0.5 rounded-lg bg-slate-200 dark:bg-slate-800 text-[11px] font-semibold">
-                <button
-                  onClick={() => setLeftPanelTab('VIEWER')}
-                  className={`px-2.5 py-1 rounded-md transition-all ${
-                    leftPanelTab === 'VIEWER'
-                      ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  Document View
-                </button>
-                <button
-                  onClick={() => setLeftPanelTab('RAW_TEXT')}
-                  className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 ${
-                    leftPanelTab === 'RAW_TEXT'
-                      ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  <Sparkles className="w-3 h-3 text-indigo-500" />
-                  <span>Raw OCR Text</span>
-                </button>
-                <button
-                  onClick={() => setLeftPanelTab('FIELDS')}
-                  className={`px-2.5 py-1 rounded-md transition-all ${
-                    leftPanelTab === 'FIELDS'
-                      ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
-                      : 'text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  Fields
-                </button>
-              </div>
+            {/* Action Buttons: Upload, Re-upload, Maximize */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                onClick={() => {
+                  setIsReuploadMode(false);
+                  setShowUploadModal(true);
+                }}
+                title="Upload New Document"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all active:scale-95"
+              >
+                <Upload className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Upload</span>
+              </button>
 
-              {/* Viewport Zoom & Fullscreen Controls */}
-              <div className="flex items-center gap-1">
-                {leftPanelTab === 'VIEWER' && (
-                  <>
-                    <button
-                      onClick={() => setZoomLevel((prev) => Math.max(50, prev - 15))}
-                      className="p-1 rounded theme-card border theme-text-primary text-xs"
-                      title="Zoom Out"
-                    >
-                      <ZoomOut className="w-3 h-3" />
-                    </button>
-                    <span className="text-[10px] font-mono theme-text-muted px-0.5">{zoomLevel}%</span>
-                    <button
-                      onClick={() => setZoomLevel((prev) => Math.min(200, prev + 15))}
-                      className="p-1 rounded theme-card border theme-text-primary text-xs"
-                      title="Zoom In"
-                    >
-                      <ZoomIn className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={() => setRotation((r) => (r + 90) % 360)}
-                      className="p-1 rounded theme-card border theme-text-primary text-xs"
-                      title="Rotate 90deg"
-                    >
-                      <RotateCw className="w-3 h-3" />
-                    </button>
-                  </>
-                )}
+              <button
+                onClick={() => {
+                  setIsReuploadMode(true);
+                  setShowUploadModal(true);
+                }}
+                title="Re-upload / Replace Current Document"
+                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg theme-card border text-xs font-semibold theme-text-secondary hover:theme-text-primary hover:border-blue-500 transition-all active:scale-95"
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Re-upload</span>
+              </button>
 
-                <button
-                  onClick={() => setShowPreviewModal(true)}
-                  className="p-1.5 rounded theme-card border text-blue-600 dark:text-blue-400 hover:border-blue-500 transition-colors"
-                  title="Full Screen Document & Raw Text Preview"
-                >
-                  <Maximize2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
+              <button
+                onClick={() => setShowPreviewModal(true)}
+                className="p-1.5 rounded-lg theme-card border text-blue-600 dark:text-blue-400 hover:border-blue-500 transition-colors"
+                title="Full Screen Document & Raw Text Preview"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 
-          {/* Left Panel Body: Tab Content */}
-          <div className="flex-1 p-3 bg-slate-100/70 dark:bg-slate-950/90 overflow-hidden flex flex-col min-h-[500px]">
-            {/* SUB-TAB 1: Real Interactive Document Previewer with OCR Highlighting */}
-            {leftPanelTab === 'VIEWER' && (
-              <DocumentViewer
-                doc={currentDoc}
-                activeHighlight={activeHighlightEntity}
-                onClearHighlight={() => setActiveHighlightEntity(null)}
-                onSelectEntityFromDoc={(key, value) => {
-                  setActiveHighlightEntity({ key, label: key, value });
-                }}
-                onOpenRawTextTab={() => setLeftPanelTab('RAW_TEXT')}
-                onDocumentTranslated={(transText, transEnts) => {
-                  const docKey = currentDoc?.id || (currentDoc as any)?.doc_id || `doc-${selectedDocIndex}`;
-                  if (transEnts) {
-                    setTranslatedEntitiesMap((prev) => ({ ...prev, [docKey]: transEnts }));
-                  }
-                  if (currentDoc) {
-                    (currentDoc as any).translated_text = transText;
-                  }
-                }}
-              />
-            )}
-
-            {/* SUB-TAB 2: Extracted Raw OCR Text Inspector */}
-            {leftPanelTab === 'RAW_TEXT' && (
-              <div className="flex-1 flex flex-col rounded-xl theme-card border overflow-hidden shadow-xs">
-                {/* Search & Copy Toolbar */}
-                <div className="p-2.5 border-b theme-border bg-slate-50 dark:bg-slate-950/50 flex items-center justify-between gap-2">
-                  <div className="relative flex-1">
-                    <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                    <input
-                      type="text"
-                      value={rawTextSearch}
-                      onChange={(e) => setRawTextSearch(e.target.value)}
-                      placeholder="Filter keywords in extracted text..."
-                      className="w-full pl-8 pr-2.5 py-1 rounded-lg border theme-border bg-white dark:bg-slate-900 text-xs theme-text-primary placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
-                      onClick={() => handleRetryOcr(currentDoc)}
-                      disabled={isRetryingOcr}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-all disabled:opacity-50 shadow-xs"
-                      title="Run or retry OCR on this document"
-                    >
-                      <RefreshCw className={`w-3 h-3 ${isRetryingOcr ? 'animate-spin' : ''}`} />
-                      <span className="text-[11px]">{isRetryingOcr ? 'OCR...' : currentDoc.rawText ? 'Retry OCR' : 'Run OCR'}</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        if (currentDoc.rawText) {
-                          navigator.clipboard.writeText(currentDoc.rawText);
-                          setCopiedRawText(true);
-                          setTimeout(() => setCopiedRawText(false), 2000);
-                        }
-                      }}
-                      disabled={!currentDoc.rawText}
-                      className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold border theme-border bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 hover:border-blue-500 transition-all disabled:opacity-50 shrink-0"
-                      title="Copy full raw text"
-                    >
-                      {copiedRawText ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-500" />
-                          <span className="text-emerald-600 dark:text-emerald-400 text-[11px]">Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5 text-slate-400" />
-                          <span className="text-[11px]">Copy</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Raw Text Content */}
-                <div className="flex-1 p-3 overflow-auto bg-slate-50/40 dark:bg-slate-950/30 font-mono text-[11px] leading-relaxed theme-text-primary whitespace-pre-wrap select-text">
-                  {currentDoc.rawText ? (
-                    rawTextSearch.trim() ? (
-                      currentDoc.rawText
-                        .split('\n')
-                        .filter((line: string) => line.toLowerCase().includes(rawTextSearch.toLowerCase()))
-                        .join('\n') || 'No matching lines found for search term.'
-                    ) : (
-                      currentDoc.rawText
-                    )
-                  ) : (
-                    <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-400 space-y-3">
-                      <div className="p-2.5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-500 border border-indigo-100 dark:border-indigo-900/50">
-                        <Sparkles className="w-6 h-6 opacity-80" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-semibold theme-text-secondary">No Raw OCR Text Extracted</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5">
-                          Click below to execute the OCR extraction pipeline on this document.
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 pt-1">
-                        <button
-                          onClick={() => handleRetryOcr(currentDoc)}
-                          disabled={isRetryingOcr}
-                          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-500 transition-all disabled:opacity-50 shadow-sm"
-                        >
-                          <RefreshCw className={`w-3.5 h-3.5 ${isRetryingOcr ? 'animate-spin' : ''}`} />
-                          <span>{isRetryingOcr ? 'Extracting OCR...' : 'Run OCR Extraction Now'}</span>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setIsReuploadMode(true);
-                            setShowUploadModal(true);
-                          }}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border theme-card text-xs font-semibold theme-text-secondary hover:theme-text-primary transition-colors"
-                        >
-                          <Upload className="w-3 h-3" />
-                          <span>Re-upload</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Raw Text Status Footer */}
-                <div className="px-3 py-1.5 border-t theme-border bg-slate-50 dark:bg-slate-950/50 flex items-center justify-between text-[10px] theme-text-muted font-mono">
-                  <span>Status: {currentDoc.ocrStatus?.toUpperCase() || 'DONE'}</span>
-                  <span>{currentDoc.rawText?.length || 0} characters</span>
-                </div>
-              </div>
-            )}
-
-            {/* SUB-TAB 3: Structured Bounding Box & Fields */}
-            {leftPanelTab === 'FIELDS' && (
-              <div className="flex-1 p-3 overflow-y-auto space-y-3 theme-card rounded-xl border">
-                <div className="flex items-center justify-between pb-2 border-b theme-border">
-                  <h4 className="text-xs font-bold theme-text-primary">Extracted Document Entities</h4>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                    {currentDoc.type}
-                  </span>
-                </div>
-
-                <div className="space-y-2.5 text-xs">
-                  <div
-                    onClick={() =>
-                      setActiveHighlightEntity({
-                        key: 'vendor',
-                        label: 'Vendor (Transferor)',
-                        value: currentDoc.extracted?.vendor || 'State Bank of India',
-                      })
-                    }
-                    className={`p-2.5 rounded-xl cursor-pointer transition-all ${
-                      activeHighlightEntity?.key === 'vendor'
-                        ? 'bg-blue-500/20 border-2 border-blue-500 shadow-xs'
-                        : 'bg-blue-500/10 border border-blue-500/30 hover:border-blue-500'
-                    }`}
-                  >
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 block mb-0.5">
-                      Vendor (Transferor)
-                    </span>
-                    <p className="font-semibold theme-text-primary">{currentDoc.extracted?.vendor}</p>
-                  </div>
-
-                  <div
-                    onClick={() =>
-                      setActiveHighlightEntity({
-                        key: 'vendee',
-                        label: 'Vendee (Purchaser / Borrower)',
-                        value: currentDoc.extracted?.vendee || 'Mr. Rahul Sharma',
-                      })
-                    }
-                    className={`p-2.5 rounded-xl cursor-pointer transition-all ${
-                      activeHighlightEntity?.key === 'vendee'
-                        ? 'bg-emerald-500/20 border-2 border-emerald-500 shadow-xs'
-                        : 'bg-emerald-500/10 border border-emerald-500/30 hover:border-emerald-500'
-                    }`}
-                  >
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block mb-0.5">
-                      Vendee (Purchaser / Borrower)
-                    </span>
-                    <p className="font-semibold theme-text-primary">{currentDoc.extracted?.vendee}</p>
-                  </div>
-
-                  <div
-                    onClick={() =>
-                      setActiveHighlightEntity({
-                        key: 'consideration',
-                        label: 'Consideration & Stamp Duty',
-                        value: currentDoc.extracted?.consideration || 'Rs. 75,00,000/-',
-                      })
-                    }
-                    className={`p-2.5 rounded-xl cursor-pointer transition-all ${
-                      activeHighlightEntity?.key === 'consideration'
-                        ? 'bg-amber-500/20 border-2 border-amber-500 shadow-xs'
-                        : 'bg-amber-500/10 border border-amber-500/30 hover:border-amber-500'
-                    }`}
-                  >
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block mb-0.5">
-                      Consideration & Stamp Duty
-                    </span>
-                    <p className="font-semibold theme-text-primary">{currentDoc.extracted?.consideration}</p>
-                  </div>
-
-                  <div
-                    onClick={() =>
-                      setActiveHighlightEntity({
-                        key: 'propertyDesc',
-                        label: 'Schedule Property Description',
-                        value: currentDoc.extracted?.propertyDesc || 'Flat No 402, 4th Floor',
-                      })
-                    }
-                    className={`p-2.5 rounded-xl theme-surface border cursor-pointer transition-all ${
-                      activeHighlightEntity?.key === 'propertyDesc'
-                        ? 'border-2 border-blue-500 shadow-xs'
-                        : 'hover:border-blue-400'
-                    }`}
-                  >
-                    <span className="text-[9px] font-bold uppercase tracking-wider theme-text-secondary block mb-0.5">
-                      Schedule Property Description
-                    </span>
-                    <p className="text-[11px] leading-relaxed theme-text-primary">{currentDoc.extracted?.propertyDesc}</p>
-                  </div>
-                </div>
-              </div>
-            )}
+          {/* Document Viewer Body */}
+          <div className="flex-1 p-2 bg-slate-100/70 dark:bg-slate-950/90 overflow-hidden flex flex-col min-h-[550px]">
+            <DocumentViewer
+              doc={currentDoc}
+              activeHighlight={activeHighlightEntity}
+              onClearHighlight={() => setActiveHighlightEntity(null)}
+              onSelectEntityFromDoc={(key, value) => {
+                setActiveHighlightEntity({ key, label: key, value });
+              }}
+              onDocumentTranslated={(transText, transEnts) => {
+                const docKey = currentDoc?.id || (currentDoc as any)?.doc_id || `doc-${selectedDocIndex}`;
+                if (transEnts) {
+                  setTranslatedEntitiesMap((prev) => ({ ...prev, [docKey]: transEnts }));
+                }
+                if (currentDoc) {
+                  (currentDoc as any).translated_text = transText;
+                }
+              }}
+            />
           </div>
         </div>
 
