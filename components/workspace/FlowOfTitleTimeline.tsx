@@ -427,14 +427,39 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
                 <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">
                   Document / Deed Type *
                 </label>
-                <input
-                  type="text"
+                <select
                   required
                   value={nodeForm.deedType}
                   onChange={(e) => setNodeForm({ ...nodeForm, deedType: e.target.value })}
-                  placeholder="e.g. Absolute Registered Sale Deed / Allotment Deed"
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                >
+                  <option value="">-- Select Document / Deed Type --</option>
+                  <option value="Parent Allotment / Conveyance Deed">Parent Allotment / Conveyance Deed</option>
+                  <option value="Absolute Registered Sale Deed">Absolute Registered Sale Deed (विक्री दस्त)</option>
+                  <option value="Agreement for Sale (Registered)">Agreement for Sale / साठेखत (Registered)</option>
+                  <option value="Gift Deed">Gift Deed (बक्षीसपत्र / दानपत्र)</option>
+                  <option value="Relinquishment / Release Deed">Relinquishment / Release Deed (हक्कसोड पत्र)</option>
+                  <option value="Partition Deed">Partition Deed (वाटपपत्र / बंटवारा)</option>
+                  <option value="Development Agreement & Power of Attorney">Development Agreement & General POA (विकास करार)</option>
+                  <option value="Equitable / Simple Mortgage Deed">Equitable / Simple Mortgage Deed (गहाणखत)</option>
+                  <option value="Rectification / Correction Deed">Rectification / Correction Deed (दुरुस्ती पत्र)</option>
+                  <option value="Perpetual Lease / Lease Deed">Perpetual Lease / 99-Year Lease Deed (भाडेपट्टा)</option>
+                  <option value="Will / Testamentary Succession">Will / Testamentary Succession (मृत्युपत्र)</option>
+                  <option value="Legal Heir / Succession Certificate">Legal Heir / Succession Certificate (वारस नोंद)</option>
+                  <option value="Society Share Certificate & NOC">Society Share Certificate & Sub-Lease NOC</option>
+                  <option value="Declaration / Indemnity Bond">Declaration / Indemnity Bond</option>
+                  <option value="Other Property Deed">Other Property Deed</option>
+                </select>
+                {nodeForm.deedType === 'Other Property Deed' && (
+                  <input
+                    type="text"
+                    required
+                    placeholder="Specify Custom Document / Deed Type"
+                    value={nodeForm.deedType === 'Other Property Deed' ? '' : nodeForm.deedType}
+                    onChange={(e) => setNodeForm({ ...nodeForm, deedType: e.target.value })}
+                    className="w-full mt-2 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                )}
               </div>
 
               <div className="grid grid-cols-2 gap-3">

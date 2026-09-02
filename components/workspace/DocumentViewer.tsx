@@ -1,52 +1,65 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
+  FileText,
+  Search,
   ZoomIn,
   ZoomOut,
   RotateCw,
-  Maximize2,
-  FileText,
   Sparkles,
-  ExternalLink,
-  Target,
-  X,
-  Eye,
+  Maximize2,
   CheckCircle2,
-  Layers,
-  FileCode,
+  AlertCircle,
+  Copy,
   Languages,
   Loader2,
+  Layers,
+  X,
+  Target,
+  FileCheck2,
+  Calendar,
+  Building2,
+  User,
+  DollarSign,
+  MapPin,
   Globe,
-  Search,
-  Copy,
+  ExternalLink,
+  ChevronRight,
+  BookOpen,
+  FileCode,
 } from 'lucide-react';
 import { requestsApi } from '@/lib/api/requests';
 
-export interface ActiveHighlightEntity {
-  key: string;
-  label: string;
-  value: string;
+export interface DocumentItem {
+  id: string;
+  name: string;
+  type: string;
   category?: string;
-  page?: number;
+  created_at?: string;
+  status?: string;
+  fileUrl?: string;
+  ocrStatus?: 'pending' | 'processing' | 'done' | 'failed' | string;
+  rawText?: string;
+  translated_text?: string;
+  extracted?: {
+    date?: string;
+    regNo?: string;
+    vendor?: string;
+    vendee?: string;
+    cts?: string;
+    propertyDesc?: string;
+    consideration?: string;
+    sro?: string;
+  };
 }
 
-export interface DocumentViewerProps {
-  doc?: {
-    id?: string;
-    name?: string;
-    type?: string;
-    fileUrl?: string;
-    rawText?: string;
-    translated_text?: string;
-    ocrStatus?: string;
-    extracted?: any;
-  } | null;
-  activeHighlight: ActiveHighlightEntity | null;
-  onClearHighlight: () => void;
-  onSelectEntityFromDoc?: (entityKey: string, entityValue: string) => void;
-  onOpenRawTextTab?: () => void;
-  onDocumentTranslated?: (translatedText: string, extractedEntities?: any) => void;
+interface DocumentViewerProps {
+  doc: DocumentItem | null;
+  activeHighlight?: { key: string; label: string; value: string } | null;
+  onClearHighlight?: () => void;
+  onSelectEntityFromDoc?: (key: string, value: string) => void;
+  onDocumentTranslated?: (translatedText: string, translatedEntities?: Record<string, string>) => void;
 }
 
 export const DocumentViewer: React.FC<DocumentViewerProps> = ({
@@ -54,50 +67,28 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   activeHighlight,
   onClearHighlight,
   onSelectEntityFromDoc,
-  onOpenRawTextTab,
   onDocumentTranslated,
 }) => {
+  const [viewMode, setViewMode] = useState<'DOCUMENT' | 'PDF_EMBED' | 'RAW_TEXT'>('DOCUMENT');
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [rotation, setRotation] = useState<number>(0);
-  const [viewMode, setViewMode] = useState<'DOCUMENT' | 'PDF_EMBED' | 'RAW_TEXT'>('DOCUMENT');
-  const [rawSearchQuery, setRawSearchQuery] = useState<string>('');
-  const [copiedRaw, setCopiedRaw] = useState<boolean>(false);
-  const [isTranslating, setIsTranslating] = useState<boolean>(false);
-  const [isTranslated, setIsTranslated] = useState<boolean>(false);
-  const [translatedText, setTranslatedText] = useState<string | null>(doc?.translated_text || null);
-  const [translationMethod, setTranslationMethod] = useState<string>('');
+  const [rawSearchQuery, setRawSearchQuery] = useState('');
+  const [copiedRaw, setCopiedRaw] = useState(false);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [isTranslated, setIsTranslated] = useState(false);
+  const [translatedText, setTranslatedText] = useState<string | null>(null);
 
-  const highlightTargetRef = useRef<HTMLDivElement | null>(null);
-  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const highlightedLineRef = useRef<HTMLDivElement>(null);
 
+  // If document has a valid native PDF/fileUrl and no text, default to PDF_EMBED
   useEffect(() => {
-    setTranslatedText(doc?.translated_text || null);
-    setIsTranslated(Boolean(doc?.translated_text));
-  }, [doc]);
-
-  // Auto-scroll to highlighted entity when it changes
-  useEffect(() => {
-    if (activeHighlight && highlightTargetRef.current) {
-      setTimeout(() => {
-        highlightTargetRef.current?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-        });
-      }, 100);
+    if (doc?.fileUrl && doc.fileUrl !== '#' && !doc?.rawText && !doc?.extracted?.vendor) {
+      setViewMode('PDF_EMBED');
     }
-  }, [activeHighlight]);
+  }, [doc?.id, doc?.fileUrl, doc?.rawText, doc?.extracted]);
 
-  if (!doc) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 min-h-[450px]">
-        <FileText className="w-12 h-12 text-slate-300 dark:text-slate-700 mb-3" />
-        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No Document Selected</p>
-        <p className="text-xs text-slate-500 mt-1">Please select or upload a document to inspect.</p>
-      </div>
-    );
-  }
-
-  // Handle live translation via backend API
+  // Handle translation
   const handleToggleTranslate = async () => {
     if (isTranslated) {
       setIsTranslated(false);
@@ -109,301 +100,181 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       return;
     }
 
-    const textToTranslate = doc.rawText || getDocumentLines().join('\n');
-    if (!textToTranslate.trim()) return;
+    if (!doc?.rawText) return;
 
+    setIsTranslating(true);
     try {
-      setIsTranslating(true);
-      const res = await requestsApi.translateText(textToTranslate, 'auto', 'en', doc.type);
-      if (res && res.translated_text) {
+      const res = await requestsApi.translateText(doc.rawText, 'auto', 'en', doc.type);
+      if (res?.translated_text) {
         setTranslatedText(res.translated_text);
-        setTranslationMethod(res.method || 'Auto');
         setIsTranslated(true);
         if (onDocumentTranslated) {
           onDocumentTranslated(res.translated_text, res.extracted_entities);
         }
       }
-    } catch (err) {
-      console.error('Translation error:', err);
+    } catch (e) {
+      console.error('Translation error:', e);
     } finally {
       setIsTranslating(false);
     }
   };
 
-  // Clean document text lines or structured real text
-  const getDocumentLines = () => {
-    if (isTranslated && translatedText) {
-      return translatedText.split('\n');
-    }
+  const displayText = useMemo(() => {
+    if (isTranslated && translatedText) return translatedText;
+    if (doc?.translated_text && isTranslated) return doc.translated_text;
+    return doc?.rawText || '';
+  }, [doc?.rawText, doc?.translated_text, isTranslated, translatedText]);
 
-    if (doc.rawText && doc.rawText.trim()) {
-      return doc.rawText.split('\n');
-    }
+  // Clean lines for transcript view
+  const lines = useMemo(() => {
+    if (!displayText) return [];
+    return displayText
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0);
+  }, [displayText]);
 
-    if (doc.extracted && (doc.extracted.vendor || doc.extracted.vendee || doc.extracted.propertyDesc)) {
-      return [
-        `${(doc.type || 'Legal Document').toUpperCase()}`,
-        doc.extracted.date ? `Date of Execution: ${doc.extracted.date}` : '',
-        doc.extracted.vendor ? `Transferor / Vendor / Lender: ${doc.extracted.vendor}` : '',
-        doc.extracted.vendee ? `Transferee / Purchaser / Borrower: ${doc.extracted.vendee}` : '',
-        doc.extracted.propertyDesc ? `Property Description: ${doc.extracted.propertyDesc}` : '',
-        doc.extracted.consideration ? `Consideration / Loan Amount: ${doc.extracted.consideration}` : '',
-        doc.extracted.regNo ? `Registration Record: ${doc.extracted.regNo}` : '',
-        doc.extracted.sro ? `Sub-Registrar Office: ${doc.extracted.sro}` : '',
-      ].filter(Boolean);
-    }
-
-    return [];
-  };
-
-  const lines = getDocumentLines();
-
-  // Extract candidate sub-phrases and key search tokens from highlighted value
-  const getCandidatePhrases = (highlightVal: string): string[] => {
-    if (!highlightVal || !highlightVal.trim()) return [];
-    const candidates: string[] = [highlightVal.trim()];
-
-    // Remove common prefixes
-    const stripped = highlightVal
-      .replace(/^(?:Member|Borrower|Lender|Vendor|CTS|City Survey|Reg under|Property situated at|Property at|Village|Place|Date)\s*[:\-–]?\s*/i, '')
-      .replace(/^(?:Mr\.|Mrs\.|Ms\.|Shri|Smt\.|Rs\.?|Flat\s+No\.?)\s*/i, '')
-      .trim();
-    if (stripped && stripped.length >= 2) {
-      candidates.push(stripped);
-    }
-
-    // Split compound slash/comma phrases (e.g. "ESTO Co-op / HTH Taey Taras")
-    const subparts = stripped.split(/[\/\|,;]/).map((p) => p.trim()).filter((p) => p.length >= 3);
-    candidates.push(...subparts);
-
-    // Extract numerical & survey tokens (e.g. "#43", "14341", "31/05/2007", "9(1)")
-    const numTokens = stripped.match(/(?:#[0-9]+|[0-9]{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{2,4}|[0-9]+(?:\([0-9]+\))?|[0-9,]{3,})/g);
-    if (numTokens) {
-      candidates.push(...numTokens.map((n) => n.trim()).filter((n) => n.length >= 2));
-    }
-
-    // Extract significant name words (> 2 chars)
-    const wordTokens = stripped.match(/[A-Za-z\u0900-\u097F]{3,}/g);
-    if (wordTokens) {
-      candidates.push(...wordTokens.map((w) => w.trim()).filter((w) => !/^(and|the|for|under|per|paid|act|reg)$/i.test(w)));
-    }
-
-    return Array.from(new Set(candidates)).sort((a, b) => b.length - a.length);
-  };
-
-  // Helper to test if a line contains the highlighted search text
-  const doesLineMatchHighlight = (line: string, highlightVal: string): boolean => {
-    if (!line || !highlightVal) return false;
-    const cleanLine = line.toLowerCase();
-    const candidates = getCandidatePhrases(highlightVal);
-    return candidates.some((cand) => cand.length >= 2 && cleanLine.includes(cand.toLowerCase()));
-  };
-
-  // Render line with interactive highlight spans
-  const renderLineWithHighlight = (line: string, lineIndex: number) => {
-    if (!activeHighlight || !activeHighlight.value) {
-      return (
-        <span className="text-slate-800 dark:text-slate-200 select-text leading-relaxed">
-          {line}
-        </span>
-      );
-    }
-
-    const highlightVal = activeHighlight.value.trim();
-    if (!doesLineMatchHighlight(line, highlightVal)) {
-      return (
-        <span className="text-slate-800 dark:text-slate-200 select-text leading-relaxed">
-          {line}
-        </span>
-      );
-    }
-
-    const candidates = getCandidatePhrases(highlightVal).filter(
-      (c) => c.length >= 2 && line.toLowerCase().includes(c.toLowerCase())
-    );
-
-    if (candidates.length === 0) {
-      return (
-        <span className="text-slate-800 dark:text-slate-200 select-text leading-relaxed">
-          {line}
-        </span>
-      );
-    }
-
-    const regexPattern = new RegExp(`(${candidates.map(escapeRegExp).join('|')})`, 'gi');
-    const parts = line.split(regexPattern);
-
+  if (!doc) {
     return (
-      <div
-        ref={highlightTargetRef}
-        className="relative my-1 p-1.5 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 border border-blue-500/40 shadow-xs transition-all duration-300 ring-2 ring-blue-500/30"
-      >
-        {/* Floating Pinpoint Tag */}
-        <div className="inline-flex items-center gap-1.5 px-2 py-0.5 mb-1 rounded-md bg-blue-600 text-white text-[10px] font-bold shadow-xs animate-bounce">
-          <Target className="w-3 h-3" />
-          <span>{activeHighlight.label || 'Highlighted Entity'}</span>
-        </div>
-
-        <div className="text-slate-900 dark:text-slate-100 font-medium select-text leading-relaxed">
-          {parts.map((part, idx) => {
-            const isMatch = candidates.some((c) => c.toLowerCase() === part.toLowerCase());
-            if (isMatch) {
-              return (
-                <mark
-                  key={idx}
-                  className="bg-amber-300 dark:bg-yellow-400 text-slate-950 font-bold px-1.5 py-0.5 rounded shadow-sm ring-2 ring-amber-400/80 animate-pulse inline-block mx-0.5"
-                >
-                  {part}
-                </mark>
-              );
-            }
-            return <span key={idx}>{part}</span>;
-          })}
-        </div>
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center theme-text-secondary h-full min-h-[450px]">
+        <FileText className="w-12 h-12 theme-text-muted mb-2 opacity-60" />
+        <p className="text-sm font-semibold theme-text-primary">No Document Selected</p>
+        <p className="text-xs theme-text-muted mt-1">Select a document from the list above to view its contents.</p>
       </div>
     );
-  };
-
-  function escapeRegExp(string: string) {
-    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 overflow-hidden shadow-xs">
-      {/* Top Document Toolbar */}
-      <div className="p-2.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/70 flex flex-wrap items-center justify-between gap-2 text-xs">
-        {/* Left: View Mode Switcher */}
-        <div className="flex items-center gap-1 bg-slate-200/70 dark:bg-slate-800/80 p-0.5 rounded-xl text-[11px] font-semibold">
+    <div className="flex-1 flex flex-col h-full rounded-2xl theme-surface border overflow-hidden shadow-xs">
+      {/* Sleek Document Header & Control Bar */}
+      <div className="px-3.5 py-2.5 border-b theme-border bg-slate-500/5 flex flex-wrap items-center justify-between gap-3 text-xs">
+        {/* Left: View Mode Pills */}
+        <div className="flex items-center gap-1 theme-card p-1 rounded-xl border text-xs font-semibold">
           <button
             onClick={() => setViewMode('DOCUMENT')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
               viewMode === 'DOCUMENT'
-                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                ? 'bg-blue-600 text-white shadow-xs font-semibold'
+                : 'theme-text-secondary hover:theme-text-primary'
             }`}
           >
-            <FileText className="w-3.5 h-3.5" />
+            <BookOpen className="w-3.5 h-3.5" />
             <span>Interactive Doc</span>
           </button>
 
           {doc.fileUrl && doc.fileUrl !== '#' && (
             <button
               onClick={() => setViewMode('PDF_EMBED')}
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
                 viewMode === 'PDF_EMBED'
-                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                  ? 'bg-blue-600 text-white shadow-xs font-semibold'
+                  : 'theme-text-secondary hover:theme-text-primary'
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>Native PDF</span>
+              <span>Native PDF / File</span>
             </button>
           )}
 
           <button
             onClick={() => setViewMode('RAW_TEXT')}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
               viewMode === 'RAW_TEXT'
-                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                ? 'bg-blue-600 text-white shadow-xs font-semibold'
+                : 'theme-text-secondary hover:theme-text-primary'
             }`}
           >
-            <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-            <span>Raw OCR Text</span>
+            <FileCode className="w-3.5 h-3.5" />
+            <span>Raw OCR</span>
           </button>
         </div>
 
-        {/* Middle: Active Highlighting Banner or Translation Toggle */}
-        <div className="flex items-center gap-2">
+        {/* Right: Actions (Translate, Highlights, Zoom) */}
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Translate Button */}
-          <button
-            onClick={handleToggleTranslate}
-            disabled={isTranslating}
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-semibold border transition-all ${
-              isTranslated
-                ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 hover:bg-emerald-500/20'
-                : 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100'
-            }`}
-            title="Translate regional language text to English"
-          >
-            {isTranslating ? (
-              <>
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-600" />
-                <span>Translating...</span>
-              </>
-            ) : isTranslated ? (
-              <>
-                <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>English (Translated)</span>
-                <span className="text-[10px] text-slate-400 font-normal">| Show Original</span>
-              </>
-            ) : (
-              <>
-                <Languages className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
-                <span>Translate to English</span>
-              </>
-            )}
-          </button>
+          {doc.rawText && (
+            <button
+              onClick={handleToggleTranslate}
+              disabled={isTranslating}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                isTranslated
+                  ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                  : 'theme-card border theme-text-secondary hover:theme-text-primary'
+              }`}
+              title="Translate vernacular Marathi/Hindi text to English"
+            >
+              {isTranslating ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-500" />
+                  <span>Translating...</span>
+                </>
+              ) : isTranslated ? (
+                <>
+                  <Globe className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>English (Translated)</span>
+                </>
+              ) : (
+                <>
+                  <Languages className="w-3.5 h-3.5 text-blue-500" />
+                  <span>Translate to English</span>
+                </>
+              )}
+            </button>
+          )}
 
+          {/* Active Highlight Pill */}
           {activeHighlight && (
-            <div className="flex items-center gap-2 px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-[11px] font-medium animate-fadeIn">
-              <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-              </span>
-              <span>
-                Target: <strong>{activeHighlight.label}</strong> ({activeHighlight.value})
-              </span>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400 text-xs font-medium animate-fadeIn">
+              <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
+              <span>{activeHighlight.label}</span>
               <button
                 onClick={onClearHighlight}
-                className="p-0.5 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 text-blue-600 dark:text-blue-400 transition-colors"
-                title="Clear Highlight"
+                className="p-0.5 hover:text-blue-800 dark:hover:text-blue-200 transition-colors"
               >
-                <X className="w-3.5 h-3.5" />
+                <X className="w-3 h-3" />
               </button>
             </div>
           )}
-        </div>
 
-        {/* Right: Zoom & Orientation Controls */}
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setZoomLevel((prev) => Math.max(60, prev - 15))}
-            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs"
-            title="Zoom Out"
-          >
-            <ZoomOut className="w-3.5 h-3.5" />
-          </button>
-          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 px-1 font-semibold">
-            {zoomLevel}%
-          </span>
-          <button
-            onClick={() => setZoomLevel((prev) => Math.min(200, prev + 15))}
-            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs"
-            title="Zoom In"
-          >
-            <ZoomIn className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => setRotation((r) => (r + 90) % 360)}
-            className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs"
-            title="Rotate 90deg"
-          >
-            <RotateCw className="w-3.5 h-3.5" />
-          </button>
+          {/* Zoom Controls */}
+          <div className="flex items-center gap-1 theme-card p-1 rounded-xl border">
+            <button
+              onClick={() => setZoomLevel((prev) => Math.max(60, prev - 15))}
+              className="p-1 rounded-lg theme-text-secondary hover:theme-text-primary hover:bg-slate-500/10 text-xs"
+              title="Zoom Out"
+            >
+              <ZoomOut className="w-3.5 h-3.5" />
+            </button>
+            <span className="text-[11px] font-mono theme-text-secondary px-1 font-semibold">
+              {zoomLevel}%
+            </span>
+            <button
+              onClick={() => setZoomLevel((prev) => Math.min(200, prev + 15))}
+              className="p-1 rounded-lg theme-text-secondary hover:theme-text-primary hover:bg-slate-500/10 text-xs"
+              title="Zoom In"
+            >
+              <ZoomIn className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setRotation((r) => (r + 90) % 360)}
+              className="p-1 rounded-lg theme-text-secondary hover:theme-text-primary hover:bg-slate-500/10 text-xs"
+              title="Rotate"
+            >
+              <RotateCw className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Main Document Canvas Viewport */}
+      {/* Main Canvas Viewport */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 p-4 sm:p-6 overflow-auto bg-slate-100 dark:bg-slate-950 flex justify-center items-start min-h-[450px]"
+        className="flex-1 p-4 sm:p-6 overflow-auto bg-slate-500/5 flex justify-center items-start min-h-[480px]"
       >
+        {/* VIEW 1: Raw Searchable Text */}
         {viewMode === 'RAW_TEXT' ? (
-          /* Clean Searchable Raw OCR Text View */
-          <div className="w-full max-w-3xl flex flex-col rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden min-h-[500px]">
-            {/* Search & Copy Header */}
-            <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between gap-3">
+          <div className="w-full max-w-3xl flex flex-col rounded-2xl theme-surface border shadow-sm overflow-hidden min-h-[500px]">
+            <div className="p-3 border-b theme-border bg-slate-500/5 flex items-center justify-between gap-3">
               <div className="relative flex-1">
                 <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
@@ -411,7 +282,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                   value={rawSearchQuery}
                   onChange={(e) => setRawSearchQuery(e.target.value)}
                   placeholder="Filter keywords in extracted text..."
-                  className="w-full pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 font-sans"
+                  className="w-full pl-9 pr-3 py-1.5 rounded-xl theme-input border text-xs theme-text-primary placeholder:theme-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
 
@@ -425,24 +296,23 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                   }
                 }}
                 disabled={!doc.rawText}
-                className="whitespace-nowrap flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:border-blue-500 transition-all disabled:opacity-50 shrink-0"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold theme-card border theme-text-secondary hover:theme-text-primary transition-all disabled:opacity-50"
               >
                 {copiedRaw ? (
                   <>
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                    <span className="text-emerald-600 dark:text-emerald-400">Copied!</span>
+                    <span className="text-emerald-500">Copied!</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="w-3.5 h-3.5 text-slate-500" />
+                    <Copy className="w-3.5 h-3.5" />
                     <span>Copy Text</span>
                   </>
                 )}
               </button>
             </div>
 
-            {/* Raw Text Content */}
-            <div className="flex-1 p-5 overflow-auto font-mono text-xs leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-wrap select-text bg-slate-50/40 dark:bg-slate-950/30">
+            <div className="flex-1 p-5 overflow-auto font-mono text-xs leading-relaxed theme-text-primary whitespace-pre-wrap select-text">
               {doc.rawText ? (
                 rawSearchQuery.trim() ? (
                   doc.rawText
@@ -453,19 +323,18 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
                   doc.rawText
                 )
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-400 space-y-3">
-                  <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-500 border border-indigo-100 dark:border-indigo-900/50">
-                    <Sparkles className="w-8 h-8 opacity-80" />
-                  </div>
-                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">No Raw OCR Text Available</p>
-                  <p className="text-[11px] text-slate-500 max-w-xs">
-                    OCR extraction has not yet produced text for this document.
+                <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-400 space-y-2">
+                  <Sparkles className="w-7 h-7 text-blue-500 opacity-60" />
+                  <p className="text-xs font-semibold theme-text-primary">No Raw OCR Text Available</p>
+                  <p className="text-[11px] theme-text-muted max-w-xs">
+                    OCR extraction has not yet generated transcript text for this document.
                   </p>
                 </div>
               )}
             </div>
           </div>
         ) : viewMode === 'PDF_EMBED' && doc.fileUrl && doc.fileUrl !== '#' ? (
+          /* VIEW 2: Native PDF or Image */
           <div
             style={{
               transform: `scale(${zoomLevel / 100}) rotate(${rotation}deg)`,
@@ -478,162 +347,157 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               <img
                 src={doc.fileUrl}
                 alt={doc.name}
-                className="max-w-full h-auto max-h-[85vh] rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 bg-white object-contain"
+                className="max-w-full h-auto max-h-[85vh] rounded-2xl shadow-xl border theme-border theme-surface object-contain"
               />
             ) : (
               <iframe
                 src={`${doc.fileUrl}#toolbar=1&navpanes=0`}
                 title={doc.name}
-                className="w-full h-[75vh] min-h-[550px] rounded-xl border border-slate-200 dark:border-slate-800 bg-white shadow-xl"
+                className="w-full h-[75vh] min-h-[550px] rounded-2xl border theme-border theme-surface shadow-xl"
               />
             )}
           </div>
         ) : (
-          /* High-Fidelity Interactive Document Paper */
+          /* VIEW 3: Clean Institutional Document Paper */
           <div
             style={{
               transform: `scale(${zoomLevel / 100}) rotate(${rotation}deg)`,
               transformOrigin: 'top center',
             }}
-            className="w-full max-w-3xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 shadow-2xl rounded-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-10 font-sans transition-transform duration-200 relative min-h-[600px] space-y-6"
+            className="w-full max-w-3xl theme-surface theme-text-primary shadow-xl rounded-2xl border theme-border p-6 sm:p-8 font-sans transition-transform duration-200 relative min-h-[550px] space-y-6"
           >
-            {/* Top Document Header Stamp */}
-            <div className="border-b-2 border-slate-900 dark:border-slate-700 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            {/* Document Header */}
+            <div className="border-b theme-border pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-extrabold tracking-widest text-blue-600 dark:text-blue-400 uppercase font-mono bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900">
-                    Official Legal Extraction • Book 1 Registration
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-mono uppercase tracking-wider">
+                    {doc.category || 'Land Revenue Registry Record'}
                   </span>
                   {doc.ocrStatus === 'done' && (
-                    <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-900 flex items-center gap-1">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" />
                       AI Verified
                     </span>
                   )}
                 </div>
-                <h2 className="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 uppercase tracking-wide">
+                <h2 className="text-lg font-bold theme-text-primary tracking-tight">
                   {doc.type || 'Legal Deed / Agreement'}
                 </h2>
+                <p className="text-xs theme-text-muted font-mono">{doc.name}</p>
               </div>
+
               <div className="text-left sm:text-right shrink-0">
-                <span className="inline-block px-3 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 text-xs font-mono font-bold border border-slate-300 dark:border-slate-700">
-                  {doc.extracted?.regNo || 'Doc #Record'}
+                <span className="inline-block px-3 py-1 rounded-xl theme-card border text-xs font-mono font-bold theme-text-primary">
+                  {doc.extracted?.regNo || 'Doc Registered'}
                 </span>
-                <span className="block text-[10px] text-slate-500 font-mono mt-0.5">
-                  Execution Date: {doc.extracted?.date || 'Recorded'}
+                <span className="block text-[11px] theme-text-secondary mt-1">
+                  {doc.extracted?.date ? `Execution Date: ${doc.extracted.date}` : doc.created_at || 'Case Record'}
                 </span>
               </div>
             </div>
 
-            {/* Key Extracted Entities Summary Cards */}
-            {doc.extracted?.vendor || doc.extracted?.vendee || doc.extracted?.propertyDesc || doc.extracted?.consideration ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Parties Box */}
-                <div className="p-3.5 rounded-xl border border-blue-100 dark:border-blue-950/60 bg-blue-50/40 dark:bg-blue-950/20 space-y-2">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5 font-mono">
-                    <span>Parties of Agreement</span>
-                  </div>
-                  <div className="space-y-1 text-xs">
+            {/* Structured Extracted Legal Summary (Only shown if entities exist) */}
+            {(doc.extracted?.vendor || doc.extracted?.vendee || doc.extracted?.propertyDesc || doc.extracted?.consideration) && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="p-4 rounded-xl border theme-border theme-card space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 font-mono">
+                    Parties of Deed
+                  </span>
+                  <div className="space-y-1.5 text-xs">
                     <div>
-                      <span className="text-[10px] text-slate-500 block">Transferor / Vendor / Lender:</span>
-                      <p className="font-semibold text-slate-900 dark:text-slate-100">{doc.extracted?.vendor || '—'}</p>
+                      <span className="text-[10px] theme-text-muted block">Transferor / Vendor / Seller:</span>
+                      <p className="font-semibold theme-text-primary">{doc.extracted?.vendor || '—'}</p>
                     </div>
-                    <div className="pt-1 border-t border-blue-100 dark:border-blue-900/40">
-                      <span className="text-[10px] text-slate-500 block">Transferee / Purchaser / Borrower:</span>
-                      <p className="font-semibold text-slate-900 dark:text-slate-100">{doc.extracted?.vendee || '—'}</p>
+                    <div className="pt-1.5 border-t theme-border">
+                      <span className="text-[10px] theme-text-muted block">Transferee / Vendee / Purchaser:</span>
+                      <p className="font-semibold theme-text-primary">{doc.extracted?.vendee || '—'}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Property & Financial Box */}
-                <div className="p-3.5 rounded-xl border border-emerald-100 dark:border-emerald-950/60 bg-emerald-50/40 dark:bg-emerald-950/20 space-y-2">
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-mono">
-                    <span>Property & Consideration</span>
-                  </div>
-                  <div className="space-y-1 text-xs">
+                <div className="p-4 rounded-xl border theme-border theme-card space-y-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 font-mono">
+                    Property & Consideration
+                  </span>
+                  <div className="space-y-1.5 text-xs">
                     <div>
-                      <span className="text-[10px] text-slate-500 block">Property / CTS Details:</span>
-                      <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{doc.extracted?.propertyDesc || '—'} {doc.extracted?.cts ? `(${doc.extracted.cts})` : ''}</p>
+                      <span className="text-[10px] theme-text-muted block">Property / CTS Description:</span>
+                      <p className="font-semibold theme-text-primary truncate">
+                        {doc.extracted?.propertyDesc || '—'} {doc.extracted?.cts ? `(${doc.extracted.cts})` : ''}
+                      </p>
                     </div>
-                    <div className="pt-1 border-t border-emerald-100 dark:border-emerald-900/40">
-                      <span className="text-[10px] text-slate-500 block">Consideration / Loan Amount:</span>
-                      <p className="font-bold text-emerald-700 dark:text-emerald-400">{doc.extracted?.consideration || '—'}</p>
+                    <div className="pt-1.5 border-t theme-border">
+                      <span className="text-[10px] theme-text-muted block">Consideration / Loan Amount:</span>
+                      <p className="font-bold text-emerald-600 dark:text-emerald-400">
+                        {doc.extracted?.consideration || '—'}
+                      </p>
                     </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="py-6 text-center text-slate-400 space-y-2 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-950/30">
-                <Sparkles className="w-6 h-6 mx-auto text-indigo-400 opacity-80" />
-                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Document Uploaded: {doc.name}</p>
-                <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
-                  Click &ldquo;Raw OCR Text&rdquo; or switch to &ldquo;Native PDF&rdquo; in the toolbar above to view the file.
-                </p>
               </div>
             )}
 
-            {/* Document Text Transcript / Clauses */}
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between pb-1 border-b border-slate-200 dark:border-slate-800">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 font-mono">
+            {/* Document Transcript & Indexed Clauses */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between pb-2 border-b theme-border">
+                <span className="text-xs font-bold uppercase tracking-wider theme-text-secondary font-mono">
                   Document Transcript & Clauses
                 </span>
-                <span className="text-[10px] text-slate-400 font-mono">
+                <span className="text-[10px] theme-text-muted font-mono">
                   {lines.length} Clauses Indexed
                 </span>
               </div>
 
-              <div className="space-y-3 text-xs sm:text-sm font-serif leading-relaxed text-slate-800 dark:text-slate-200 max-h-[380px] overflow-y-auto pr-2">
+              <div className="space-y-2.5 text-xs sm:text-sm leading-relaxed theme-text-primary max-h-[380px] overflow-y-auto pr-2">
                 {lines.length > 0 ? (
-                  lines.map((line, idx) => (
-                    <div key={idx} className="p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                      {renderLineWithHighlight(line, idx)}
-                    </div>
-                  ))
+                  lines.map((line, idx) => {
+                    const isPageDivider = line.startsWith('---') || line.toLowerCase().includes('[page');
+                    if (isPageDivider) {
+                      return (
+                        <div key={idx} className="my-3 flex items-center gap-3">
+                          <div className="flex-1 border-t theme-border" />
+                          <span className="text-[10px] font-mono font-semibold px-2.5 py-0.5 rounded-full theme-card border theme-text-muted uppercase">
+                            {line.replace(/[-[\]]/g, '').trim()}
+                          </span>
+                          <div className="flex-1 border-t theme-border" />
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <div
+                        key={idx}
+                        className="p-2.5 rounded-xl hover:bg-slate-500/5 transition-colors border border-transparent hover:border-slate-500/10"
+                      >
+                        <p>{line}</p>
+                      </div>
+                    );
+                  })
                 ) : (
-                  <p className="text-xs text-slate-400 italic text-center py-6">
-                    No transcript clauses indexed yet for this document.
-                  </p>
+                  <div className="py-10 text-center space-y-2">
+                    <BookOpen className="w-8 h-8 mx-auto text-slate-400 opacity-40" />
+                    <p className="text-xs font-semibold theme-text-primary">Transcript Ready in Native PDF</p>
+                    <p className="text-xs theme-text-muted max-w-sm mx-auto">
+                      Switch to the &quot;Native PDF / File&quot; tab in the toolbar above to view the high-resolution original file.
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
 
-            {/* Bottom Verification & Signature Footnote */}
-            <div className="pt-4 border-t border-slate-200 dark:border-slate-800 grid grid-cols-1 sm:grid-cols-2 gap-3 text-[10px] text-slate-500 font-sans">
-              <div>
-                <span className="font-bold text-slate-700 dark:text-slate-300 block mb-0.5">Execution & SRO Authority</span>
-                <span>{doc.extracted?.sro || 'Competent Sub-Registrar Office'}</span>
-              </div>
-              <div className="text-left sm:text-right">
-                <span className="font-bold text-slate-700 dark:text-slate-300 block mb-0.5">Extraction Security Seal</span>
-                <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Gemini AI Verified & Encrypted
-                </span>
-              </div>
+            {/* Footer Verification Seal */}
+            <div className="pt-4 border-t theme-border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs theme-text-muted">
+              <span>Authority: {doc.extracted?.sro || 'Competent Sub-Registrar Office'}</span>
+              <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold text-[11px]">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                AI Verified & Encrypted
+              </span>
             </div>
           </div>
-        )}
-      </div>
-
-      {/* Bottom Status Bar */}
-      <div className="px-3 py-2 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/70 flex items-center justify-between text-[11px] text-slate-500 font-mono">
-        <div className="flex items-center gap-2">
-          <span>Mode: {viewMode === 'DOCUMENT' ? 'Interactive Layer' : 'Native Viewer'}</span>
-          <span>•</span>
-          <span>{lines.length} Document Blocks</span>
-        </div>
-
-        {activeHighlight && (
-          <button
-            onClick={onClearHighlight}
-            className="text-blue-600 dark:text-blue-400 hover:underline font-semibold flex items-center gap-1"
-          >
-            <X className="w-3 h-3" />
-            <span>Clear Highlight</span>
-          </button>
         )}
       </div>
     </div>
   );
 };
+
+export default DocumentViewer;

@@ -10,6 +10,7 @@ import {
   Database,
   FileText,
   ShieldAlert,
+  Activity,
   PlusCircle,
   Sparkles,
   X,
@@ -29,6 +30,12 @@ export function Sidebar() {
   const { hasModuleAccess, isAdmin } = useEntitlements();
   const { isMobileMenuOpen, closeMobileMenu, isSidebarCollapsed, toggleSidebarCollapsed } = useUIStore();
   const { user, logout } = useAuthStore();
+
+  const isSuperAdmin = Boolean(
+    isAdmin ||
+    user?.is_admin ||
+    (typeof user?.role === 'string' && (user.role.toLowerCase().includes('admin') || user.role.toLowerCase().includes('dev')))
+  );
 
   const navItems = [
     {
@@ -62,19 +69,27 @@ export function Sidebar() {
       label: 'IGR Land Registry',
       href: '/requests/search',
       icon: Database,
-      show: hasModuleAccess('due_diligence') || isAdmin,
+      show: hasModuleAccess('due_diligence') || isSuperAdmin,
+    },
+    {
+      label: 'IGR Scrape Jobs',
+      href: '/admin/igr-jobs',
+      icon: Activity,
+      show: isSuperAdmin,
+      badge: 'Admin',
+      badgeColor: 'blue',
     },
     {
       label: 'LSR & SCR Reports',
       href: '/requests/reports',
       icon: FileText,
-      show: hasModuleAccess('case_analyzer') || isAdmin,
+      show: hasModuleAccess('case_analyzer') || isSuperAdmin,
     },
     {
       label: 'System Health & AI',
       href: '/admin',
       icon: ShieldAlert,
-      show: isAdmin,
+      show: isSuperAdmin,
     },
   ];
 

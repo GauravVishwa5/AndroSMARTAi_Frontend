@@ -75,9 +75,31 @@ export const igrApi = {
     return response.data?.items || (Array.isArray(response.data) ? response.data : []);
   },
 
+  // Full IGR Scrape Jobs CRUD for Admin Management
+  getAllIgrJobs: async (params?: { state?: string; status?: string; search?: string; limit?: number }) => {
+    const response = await apiClient.get('/api/igr-jobs', { params });
+    return response.data;
+  },
+
+  updateIgrJob: async (jobId: string, data: Record<string, any>) => {
+    const response = await apiClient.patch(`/api/igr-jobs/${jobId}`, data);
+    return response.data;
+  },
+
+  deleteIgrJob: async (jobId: string) => {
+    const response = await apiClient.delete(`/api/igr-jobs/${jobId}`);
+    return response.data;
+  },
+
+  retryIgrJob: async (jobId: string) => {
+    const response = await apiClient.post(`/api/igr-jobs/${jobId}/retry`);
+    return response.data;
+  },
+
   // Legacy alias
   getScraperHealth: async () => {
     const response = await apiClient.get('/health').catch(() => ({ data: { status: 'ok' } }));
     return response.data;
   },
 };
+

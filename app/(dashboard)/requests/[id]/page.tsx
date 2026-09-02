@@ -140,10 +140,10 @@ export default function RequestWorkspacePage() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [isReuploadMode, setIsReuploadMode] = useState(false);
 
-  const loadDetails = async () => {
+  const loadDetails = async (forceRefresh = false) => {
     setIsLoading(true);
     try {
-      const data = await requestsApi.getRequestDetails(requestId);
+      const data = await requestsApi.getRequestDetails(requestId, forceRefresh);
       if (data) {
         setRequestData(data);
         if (data.status) {
@@ -225,7 +225,7 @@ export default function RequestWorkspacePage() {
     setShowUploadModal(true);
   };
 
-  const handleUpdateStatus = async (newStatus: 'Verified' | 'Rejected') => {
+  const handleUpdateStatus = async (newStatus: 'Verified' | 'Rejected' | 'In Progress') => {
     setIsUpdatingStatus(true);
     setStatusFeedback(null);
     try {
@@ -233,7 +233,12 @@ export default function RequestWorkspacePage() {
       setRequestStatus(newStatus);
       setStatusFeedback({
         type: 'success',
-        message: newStatus === 'Verified' ? 'Property Title Approved & Verified in Postgres Database!' : 'Discrepancy Flagged on Property Title!',
+        message:
+          newStatus === 'Verified'
+            ? 'Property Title Approved & Verified in Postgres Database!'
+            : newStatus === 'Rejected'
+            ? 'Discrepancy Flagged on Property Title!'
+            : 'Request status updated to In Progress!',
       });
       setTimeout(() => setStatusFeedback(null), 5000);
     } catch (err: any) {
@@ -345,89 +350,137 @@ export default function RequestWorkspacePage() {
       )}
 
       {/* Top Breadcrumb & Status Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl theme-surface border backdrop-blur-md">
-        <div className="flex items-center gap-3">
+      <div className="p-4 sm:p-5 rounded-2xl theme-surface border shadow-xs backdrop-blur-md flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        {/* Left Side: Request Info & Property Summary */}
+        <div className="flex items-start sm:items-center gap-3.5">
           <Link
             href="/branch"
-            className="p-2 rounded-xl theme-card border theme-text-primary hover:border-blue-500 transition-colors"
+            className="p-2.5 rounded-xl theme-card border theme-text-secondary hover:theme-text-primary hover:border-blue-500 transition-all shrink-0 shadow-2xs mt-0.5 sm:mt-0"
+            title="Back to Requests"
           >
             <ArrowLeft className="w-4 h-4" />
           </Link>
-          <div>
+
+          <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">
+              <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
                 {requestId}
               </span>
-              <span className="text-slate-400">&bull;</span>
-              <h1 className="text-base font-bold theme-text-primary">
-                {propName} &mdash; {flatNo}
+              <h1 className="text-base sm:text-lg font-bold theme-text-primary tracking-tight">
+                {propName} &mdash; <span className="font-semibold theme-text-secondary">{flatNo}</span>
               </h1>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30">
-                {cts}
+              <span className="px-2 py-0.5 rounded-md text-[11px] font-semibold font-mono theme-card border theme-text-secondary">
+                CTS {cts}
               </span>
+
+              {/* Status Badge */}
               {requestStatus === 'Verified' && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                  <CheckCircle className="w-3 h-3" />
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   Clean Title
                 </span>
               )}
               {requestStatus === 'Rejected' && (
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30 flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" />
-                  Flagged
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                  Flagged Discrepancy
+                </span>
+              )}
+              {requestStatus !== 'Verified' && requestStatus !== 'Rejected' && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  In Progress
                 </span>
               )}
             </div>
-            <p className="text-xs theme-text-secondary mt-0.5">
-              Borrower: <strong className="theme-text-primary">{ownerName}</strong> &bull; {location} &bull; {bankBranch}
-            </p>
+
+            {/* Subtitle Metadata Bar */}
+            <div className="flex items-center gap-2 text-xs theme-text-secondary flex-wrap">
+              <span>
+                Borrower: <strong className="theme-text-primary font-semibold">{ownerName}</strong>
+              </span>
+              <span className="text-slate-300 dark:text-slate-700">•</span>
+              <span className="truncate max-w-xs sm:max-w-md" title={location}>
+                {location}
+              </span>
+              <span className="text-slate-300 dark:text-slate-700">•</span>
+              <span className="theme-text-muted">{bankBranch}</span>
+            </div>
           </div>
         </div>
 
-        {/* Quick Review Actions + Edit Form Button */}
-        <div className="grid grid-cols-2 sm:flex items-center gap-2 sm:gap-2.5 w-full md:w-auto">
+        {/* Right Side: Quick Action Toolbar */}
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 theme-border">
+          {/* Refresh / Sync Button */}
+          <button
+            onClick={() => loadDetails(true)}
+            disabled={isLoading}
+            className="p-2 rounded-xl theme-card border text-xs font-semibold theme-text-secondary hover:theme-text-primary hover:border-blue-500 transition-all active:scale-95 shadow-2xs disabled:opacity-50"
+            title="Sync with database"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-blue-500' : ''}`} />
+          </button>
+
           {/* Edit Form Button */}
           <button
             onClick={handleOpenEditModal}
-            className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl border theme-card text-xs font-semibold theme-text-primary hover:border-blue-500 hover:text-blue-500 transition-all active:scale-95 shadow-sm"
-            title="Edit Property & Case Details"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl theme-card border text-xs font-semibold theme-text-primary hover:border-blue-500 hover:text-blue-500 transition-all active:scale-95 shadow-2xs"
+            title="Edit property details"
           >
-            <Edit3 className="w-4 h-4 text-blue-500" />
+            <Edit3 className="w-3.5 h-3.5 text-blue-500" />
             <span>Edit Form</span>
           </button>
 
+          {/* In Progress Button */}
+          <button
+            onClick={() => handleUpdateStatus('In Progress')}
+            disabled={isUpdatingStatus}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 disabled:opacity-50 shadow-2xs ${
+              requestStatus === 'In Progress' || (requestStatus !== 'Verified' && requestStatus !== 'Rejected')
+                ? 'bg-amber-500 text-white shadow-amber-500/20'
+                : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+            }`}
+            title="Mark status as In Progress"
+          >
+            <Clock className="w-3.5 h-3.5" />
+            <span>In Progress</span>
+          </button>
+
+          {/* Approve Button */}
           <button
             onClick={() => handleUpdateStatus('Verified')}
             disabled={isUpdatingStatus}
-            className={`flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold shadow-sm transition-all active:scale-95 disabled:opacity-50 ${
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 disabled:opacity-50 shadow-2xs ${
               requestStatus === 'Verified'
-                ? 'bg-emerald-600 text-white shadow-emerald-600/25 shadow-md'
-                : 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30'
+                ? 'bg-emerald-600 text-white shadow-emerald-600/20'
+                : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
             }`}
           >
-            {isUpdatingStatus ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
-            <span>Clear Title (Approve)</span>
+            {isUpdatingStatus ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />}
+            <span>Clear Title</span>
           </button>
 
+          {/* Flag Button */}
           <button
             onClick={() => handleUpdateStatus('Rejected')}
             disabled={isUpdatingStatus}
-            className={`flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold shadow-sm transition-all active:scale-95 disabled:opacity-50 ${
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all active:scale-95 disabled:opacity-50 shadow-2xs ${
               requestStatus === 'Rejected'
-                ? 'bg-red-600 text-white shadow-red-600/25 shadow-md'
-                : 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/25 hover:bg-red-500/20'
+                ? 'bg-rose-600 text-white shadow-rose-600/20'
+                : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30'
             }`}
           >
-            <AlertTriangle className="w-4 h-4" />
+            <AlertTriangle className="w-3.5 h-3.5 text-rose-500" />
             <span>Flag Discrepancy</span>
           </button>
 
+          {/* View TSR Report */}
           <button
             onClick={() => setActiveTab('TSR_REPORT')}
-            className="flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/25 transition-all active:scale-95 col-span-2 sm:col-span-1"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/20 transition-all active:scale-95 shrink-0"
           >
-            <FileCheck2 className="w-4 h-4" />
-            <span>View TSR Report</span>
+            <FileCheck2 className="w-3.5 h-3.5" />
+            <span>View TSR</span>
           </button>
         </div>
       </div>
@@ -436,17 +489,17 @@ export default function RequestWorkspacePage() {
       {/* Main Split-Screen Workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 min-h-[680px]">
         {/* Left Column (5 Cols): Real Document & OCR Viewer */}
-        <div className="lg:col-span-5 flex flex-col rounded-2xl theme-surface border overflow-hidden shadow-sm">
+        <div className="lg:col-span-5 flex flex-col rounded-2xl theme-surface border overflow-hidden shadow-xs">
           {/* Document Switcher Header with Upload / Reupload Controls & Maximize */}
-          <div className="p-2.5 border-b theme-border bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between gap-2 min-w-0">
+          <div className="p-3 border-b theme-border bg-slate-500/5 flex items-center justify-between gap-2.5 min-w-0">
             {/* Document Tabs / Dropdown */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 flex-1 min-w-0">
+            <div className="flex items-center gap-2 overflow-x-auto flex-1 min-w-0">
               {docs.length > 2 ? (
                 <div className="relative flex items-center gap-2 flex-1 min-w-0">
                   <select
                     value={selectedDocIndex}
                     onChange={(e) => setSelectedDocIndex(Number(e.target.value))}
-                    className="w-full sm:max-w-[280px] pl-2.5 pr-8 py-1.5 rounded-lg border theme-border bg-white dark:bg-slate-900 text-xs font-semibold theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 truncate shadow-xs"
+                    className="w-full sm:max-w-[280px] pl-3 pr-8 py-2 rounded-xl theme-input border text-xs font-semibold theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 truncate shadow-2xs"
                   >
                     {docs.map((doc, idx) => (
                       <option key={doc.id} value={idx}>
@@ -463,10 +516,10 @@ export default function RequestWorkspacePage() {
                   <button
                     key={doc.id}
                     onClick={() => setSelectedDocIndex(idx)}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
                       selectedDocIndex === idx
                         ? 'bg-blue-600 text-white shadow-sm font-semibold'
-                        : 'theme-text-secondary hover:theme-text-primary hover:bg-slate-200 dark:hover:bg-slate-800'
+                        : 'theme-text-secondary hover:theme-text-primary hover:bg-slate-500/10'
                     }`}
                   >
                     <FileText className="w-3.5 h-3.5" />
@@ -484,14 +537,14 @@ export default function RequestWorkspacePage() {
             </div>
 
             {/* Action Buttons: Upload, Re-upload, Maximize */}
-            <div className="flex items-center gap-1 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 onClick={() => {
                   setIsReuploadMode(false);
                   setShowUploadModal(true);
                 }}
                 title="Upload New Document"
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-sm transition-all active:scale-95"
               >
                 <Upload className="w-3.5 h-3.5" />
                 <span className="hidden sm:inline">Upload</span>
@@ -503,15 +556,15 @@ export default function RequestWorkspacePage() {
                   setShowUploadModal(true);
                 }}
                 title="Re-upload / Replace Current Document"
-                className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg theme-card border text-xs font-semibold theme-text-secondary hover:theme-text-primary hover:border-blue-500 transition-all active:scale-95"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl theme-card border text-xs font-semibold theme-text-secondary hover:theme-text-primary hover:border-blue-500 transition-all active:scale-95"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Re-upload</span>
+                <span className="hidden sm:inline">Replace</span>
               </button>
 
               <button
                 onClick={() => setShowPreviewModal(true)}
-                className="p-1.5 rounded-lg theme-card border text-blue-600 dark:text-blue-400 hover:border-blue-500 transition-colors"
+                className="p-2 rounded-xl theme-card border theme-text-secondary hover:theme-text-primary hover:border-blue-500 transition-colors"
                 title="Full Screen Document & Raw Text Preview"
               >
                 <Maximize2 className="w-3.5 h-3.5" />
@@ -520,7 +573,7 @@ export default function RequestWorkspacePage() {
           </div>
 
           {/* Document Viewer Body */}
-          <div className="flex-1 p-2 bg-slate-100/70 dark:bg-slate-950/90 overflow-hidden flex flex-col min-h-[550px]">
+          <div className="flex-1 p-2 bg-slate-500/5 overflow-hidden flex flex-col min-h-[550px]">
             <DocumentViewer
               doc={currentDoc}
               activeHighlight={activeHighlightEntity}
