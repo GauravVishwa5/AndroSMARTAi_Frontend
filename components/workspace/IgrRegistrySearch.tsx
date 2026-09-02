@@ -439,14 +439,14 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
 
         {/* Dynamic Cascading Form Fields Based on Selected State */}
         {selectedState === 'Delhi' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 text-xs">
             {/* Field 1: Delhi SRO Dropdown */}
-            <div className="sm:col-span-2">
-              <label className="block text-slate-500 mb-1 font-medium">Sub-Registrar Office (SRO)</label>
+            <div className="md:col-span-4">
+              <label className="block text-[11px] text-slate-600 dark:text-slate-400 mb-1 font-semibold">Sub-Registrar Office (SRO)</label>
               <select
                 value={selectedSroId}
                 onChange={(e) => setSelectedSroId(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-xs transition-all"
               >
                 {delhiSros.map((s: any) => (
                   <option key={s.sro_id} value={s.sro_id}>
@@ -457,12 +457,12 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
             </div>
 
             {/* Field 2: Delhi Locality Dropdown */}
-            <div>
-              <label className="block text-slate-500 mb-1 font-medium">Locality / Village</label>
+            <div className="md:col-span-3">
+              <label className="block text-[11px] text-slate-600 dark:text-slate-400 mb-1 font-semibold">Locality / Village</label>
               <select
                 value={selectedLocality}
                 onChange={(e) => setSelectedLocality(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-xs transition-all"
               >
                 {delhiLocalities.map((l: any, idx: number) => (
                   <option key={idx} value={l.locality_name}>
@@ -473,46 +473,46 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
             </div>
 
             {/* Field 3: Plot / Unit */}
-            <div>
-              <label className="block text-slate-500 mb-1 font-medium">Plot / Flat / Unit No.</label>
+            <div className="md:col-span-2">
+              <label className="block text-[11px] text-slate-600 dark:text-slate-400 mb-1 font-semibold">Plot / Unit No.</label>
               <input
                 type="text"
                 value={ctsQuery}
                 onChange={(e) => setCtsQuery(e.target.value)}
-                placeholder="e.g. Plot No. 235"
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                placeholder="e.g. Plot 235"
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs font-medium transition-all"
               />
             </div>
 
             {/* Field 4: Search Period */}
-            <div>
-              <label className="block text-slate-500 mb-1 font-medium">Search Period</label>
-              <div className="flex items-center gap-1.5">
+            <div className="md:col-span-3">
+              <label className="block text-[11px] text-slate-600 dark:text-slate-400 mb-1 font-semibold">Search Period (Years)</label>
+              <div className="flex items-center gap-2">
                 <input
                   type="number"
                   value={startYear}
                   onChange={(e) => setStartYear(Number(e.target.value))}
-                  className="w-full px-2 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-center font-mono"
+                  className="w-full min-w-[70px] px-2.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs text-center font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                 />
-                <span className="text-slate-400">&ndash;</span>
+                <span className="text-slate-400 font-bold">&ndash;</span>
                 <input
                   type="number"
                   value={endYear}
                   onChange={(e) => setEndYear(Number(e.target.value))}
-                  className="w-full px-2 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-center font-mono"
+                  className="w-full min-w-[70px] px-2.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs text-center font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                 />
               </div>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-3 text-xs">
             {/* Field 1: Maharashtra District Dropdown */}
-            <div className="sm:col-span-2">
-              <label className="block text-slate-500 mb-1 font-medium">District</label>
+            <div className="md:col-span-3">
+              <label className="block text-[11px] text-slate-600 dark:text-slate-400 mb-1 font-semibold">District</label>
               <select
                 value={selectedDistrict}
                 onChange={(e) => setSelectedDistrict(e.target.value)}
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-xs transition-all"
               >
                 {districts.map((d: any) => (
                   <option key={d.id} value={d.district_name || d.name}>
@@ -523,60 +523,61 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
             </div>
 
             {/* Field 2: Area / Village Input */}
-            <div>
-              <label className="block text-slate-500 mb-1 font-medium">Taluka / Area</label>
+            <div className="md:col-span-3">
+              <label className="block text-[11px] text-slate-600 dark:text-slate-400 mb-1 font-semibold">Taluka / Area</label>
               <input
                 type="text"
                 value={selectedArea}
                 onChange={(e) => setSelectedArea(e.target.value)}
-                placeholder="e.g. Andheri"
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium"
+                placeholder="e.g. Borivali"
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-xs transition-all"
               />
             </div>
 
             {/* Field 3: CTS Number */}
-            <div>
-              <label className="block text-slate-500 mb-1 font-medium">CTS / Survey / Gat No.</label>
+            <div className="md:col-span-3">
+              <label className="block text-[11px] text-slate-600 dark:text-slate-400 mb-1 font-semibold">CTS / Survey / Gat No.</label>
               <input
                 type="text"
                 value={ctsQuery}
                 onChange={(e) => setCtsQuery(e.target.value)}
-                placeholder="e.g. CTS-1029"
-                className="w-full px-3 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500 font-mono"
+                placeholder="e.g. 589"
+                className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-xs font-bold transition-all"
               />
             </div>
 
             {/* Field 4: Search Period */}
-            <div>
-              <label className="block text-slate-500 mb-1 font-medium">Search Period</label>
-              <div className="flex items-center gap-1.5">
+            <div className="md:col-span-3">
+              <label className="block text-[11px] text-slate-600 dark:text-slate-400 mb-1 font-semibold">Search Period (Years)</label>
+              <div className="flex items-center gap-2">
                 <input
                   type="number"
                   value={startYear}
                   onChange={(e) => setStartYear(Number(e.target.value))}
-                  className="w-full px-2 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-center font-mono"
+                  className="w-full min-w-[70px] px-2.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs text-center font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                 />
-                <span className="text-slate-400">&ndash;</span>
+                <span className="text-slate-400 font-bold">&ndash;</span>
                 <input
                   type="number"
                   value={endYear}
                   onChange={(e) => setEndYear(Number(e.target.value))}
-                  className="w-full px-2 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-xs text-center font-mono"
+                  className="w-full min-w-[70px] px-2.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 text-xs text-center font-mono font-bold focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                 />
               </div>
             </div>
           </div>
         )}
 
-        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
-          <span className="text-[11px] text-slate-500 font-mono">
-            {searchStatus || 'Ready to execute live automated search against registry'}
-          </span>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-2 text-[11px] text-slate-500 font-mono">
+            <span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+            <span>{searchStatus || 'Ready to execute live automated search against registry (1996 - 2026)'}</span>
+          </div>
 
           <button
             type="submit"
             disabled={isSearching}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md active:scale-95 transition-all disabled:opacity-50"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all disabled:opacity-50"
           >
             {isSearching ? (
               <>

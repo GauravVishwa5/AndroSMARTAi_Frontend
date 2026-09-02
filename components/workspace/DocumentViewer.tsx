@@ -363,7 +363,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       {/* Main Document Canvas Viewport */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 p-4 sm:p-6 overflow-auto bg-slate-100/90 dark:bg-slate-950 flex justify-center items-start min-h-[450px]"
+        className="flex-1 p-4 sm:p-6 overflow-auto bg-slate-100 dark:bg-slate-950 flex justify-center items-start min-h-[450px]"
       >
         {viewMode === 'PDF_EMBED' && doc.fileUrl && doc.fileUrl !== '#' ? (
           <div
@@ -371,13 +371,22 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               transform: `scale(${zoomLevel / 100}) rotate(${rotation}deg)`,
               transformOrigin: 'top center',
             }}
-            className="w-full h-full min-h-[500px] transition-transform duration-200"
+            className="w-full flex justify-center transition-transform duration-200"
           >
-            <iframe
-              src={`${doc.fileUrl}#toolbar=1&navpanes=0`}
-              title={doc.name}
-              className="w-full h-full min-h-[500px] rounded-xl border border-slate-200 dark:border-slate-800 bg-white shadow-md"
-            />
+            {/\.(jpe?g|png|webp|gif|bmp)$/i.test(doc.fileUrl || '') || /\.(jpe?g|png|webp|gif|bmp)$/i.test(doc.name || '') ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={doc.fileUrl}
+                alt={doc.name}
+                className="max-w-full h-auto max-h-[85vh] rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 bg-white object-contain"
+              />
+            ) : (
+              <iframe
+                src={`${doc.fileUrl}#toolbar=1&navpanes=0`}
+                title={doc.name}
+                className="w-full h-[75vh] min-h-[550px] rounded-xl border border-slate-200 dark:border-slate-800 bg-white shadow-xl"
+              />
+            )}
           </div>
         ) : (
           /* High-Fidelity Interactive Document Paper */
