@@ -296,61 +296,20 @@ export default function RequestWorkspacePage() {
       ocrMeta: d.ocr_meta || {},
       extracted_json: ej,
       extracted: {
-        vendor: ej.vendor || ej.seller_names || ej.seller || ej.transferor || ej.parties?.seller || requestData?.advocateName || 'Previous Landholder',
-        vendee: ej.vendee || ej.purchaser_names || ej.purchaser || ej.transferee || ej.borrower || ej.parties?.purchaser || requestData?.ownerName || requestData?.applicantName || 'Borrower',
-        date: ej.date || ej.registration_date || ej.execution_date || requestData?.date_of_issue || 'Registered Record',
-        consideration: ej.consideration || ej.consideration_amount || ej.amount || ej.loan_amount || 'Institutional Mortgage',
-        propertyDesc: ej.propertyDesc || ej.property_description || ej.schedule_property || ej.address || `${requestData?.propertyName || 'Property'} ${requestData?.flatNumber ? `Flat ${requestData?.flatNumber}` : ''}, ${requestData?.address || requestData?.city || 'Location'}`,
-        cts: ej.cts || ej.cts_number || ej.survey_number || ej.gat_number || requestData?.ctsNumber || requestData?.ctsnumber || 'CTS-Record',
-        sro: ej.sro || ej.sro_name || ej.sub_registrar || `${requestData?.district || 'SRO District'} Sub-Registrar`,
-        regNo: ej.regNo || ej.document_number || ej.registration_number || ej.doc_no || requestData?.permitnumber || requestData?.permitNumber || `DOC #${requestId}`,
-        stampDuty: ej.stampDuty || ej.stamp_duty || 'Stamp Duty & Registration Paid',
+        vendor: ej.vendor || ej.seller_names || ej.seller || ej.transferor || ej.parties?.seller || '',
+        vendee: ej.vendee || ej.purchaser_names || ej.purchaser || ej.transferee || ej.borrower || ej.parties?.purchaser || '',
+        date: ej.date || ej.registration_date || ej.execution_date || '',
+        consideration: ej.consideration || ej.consideration_amount || ej.amount || ej.loan_amount || '',
+        propertyDesc: ej.propertyDesc || ej.property_description || ej.schedule_property || ej.address || '',
+        cts: ej.cts || ej.cts_number || ej.survey_number || ej.gat_number || '',
+        sro: ej.sro || ej.sro_name || ej.sub_registrar || '',
+        regNo: ej.regNo || ej.document_number || ej.registration_number || ej.doc_no || '',
+        stampDuty: ej.stampDuty || ej.stamp_duty || '',
       },
     };
-  }) : [
-    {
-      id: 'doc-1',
-      name: 'Registered_Sale_Deed_2020.pdf',
-      type: 'Sale Deed',
-      status: 'clear' as const,
-      ocrStatus: 'done',
-      date: 'Aug 30, 2026',
-      fileUrl: '#',
-      rawText: 'MORTGAGE DEED AGREEMENT\nThis Deed of Mortgage is made on 31st August 2026.\nBetween Borrower: Mr. Rahul Sharma\nAnd Lender: State Bank of India\nProperty Description: Flat No 402, 4th Floor, Survey No 142/3, CTS No 589, Village Borivali.\nLoan Amount: Rs. 75,00,000/-',
-      ocrMeta: { total_pages: 1, char_count: 245 },
-      extracted: {
-        vendor: 'Sunil K. Sharma',
-        vendee: requestData?.ownerName || 'Ajay Kumar',
-        date: '14-Aug-2020',
-        consideration: 'Rs. 85,00,000',
-        propertyDesc: `${requestData?.propertyName || 'Deepali Residency'}, Flat ${requestData?.flatNumber || '235'}`,
-        cts: requestData?.ctsNumber || 'CTS-1029',
-        sro: 'SRO VI-A Pitampura',
-        regNo: 'Doc #8472/Book-I',
-      },
-    },
-    {
-      id: 'doc-2',
-      name: 'Parent_Chain_Deed_1998.pdf',
-      type: 'Parent Deed',
-      status: 'clear' as const,
-      ocrStatus: 'done',
-      date: 'Aug 29, 2026',
-      fileUrl: '#',
-      extracted: {
-        vendor: 'DDA / DLF Housing Ltd',
-        vendee: 'Sunil K. Sharma',
-        date: '22-Mar-1998',
-        consideration: 'Rs. 18,50,000',
-        propertyDesc: `${requestData?.propertyName || 'Deepali Residency'} Plot 235`,
-        cts: requestData?.ctsNumber || 'CTS-1029',
-        sro: 'SRO VI Delhi',
-        regNo: 'Doc #1249/Book-I',
-      },
-    },
-  ];
+  }) : [];
 
-  const currentDoc = docs[Math.min(selectedDocIndex, docs.length - 1)] || docs[0];
+  const currentDoc = docs[Math.min(selectedDocIndex, Math.max(0, docs.length - 1))] || null;
 
   const propName = requestData?.propertyName || requestData?.property_name || 'Deepali Residency';
   const flatNo = requestData?.flatNumber || requestData?.flat_number ? `Flat ${requestData?.flatNumber || requestData?.flat_number}` : 'Flat 235';

@@ -115,7 +115,7 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
     }
   };
 
-  // Clean document text lines or structured fallback text
+  // Clean document text lines or structured real text
   const getDocumentLines = () => {
     if (isTranslated && translatedText) {
       return translatedText.split('\n');
@@ -125,18 +125,20 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       return doc.rawText.split('\n');
     }
 
-    // Default template representation for visual clarity
-    return [
-      `MORTGAGE DEED AGREEMENT`,
-      `This Deed of Mortgage is made on ${doc.extracted?.date || '31st August 2026'}.`,
-      `Between Borrower: ${doc.extracted?.vendee || 'Mr. Rahul Sharma'}, Residing at Flat 402, Sunshine Heights, Mumbai.`,
-      `And Lender: ${doc.extracted?.vendor || 'State Bank of India, Nariman Point Branch, Mumbai'}.`,
-      `Property Description: ${doc.extracted?.propertyDesc || 'Flat No 402, 4th Floor, Survey No 142/3, CTS No 589, Village Borivali'}.`,
-      `Loan Amount: ${doc.extracted?.consideration || 'Rs. 75,00,000/- (Rupees Seventy Five Lakhs Only)'}.`,
-      `Registration No: ${doc.extracted?.regNo || '4589/2026'} dated ${doc.extracted?.date || '31/08/2026'}.`,
-      `Sub-Registrar Office: ${doc.extracted?.sro || 'SRO Borivali, Mumbai Suburban'}.`,
-      `Stamp Duty Status: ${doc.extracted?.stampDuty || 'Stamp Duty & Registration Fee Paid'}.`,
-    ];
+    if (doc.extracted && (doc.extracted.vendor || doc.extracted.vendee || doc.extracted.propertyDesc)) {
+      return [
+        `${(doc.type || 'Legal Document').toUpperCase()}`,
+        doc.extracted.date ? `Date of Execution: ${doc.extracted.date}` : '',
+        doc.extracted.vendor ? `Transferor / Vendor / Lender: ${doc.extracted.vendor}` : '',
+        doc.extracted.vendee ? `Transferee / Purchaser / Borrower: ${doc.extracted.vendee}` : '',
+        doc.extracted.propertyDesc ? `Property Description: ${doc.extracted.propertyDesc}` : '',
+        doc.extracted.consideration ? `Consideration / Loan Amount: ${doc.extracted.consideration}` : '',
+        doc.extracted.regNo ? `Registration Record: ${doc.extracted.regNo}` : '',
+        doc.extracted.sro ? `Sub-Registrar Office: ${doc.extracted.sro}` : '',
+      ].filter(Boolean);
+    }
+
+    return [];
   };
 
   const lines = getDocumentLines();
@@ -509,41 +511,51 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
             </div>
 
             {/* Key Extracted Entities Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Parties Box */}
-              <div className="p-3.5 rounded-xl border border-blue-100 dark:border-blue-950/60 bg-blue-50/40 dark:bg-blue-950/20 space-y-2">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5 font-mono">
-                  <span>Parties of Agreement</span>
-                </div>
-                <div className="space-y-1 text-xs">
-                  <div>
-                    <span className="text-[10px] text-slate-500 block">Transferor / Vendor / Lender:</span>
-                    <p className="font-semibold text-slate-900 dark:text-slate-100">{doc.extracted?.vendor || 'Not Specified'}</p>
+            {doc.extracted?.vendor || doc.extracted?.vendee || doc.extracted?.propertyDesc || doc.extracted?.consideration ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Parties Box */}
+                <div className="p-3.5 rounded-xl border border-blue-100 dark:border-blue-950/60 bg-blue-50/40 dark:bg-blue-950/20 space-y-2">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1.5 font-mono">
+                    <span>Parties of Agreement</span>
                   </div>
-                  <div className="pt-1 border-t border-blue-100 dark:border-blue-900/40">
-                    <span className="text-[10px] text-slate-500 block">Transferee / Purchaser / Borrower:</span>
-                    <p className="font-semibold text-slate-900 dark:text-slate-100">{doc.extracted?.vendee || 'Not Specified'}</p>
+                  <div className="space-y-1 text-xs">
+                    <div>
+                      <span className="text-[10px] text-slate-500 block">Transferor / Vendor / Lender:</span>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">{doc.extracted?.vendor || '—'}</p>
+                    </div>
+                    <div className="pt-1 border-t border-blue-100 dark:border-blue-900/40">
+                      <span className="text-[10px] text-slate-500 block">Transferee / Purchaser / Borrower:</span>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">{doc.extracted?.vendee || '—'}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Property & Financial Box */}
-              <div className="p-3.5 rounded-xl border border-emerald-100 dark:border-emerald-950/60 bg-emerald-50/40 dark:bg-emerald-950/20 space-y-2">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-mono">
-                  <span>Property & Consideration</span>
-                </div>
-                <div className="space-y-1 text-xs">
-                  <div>
-                    <span className="text-[10px] text-slate-500 block">Property / CTS Details:</span>
-                    <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{doc.extracted?.propertyDesc || 'Property Schedule'} {doc.extracted?.cts ? `(${doc.extracted.cts})` : ''}</p>
+                {/* Property & Financial Box */}
+                <div className="p-3.5 rounded-xl border border-emerald-100 dark:border-emerald-950/60 bg-emerald-50/40 dark:bg-emerald-950/20 space-y-2">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-mono">
+                    <span>Property & Consideration</span>
                   </div>
-                  <div className="pt-1 border-t border-emerald-100 dark:border-emerald-900/40">
-                    <span className="text-[10px] text-slate-500 block">Consideration / Loan Amount:</span>
-                    <p className="font-bold text-emerald-700 dark:text-emerald-400">{doc.extracted?.consideration || 'Standard Legal Terms'}</p>
+                  <div className="space-y-1 text-xs">
+                    <div>
+                      <span className="text-[10px] text-slate-500 block">Property / CTS Details:</span>
+                      <p className="font-semibold text-slate-900 dark:text-slate-100 truncate">{doc.extracted?.propertyDesc || '—'} {doc.extracted?.cts ? `(${doc.extracted.cts})` : ''}</p>
+                    </div>
+                    <div className="pt-1 border-t border-emerald-100 dark:border-emerald-900/40">
+                      <span className="text-[10px] text-slate-500 block">Consideration / Loan Amount:</span>
+                      <p className="font-bold text-emerald-700 dark:text-emerald-400">{doc.extracted?.consideration || '—'}</p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="py-6 text-center text-slate-400 space-y-2 border border-dashed border-slate-200 dark:border-slate-800 rounded-xl bg-slate-50/50 dark:bg-slate-950/30">
+                <Sparkles className="w-6 h-6 mx-auto text-indigo-400 opacity-80" />
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Document Uploaded: {doc.name}</p>
+                <p className="text-[11px] text-slate-500 max-w-sm mx-auto">
+                  Click &ldquo;Raw OCR Text&rdquo; or switch to &ldquo;Native PDF&rdquo; in the toolbar above to view the file.
+                </p>
+              </div>
+            )}
 
             {/* Document Text Transcript / Clauses */}
             <div className="space-y-3 pt-2">
@@ -557,11 +569,17 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
               </div>
 
               <div className="space-y-3 text-xs sm:text-sm font-serif leading-relaxed text-slate-800 dark:text-slate-200 max-h-[380px] overflow-y-auto pr-2">
-                {lines.map((line, idx) => (
-                  <div key={idx} className="p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    {renderLineWithHighlight(line, idx)}
-                  </div>
-                ))}
+                {lines.length > 0 ? (
+                  lines.map((line, idx) => (
+                    <div key={idx} className="p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                      {renderLineWithHighlight(line, idx)}
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-xs text-slate-400 italic text-center py-6">
+                    No transcript clauses indexed yet for this document.
+                  </p>
+                )}
               </div>
             </div>
 
