@@ -277,7 +277,7 @@ export default function NewRequestPage() {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files).map((file) => ({
         file,
-        docType: docTypesData?.document_types?.[0]?.document_type || 'Sale Deed',
+        docType: 'Auto-Detect',
       }));
       setUploadedFiles([...uploadedFiles, ...newFiles]);
     }
@@ -921,8 +921,9 @@ export default function NewRequestPage() {
                           }
                           setUploadedFiles(updated);
                         }}
-                        className="theme-input border rounded-lg px-2.5 py-1.5 text-xs theme-text-primary focus:outline-none"
+                        className="theme-input border rounded-lg px-2.5 py-1.5 text-xs theme-text-primary focus:outline-none font-medium"
                       >
+                        <option value="Auto-Detect">✨ Auto-Detect by AI (Recommended)</option>
                         {docTypesData?.document_types?.map((d) => (
                           <option key={d.id} value={d.document_type}>
                             {d.document_type}
