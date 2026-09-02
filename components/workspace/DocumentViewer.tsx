@@ -31,17 +31,17 @@ export interface ActiveHighlightEntity {
   page?: number;
 }
 
-interface DocumentViewerProps {
-  doc: {
-    id: string;
-    name: string;
-    type: string;
+export interface DocumentViewerProps {
+  doc?: {
+    id?: string;
+    name?: string;
+    type?: string;
     fileUrl?: string;
     rawText?: string;
     translated_text?: string;
     ocrStatus?: string;
     extracted?: any;
-  };
+  } | null;
   activeHighlight: ActiveHighlightEntity | null;
   onClearHighlight: () => void;
   onSelectEntityFromDoc?: (entityKey: string, entityValue: string) => void;
@@ -64,11 +64,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
   const [copiedRaw, setCopiedRaw] = useState<boolean>(false);
   const [isTranslating, setIsTranslating] = useState<boolean>(false);
   const [isTranslated, setIsTranslated] = useState<boolean>(false);
-  const [translatedText, setTranslatedText] = useState<string | null>(doc.translated_text || null);
+  const [translatedText, setTranslatedText] = useState<string | null>(doc?.translated_text || null);
   const [translationMethod, setTranslationMethod] = useState<string>('');
 
   const highlightTargetRef = useRef<HTMLDivElement | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setTranslatedText(doc?.translated_text || null);
+    setIsTranslated(Boolean(doc?.translated_text));
+  }, [doc]);
 
   // Auto-scroll to highlighted entity when it changes
   useEffect(() => {
@@ -81,6 +86,16 @@ export const DocumentViewer: React.FC<DocumentViewerProps> = ({
       }, 100);
     }
   }, [activeHighlight]);
+
+  if (!doc) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 min-h-[450px]">
+        <FileText className="w-12 h-12 text-slate-300 dark:text-slate-700 mb-3" />
+        <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">No Document Selected</p>
+        <p className="text-xs text-slate-500 mt-1">Please select or upload a document to inspect.</p>
+      </div>
+    );
+  }
 
   // Handle live translation via backend API
   const handleToggleTranslate = async () => {
