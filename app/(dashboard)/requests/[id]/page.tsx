@@ -438,34 +438,53 @@ export default function RequestWorkspacePage() {
         {/* Left Column (5 Cols): Real Document & OCR Viewer */}
         <div className="lg:col-span-5 flex flex-col rounded-2xl theme-surface border overflow-hidden shadow-sm">
           {/* Document Switcher Header with Upload / Reupload Controls & Maximize */}
-          <div className="p-3 border-b theme-border bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between gap-2">
-            {/* Document Tabs */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 flex-1 scrollbar-none">
-              {docs.map((doc, idx) => (
-                <button
-                  key={doc.id}
-                  onClick={() => setSelectedDocIndex(idx)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                    selectedDocIndex === idx
-                      ? 'bg-blue-600 text-white shadow-sm font-semibold'
-                      : 'theme-text-secondary hover:theme-text-primary hover:bg-slate-200 dark:hover:bg-slate-800'
-                  }`}
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>{doc.type}</span>
-                  {doc.ocrStatus && (
-                    <span
-                      className={`w-2 h-2 rounded-full ${
-                        doc.ocrStatus === 'done' ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'
-                      }`}
-                    />
-                  )}
-                </button>
-              ))}
+          <div className="p-2.5 border-b theme-border bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between gap-2 min-w-0">
+            {/* Document Tabs / Dropdown */}
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 flex-1 min-w-0">
+              {docs.length > 2 ? (
+                <div className="relative flex items-center gap-2 flex-1 min-w-0">
+                  <select
+                    value={selectedDocIndex}
+                    onChange={(e) => setSelectedDocIndex(Number(e.target.value))}
+                    className="w-full sm:max-w-[280px] pl-2.5 pr-8 py-1.5 rounded-lg border theme-border bg-white dark:bg-slate-900 text-xs font-semibold theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 truncate shadow-xs"
+                  >
+                    {docs.map((doc, idx) => (
+                      <option key={doc.id} value={idx}>
+                        {idx + 1}. {doc.type} {doc.name ? `— ${doc.name}` : ''} {doc.ocrStatus === 'done' ? '✓' : '⏳'}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="text-[11px] font-mono theme-text-muted shrink-0">
+                    {selectedDocIndex + 1}/{docs.length}
+                  </span>
+                </div>
+              ) : (
+                docs.map((doc, idx) => (
+                  <button
+                    key={doc.id}
+                    onClick={() => setSelectedDocIndex(idx)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                      selectedDocIndex === idx
+                        ? 'bg-blue-600 text-white shadow-sm font-semibold'
+                        : 'theme-text-secondary hover:theme-text-primary hover:bg-slate-200 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>{doc.type}</span>
+                    {doc.ocrStatus && (
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          doc.ocrStatus === 'done' ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'
+                        }`}
+                      />
+                    )}
+                  </button>
+                ))
+              )}
             </div>
 
             {/* Action Buttons: Upload, Re-upload, Maximize */}
-            <div className="flex items-center gap-1.5 shrink-0">
+            <div className="flex items-center gap-1 shrink-0">
               <button
                 onClick={() => {
                   setIsReuploadMode(false);
