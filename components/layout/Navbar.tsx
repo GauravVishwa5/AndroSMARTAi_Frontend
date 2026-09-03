@@ -158,10 +158,12 @@ export function Navbar() {
                 ? `${user.first_name} ${user.last_name || ''}`
                 : user?.username === 'admin' || pathname.startsWith('/admin')
                 ? 'System Admin'
-                : user?.username || 'Branch Officer'}
+                : pathname.startsWith('/legal')
+                ? 'Adv. Kushal Verma'
+                : user?.username || 'Rajesh Sharma'}
             </p>
             <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate max-w-[130px]">
-              {user?.role || (pathname.startsWith('/admin') ? 'Super Admin' : pathname.startsWith('/legal') ? 'Legal Counsel' : 'Officer')}
+              {user?.role || (pathname.startsWith('/admin') ? 'Super Admin' : pathname.startsWith('/legal') ? 'Panel Advocate' : 'Branch Officer')}
             </p>
           </div>
 

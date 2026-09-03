@@ -26,6 +26,8 @@ export default function RequestsListPage() {
       propertyName: 'Deepali Residency',
       location: 'Deepali, Pitampura, New Delhi',
       state: 'Delhi',
+      bankBranch: 'PNB Pitampura Branch',
+      raised_by: 'Sunita Kulkarni (Relationship Mgr)',
       caseType: 'General',
       docCount: 4,
       status: 'Pending',
@@ -37,6 +39,8 @@ export default function RequestsListPage() {
       propertyName: 'Sunrise Heights CHSL',
       location: 'Borivali, Mumbai',
       state: 'Maharashtra',
+      bankBranch: 'SBI Nariman Point Corporate Branch',
+      raised_by: 'Vikram Singhania (Sr. Loan Officer)',
       caseType: 'SRA',
       docCount: 6,
       status: 'Verified',
@@ -48,6 +52,8 @@ export default function RequestsListPage() {
       propertyName: 'Grand Palm Tower',
       location: 'Andheri, Mumbai',
       state: 'Maharashtra',
+      bankBranch: 'HDFC Andheri West Commercial',
+      raised_by: 'Priya Nair (Credit Underwriter)',
       caseType: 'Resale',
       docCount: 3,
       status: 'Rejected',
@@ -59,10 +65,38 @@ export default function RequestsListPage() {
       propertyName: 'Kavitha Thingalaya Villa',
       location: 'Borivali, Mumbai',
       state: 'Maharashtra',
+      bankBranch: 'ICICI BKC Financial Centre',
+      raised_by: 'Arun Deshmukh (Branch Manager)',
       caseType: 'General',
       docCount: 5,
       status: 'Verified',
       date: 'Aug 27, 2026',
+    },
+    {
+      id: 'REQ-308',
+      ownerName: 'Vikram Joshi',
+      propertyName: 'Nirman Park Horizon',
+      location: 'Thane West',
+      state: 'Maharashtra',
+      bankBranch: 'Axis Bank — Connaught Place',
+      raised_by: 'Rohit Mehra (Chief Loan Officer)',
+      caseType: 'General',
+      docCount: 7,
+      status: 'Pending',
+      date: 'Aug 26, 2026',
+    },
+    {
+      id: 'REQ-302',
+      ownerName: 'Ramesh Sharma',
+      propertyName: 'Shree Ganesh Heights',
+      location: 'Andheri West, Mumbai',
+      state: 'Maharashtra',
+      bankBranch: 'Kotak Mahindra — Borivali West',
+      raised_by: 'Ananya Sen (Intake Specialist)',
+      caseType: 'General',
+      docCount: 4,
+      status: 'Pending',
+      date: 'Aug 25, 2026',
     },
   ];
 
@@ -222,7 +256,8 @@ export default function RequestsListPage() {
                   const owner = req.ownerName || req.owner_name || 'Borrower';
                   const loc = req.district || req.city || req.location || req.address || 'Maharashtra';
                   const stateStr = req.state || 'Maharashtra';
-                  const raisedBy = req.raised_by || req.Bank_branch || req.bankBranch || 'Branch User';
+                  const branchName = req.bank_branch || req.bankBranch || req.Bank_branch || '';
+                  const officerName = req.branch_officer || req.raised_by || 'Vikram Singhania (Loan Officer)';
                   const dateRaised = req.date_raised || req.date || req.created_at || 'Recent';
                   const statusStr = req.status || 'Pending';
                   const docCount = req.documents
@@ -249,8 +284,8 @@ export default function RequestsListPage() {
                         <span className="text-[10px] text-slate-400 font-mono">{stateStr}</span>
                       </td>
                       <td className="py-3 px-4">
-                        <p className="theme-text-primary">{raisedBy}</p>
-                        <p className="text-[10px] text-slate-400">{dateRaised}</p>
+                        <p className="font-semibold text-xs theme-text-primary">{officerName}</p>
+                        <p className="text-[10px] theme-text-muted mt-0.5">{branchName ? `${branchName} • ` : ''}{dateRaised}</p>
                       </td>
                       <td className="py-3 px-4 text-center">
                         <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-mono text-slate-700 dark:text-slate-300 border theme-border">

@@ -518,123 +518,229 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Role 1: Branch Officer */}
-            <div className="p-6 rounded-2xl theme-surface border hover:border-blue-500/50 space-y-4 transition-all hover:-translate-y-1 shadow-xs flex flex-col justify-between">
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold">
-                  <Building2 className="w-5 h-5" />
+            <div className="group relative p-6 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 hover:border-blue-500/60 dark:hover:border-blue-500/60 transition-all duration-300 hover:-translate-y-1.5 shadow-sm hover:shadow-xl hover:shadow-blue-500/10 flex flex-col justify-between overflow-hidden">
+              {/* Subtle top accent gradient */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-blue-600 opacity-90 group-hover:h-1.5 transition-all" />
+
+              <div className="space-y-4 pt-1">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-xl bg-blue-500/10 dark:bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold border border-blue-500/20 shadow-xs group-hover:scale-105 transition-transform">
+                    <Building2 className="w-6 h-6" />
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200/80 dark:border-blue-800/80 font-mono">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                    Intake SLA
+                  </span>
                 </div>
+
                 <div>
-                  <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">Branch Officer</span>
-                  <h3 className="text-base font-bold theme-text-primary">Loan Intake & SLA Queue</h3>
+                  <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider font-mono">Role 1: Bank Maker</span>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    Branch Officer
+                  </h3>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Loan Intake & SLA Queue</p>
                 </div>
-                <p className="text-xs theme-text-secondary leading-relaxed">
-                  Fast 3-step property intake wizard, property geolocation (Survey & CTS), live case status tracking, and SLA countdowns.
+
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Fast 3-step loan property intake wizard, CTS / Survey geolocation, direct S3 collateral uploads, and real-time branch SLA countdowns.
                 </p>
-                <ul className="text-[11px] space-y-1.5 text-slate-600 dark:text-slate-400">
-                  <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-blue-500 shrink-0" /> Fast Intake Wizard</li>
-                  <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-blue-500 shrink-0" /> Direct S3 File Uploads</li>
-                  <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-blue-500 shrink-0" /> Live Branch SLA Tracker</li>
-                </ul>
+
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                    <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
+                    <span>3-Step Intake Wizard</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                    <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
+                    <span>Direct Encrypted S3 Uploads</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                    <CheckCircle2 className="w-4 h-4 text-blue-500 shrink-0" />
+                    <span>Branch SLA Countdown Watch</span>
+                  </div>
+                </div>
               </div>
-              <Link
-                href="/branch"
-                className="mt-4 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition-all shadow-sm"
-              >
-                <span>Launch Branch Portal</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+
+              <div className="mt-6 pt-2">
+                <Link
+                  href="/branch"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold text-xs transition-all shadow-md shadow-blue-500/20 group-hover:shadow-blue-500/30 cursor-pointer"
+                >
+                  <span>Launch Branch Portal</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
             </div>
 
             {/* Role 2: Legal Advocate */}
-            <div className="p-6 rounded-2xl theme-surface border hover:border-indigo-500/50 space-y-4 transition-all hover:-translate-y-1 shadow-xs flex flex-col justify-between">
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold">
-                  <Scale className="w-5 h-5" />
+            <div className="group relative p-6 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 hover:border-indigo-500/60 dark:hover:border-indigo-500/60 transition-all duration-300 hover:-translate-y-1.5 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 flex flex-col justify-between overflow-hidden">
+              {/* Subtle top accent gradient */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-indigo-600 opacity-90 group-hover:h-1.5 transition-all" />
+
+              <div className="space-y-4 pt-1">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-xl bg-indigo-500/10 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold border border-indigo-500/20 shadow-xs group-hover:scale-105 transition-transform">
+                    <Scale className="w-6 h-6" />
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200/80 dark:border-indigo-800/80 font-mono">
+                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                    Scrutiny Ready
+                  </span>
                 </div>
+
                 <div>
-                  <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono">Panel Advocate</span>
-                  <h3 className="text-base font-bold theme-text-primary">Legal Scrutiny Workspace</h3>
+                  <span className="text-[11px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider font-mono">Role 2: Legal Checker</span>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                    Panel Advocate
+                  </h3>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Legal Scrutiny Workspace</p>
                 </div>
-                <p className="text-xs theme-text-secondary leading-relaxed">
-                  Interactive 30-year devolution tree, 6-point encumbrance matrix, conflict detection, and live in-browser TSR opinion drafting.
+
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Interactive 30-year devolution tree, 6-point encumbrance matrix, conflict detector, and live in-browser TSR opinion drafting.
                 </p>
-                <ul className="text-[11px] space-y-1.5 text-slate-600 dark:text-slate-400">
-                  <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" /> 30-Yr Devolution Graph</li>
-                  <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" /> Conflict Detection Engine</li>
-                  <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-indigo-500 shrink-0" /> Live Legal TSR Editor</li>
-                </ul>
+
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                    <CheckCircle2 className="w-4 h-4 text-indigo-500 shrink-0" />
+                    <span>30-Yr Devolution Graph</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                    <CheckCircle2 className="w-4 h-4 text-indigo-500 shrink-0" />
+                    <span>Conflict Detection Engine</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                    <CheckCircle2 className="w-4 h-4 text-indigo-500 shrink-0" />
+                    <span>Live In-Browser TSR Editor</span>
+                  </div>
+                </div>
               </div>
-              <Link
-                href="/legal"
-                className="mt-4 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition-all shadow-sm"
-              >
-                <span>Open Scrutiny Queue</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+
+              <div className="mt-6 pt-2">
+                <Link
+                  href="/legal"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-semibold text-xs transition-all shadow-md shadow-indigo-500/20 group-hover:shadow-indigo-500/30 cursor-pointer"
+                >
+                  <span>Open Scrutiny Queue</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
             </div>
 
             {/* Role 3: Borrower Portal */}
-            <div className="p-6 rounded-2xl theme-surface border hover:border-emerald-500/50 space-y-4 transition-all hover:-translate-y-1 shadow-xs flex flex-col justify-between">
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold">
-                  <ShieldCheck className="w-5 h-5" />
+            <div className="group relative p-6 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 hover:border-emerald-500/60 dark:hover:border-emerald-500/60 transition-all duration-300 hover:-translate-y-1.5 shadow-sm hover:shadow-xl hover:shadow-emerald-500/10 flex flex-col justify-between overflow-hidden">
+              {/* Subtle top accent gradient */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-emerald-600 opacity-90 group-hover:h-1.5 transition-all" />
+
+              <div className="space-y-4 pt-1">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold border border-emerald-500/20 shadow-xs group-hover:scale-105 transition-transform">
+                    <ShieldCheck className="w-6 h-6" />
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/80 font-mono">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Self-Service
+                  </span>
                 </div>
+
                 <div>
-                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">Loan Borrower</span>
-                  <h3 className="text-base font-bold theme-text-primary">Applicant Self-Service</h3>
+                  <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider font-mono">Role 3: Borrower</span>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                    Loan Borrower
+                  </h3>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Applicant Self-Service Portal</p>
                 </div>
-                <p className="text-xs theme-text-secondary leading-relaxed">
-                  Token-based secure activation, real-time verification milestone progress, deficiency document upload, and zero cross-tenant data leaks.
+
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Token-based secure activation, real-time 4-milestone legal progress tracking, deficiency document upload, and zero cross-tenant data leaks.
                 </p>
-                <ul className="text-[11px] space-y-1.5 text-slate-600 dark:text-slate-400">
-                  <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> Milestone Tracking</li>
-                  <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> Deficiency File Upload</li>
-                  <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" /> Zero-Token Leakage</li>
-                </ul>
+
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>4-Milestone Progress Tracker</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>Deficiency Document Upload</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                    <span>Encrypted Zero-Token Leakage</span>
+                  </div>
+                </div>
               </div>
-              <div className="mt-4 flex flex-col gap-2">
+
+              <div className="mt-6 pt-2 space-y-2">
                 <Link
                   href="/applicant/dashboard"
-                  className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition-all shadow-sm"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-semibold text-xs transition-all shadow-md shadow-emerald-500/20 group-hover:shadow-emerald-500/30 cursor-pointer"
                 >
                   <span>Borrower Dashboard</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
                 <Link
                   href="/applicant/activate"
-                  className="text-center text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline"
+                  className="flex items-center justify-center gap-1.5 w-full py-1.5 px-3 rounded-lg border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-semibold text-[11px] transition-colors"
                 >
-                  Activate New Account
+                  <span>🔑 Activate Account via Token</span>
                 </Link>
               </div>
             </div>
 
             {/* Role 4: System Admin */}
-            <div className="p-6 rounded-2xl theme-surface border hover:border-amber-500/50 space-y-4 transition-all hover:-translate-y-1 shadow-xs flex flex-col justify-between">
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold">
-                  <Layers className="w-5 h-5" />
+            <div className="group relative p-6 rounded-2xl bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800/80 hover:border-amber-500/60 dark:hover:border-amber-500/60 transition-all duration-300 hover:-translate-y-1.5 shadow-sm hover:shadow-xl hover:shadow-amber-500/10 flex flex-col justify-between overflow-hidden">
+              {/* Subtle top accent gradient */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-amber-600 opacity-90 group-hover:h-1.5 transition-all" />
+
+              <div className="space-y-4 pt-1">
+                <div className="flex items-center justify-between">
+                  <div className="w-12 h-12 rounded-xl bg-amber-500/10 dark:bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center font-bold border border-amber-500/20 shadow-xs group-hover:scale-105 transition-transform">
+                    <Layers className="w-6 h-6" />
+                  </div>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200/80 dark:border-amber-800/80 font-mono">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    7-Key Pool 100%
+                  </span>
                 </div>
+
                 <div>
-                  <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">Platform Admin</span>
-                  <h3 className="text-base font-bold theme-text-primary">Governance & Telemetry</h3>
+                  <span className="text-[11px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider font-mono">Role 4: Governance</span>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                    Platform Admin
+                  </h3>
+                  <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Governance & Telemetry</p>
                 </div>
-                <p className="text-xs theme-text-secondary leading-relaxed">
-                  Multi-tenant organization management, role entitlements, Gemini API key pool health, and database connection monitoring.
+
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Multi-tenant RBAC organization management, role entitlements, Gemini 7-key failover pool health, and database connection telemetry.
                 </p>
-                <ul className="text-[11px] space-y-1.5 text-slate-600 dark:text-slate-400">
-                  <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" /> Multi-Tenant RBAC</li>
-                  <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" /> Gemini 7-Key Pool Health</li>
-                  <li className="flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5 text-amber-500 shrink-0" /> System Capacity Audit</li>
-                </ul>
+
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-800/80 space-y-2">
+                  <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                    <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span>Multi-Tenant RBAC & Orgs</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                    <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span>Gemini 7-Key Pool Health</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300">
+                    <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span>System Capacity & DB Telemetry</span>
+                  </div>
+                </div>
               </div>
-              <Link
-                href="/admin"
-                className="mt-4 flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs transition-all shadow-sm"
-              >
-                <span>Admin Console</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
+
+              <div className="mt-6 pt-2">
+                <Link
+                  href="/admin"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-semibold text-xs transition-all shadow-md shadow-amber-500/20 group-hover:shadow-amber-500/30 cursor-pointer"
+                >
+                  <span>Admin Console</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              </div>
             </div>
           </div>
         </section>

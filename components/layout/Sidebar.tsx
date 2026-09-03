@@ -257,7 +257,9 @@ export function Sidebar() {
                     ? `${user.first_name} ${user.last_name || ''}`
                     : user?.username === 'admin' || pathname.startsWith('/admin')
                     ? 'System Admin'
-                    : user?.username || 'Branch Officer'}
+                    : pathname.startsWith('/legal')
+                    ? 'Adv. Kushal Verma'
+                    : user?.username || 'Rajesh Sharma'}
                 </p>
                 <p className="text-[11px] text-slate-400 truncate">
                   {user?.role
@@ -265,7 +267,7 @@ export function Sidebar() {
                     : pathname.startsWith('/admin') || user?.is_admin
                     ? 'Super Admin'
                     : pathname.startsWith('/legal')
-                    ? 'Legal Scrutinizer'
+                    ? 'Panel Advocate'
                     : 'Branch Officer'}
                 </p>
               </div>

@@ -31,7 +31,9 @@ export default function BranchDashboardPage() {
       id: 'REQ-349',
       propertyName: 'Deepali Residency',
       ownerName: 'Ajay Kumar',
-      bankBranch: 'Pitampura Branch',
+      bankBranch: 'PNB Pitampura Branch',
+      branchOfficer: 'Sunita Kulkarni (Relationship Mgr)',
+      raised_by: 'Sunita Kulkarni (Relationship Mgr)',
       location: 'Pitampura, New Delhi',
       state: 'Delhi',
       docCount: 4,
@@ -45,8 +47,10 @@ export default function BranchDashboardPage() {
       id: 'REQ-345',
       propertyName: 'Sunrise Heights CHSL',
       ownerName: 'Rajesh Patil',
-      bankBranch: 'Andheri West Branch',
-      location: 'Borivali, Mumbai',
+      bankBranch: 'SBI Nariman Point Corporate Branch',
+      branchOfficer: 'Vikram Singhania (Sr. Loan Officer)',
+      raised_by: 'Vikram Singhania (Sr. Loan Officer)',
+      location: 'Borivali West, Mumbai',
       state: 'Maharashtra',
       docCount: 6,
       status: 'Verified',
@@ -59,8 +63,10 @@ export default function BranchDashboardPage() {
       id: 'REQ-320',
       propertyName: 'Grand Palm Tower',
       ownerName: 'Suresh Mehta',
-      bankBranch: 'Andheri West Branch',
-      location: 'Andheri, Mumbai',
+      bankBranch: 'HDFC Andheri West Commercial',
+      branchOfficer: 'Priya Nair (Credit Underwriter)',
+      raised_by: 'Priya Nair (Credit Underwriter)',
+      location: 'Andheri West, Mumbai',
       state: 'Maharashtra',
       docCount: 3,
       status: 'Rejected',
@@ -73,7 +79,9 @@ export default function BranchDashboardPage() {
       id: 'REQ-312',
       propertyName: 'Kavitha Thingalaya Villa',
       ownerName: 'Kavitha Thingalaya',
-      bankBranch: 'Borivali Branch',
+      bankBranch: 'ICICI BKC Financial Centre',
+      branchOfficer: 'Arun Deshmukh (Branch Manager)',
+      raised_by: 'Arun Deshmukh (Branch Manager)',
       location: 'Borivali, Mumbai',
       state: 'Maharashtra',
       docCount: 5,
@@ -87,7 +95,9 @@ export default function BranchDashboardPage() {
       id: 'REQ-308',
       propertyName: 'Nirman Park Horizon',
       ownerName: 'Vikram Joshi',
-      bankBranch: 'Thane Central Branch',
+      bankBranch: 'Axis Bank — Connaught Place',
+      branchOfficer: 'Rohit Mehra (Chief Loan Officer)',
+      raised_by: 'Rohit Mehra (Chief Loan Officer)',
       location: 'Thane West',
       state: 'Maharashtra',
       docCount: 7,
@@ -96,6 +106,22 @@ export default function BranchDashboardPage() {
       ocrDone: true,
       riskScore: 'Low Risk',
       cts: 'CTS-562',
+    },
+    {
+      id: 'REQ-302',
+      propertyName: 'Shree Ganesh Heights',
+      ownerName: 'Ramesh Sharma',
+      bankBranch: 'Kotak Mahindra — Borivali West',
+      branchOfficer: 'Ananya Sen (Intake Specialist)',
+      raised_by: 'Ananya Sen (Intake Specialist)',
+      location: 'Andheri West, Mumbai',
+      state: 'Maharashtra',
+      docCount: 4,
+      status: 'Pending',
+      date: 'Aug 25, 2026',
+      ocrDone: true,
+      riskScore: 'Low Risk',
+      cts: 'CTS-781',
     },
   ];
 
@@ -332,7 +358,7 @@ export default function BranchDashboardPage() {
                 <th className="px-4 py-3">Case ID</th>
                 <th className="px-4 py-3">Property Schedule</th>
                 <th className="px-4 py-3">Borrower / Applicant</th>
-                <th className="px-4 py-3">Branch Branch</th>
+                <th className="px-4 py-3">Originating Branch & Officer</th>
                 <th className="px-4 py-3 text-center">Docs</th>
                 <th className="px-4 py-3">Date Raised</th>
                 <th className="px-4 py-3">Legal Status</th>
@@ -370,7 +396,8 @@ export default function BranchDashboardPage() {
                   const flatNo = req.flatNumber || req.flat_number ? `Flat ${req.flatNumber || req.flat_number}` : '';
                   const location = req.district || req.city || req.location || req.address || 'Maharashtra';
                   const owner = req.ownerName || req.owner_name || 'Borrower';
-                  const raisedBy = req.raised_by || req.Bank_branch || req.bankBranch || 'Branch Officer';
+                  const branchName = req.bankBranch || req.bank_branch || req.Bank_branch || 'SBI Nariman Point Corporate Branch';
+                  const officerName = req.branchOfficer || req.raised_by || 'Vikram Singhania (Loan Officer)';
                   const dateRaised = req.date_raised || req.date || req.created_at || 'Today';
                   const statusStr = req.status || 'Pending';
                   const docCount = req.documents
@@ -406,9 +433,12 @@ export default function BranchDashboardPage() {
                         {owner}
                       </td>
 
-                      {/* Bank Branch */}
-                      <td className="px-4 py-3 text-slate-500 text-[11px]">
-                        {raisedBy}
+                      {/* Originating Branch & Officer */}
+                      <td className="px-4 py-3">
+                        <p className="font-semibold text-xs theme-text-primary">{branchName}</p>
+                        <p className="text-[11px] text-blue-600 dark:text-blue-400 font-medium mt-0.5">
+                          {officerName}
+                        </p>
                       </td>
 
                       {/* Document Count */}
