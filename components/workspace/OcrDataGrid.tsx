@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState } from 'react';
 import {
@@ -53,7 +53,6 @@ export const OcrDataGrid: React.FC<OcrDataGridProps> = ({
 }) => {
   const currentDoc = docs[selectedDocIndex] || docs[0];
 
-  // Default entity fields generated from currentDoc
   const [entities, setEntities] = useState<{ [docId: string]: EntityField[] }>({});
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [tempValue, setTempValue] = useState('');
@@ -64,11 +63,9 @@ export const OcrDataGrid: React.FC<OcrDataGridProps> = ({
 
   const currentDocId = currentDoc?.id || currentDoc?.doc_id || `doc-${selectedDocIndex}`;
 
-  // Handle on-demand grid translation to English
   const handleTranslateAllFields = async () => {
     const rawText = currentDoc?.rawText || '';
     if (!rawText.trim()) return;
-
     try {
       setIsTranslatingGrid(true);
       const res = await requestsApi.translateText(rawText, 'auto', 'en', currentDoc?.type);
@@ -94,13 +91,9 @@ export const OcrDataGrid: React.FC<OcrDataGridProps> = ({
     }
   };
 
-  // Initialize entities for current doc
   const getDocEntities = (): EntityField[] => {
-    if (entities[currentDocId]) {
-      return entities[currentDocId];
-    }
+    if (entities[currentDocId]) return entities[currentDocId];
 
-    // If translated entities passed from viewer
     if (translatedEntities && Object.keys(translatedEntities).length > 0) {
       const ent = translatedEntities;
       return [
@@ -117,119 +110,42 @@ export const OcrDataGrid: React.FC<OcrDataGridProps> = ({
     }
 
     const sourceText = currentDoc?.translated_text || currentDoc?.rawText || '';
-
     const parsed = extractEntitiesFromRawText(
       sourceText,
       currentDoc?.type || currentDoc?.document_type || 'Property Document',
       currentDoc?.extracted || {}
     );
 
-    const initial: EntityField[] = [
-      {
-        key: 'vendor',
-        label: 'Vendor / Transferor / Society / Lender',
-        value: parsed.vendor,
-        category: 'Parties',
-        confidence: 97,
-        verified: true,
-      },
-      {
-        key: 'vendee',
-        label: 'Vendee / Purchaser / Member (Borrower)',
-        value: parsed.vendee,
-        category: 'Parties',
-        confidence: 99,
-        verified: true,
-      },
-      {
-        key: 'propertyDesc',
-        label: 'Schedule Property Description',
-        value: parsed.propertyDesc,
-        category: 'Property',
-        confidence: 96,
-        verified: true,
-      },
-      {
-        key: 'cts',
-        label: 'CTS / Survey Number',
-        value: parsed.surveyNo ? `${parsed.cts} / ${parsed.surveyNo}` : parsed.cts,
-        category: 'Property',
-        confidence: 99,
-        verified: true,
-      },
-      {
-        key: 'consideration',
-        label: 'Consideration / Loan Amount / Fees',
-        value: parsed.consideration,
-        category: 'Financial',
-        confidence: 98,
-        verified: true,
-      },
-      {
-        key: 'stampDuty',
-        label: 'Stamp Duty & Registration Status',
-        value: parsed.stampDuty,
-        category: 'Financial',
-        confidence: 94,
-        verified: true,
-      },
-      {
-        key: 'regNo',
-        label: 'Registration / Document / Act Number',
-        value: parsed.regNo,
-        category: 'Registration',
-        confidence: 99,
-        verified: true,
-      },
-      {
-        key: 'sro',
-        label: 'Sub-Registrar / Authority Office',
-        value: parsed.sro,
-        category: 'Registration',
-        confidence: 95,
-        verified: true,
-      },
-      {
-        key: 'date',
-        label: 'Date of Execution / Registration / Issue',
-        value: parsed.date,
-        category: 'Registration',
-        confidence: 98,
-        verified: true,
-      },
+    return [
+      { key: 'vendor', label: 'Vendor / Transferor / Society / Lender', value: parsed.vendor, category: 'Parties', confidence: 97, verified: true },
+      { key: 'vendee', label: 'Vendee / Purchaser / Member (Borrower)', value: parsed.vendee, category: 'Parties', confidence: 99, verified: true },
+      { key: 'propertyDesc', label: 'Schedule Property Description', value: parsed.propertyDesc, category: 'Property', confidence: 96, verified: true },
+      { key: 'cts', label: 'CTS / Survey Number', value: parsed.surveyNo ? `${parsed.cts} / ${parsed.surveyNo}` : parsed.cts, category: 'Property', confidence: 99, verified: true },
+      { key: 'consideration', label: 'Consideration / Loan Amount / Fees', value: parsed.consideration, category: 'Financial', confidence: 98, verified: true },
+      { key: 'stampDuty', label: 'Stamp Duty & Registration Status', value: parsed.stampDuty, category: 'Financial', confidence: 94, verified: true },
+      { key: 'regNo', label: 'Registration / Document / Act Number', value: parsed.regNo, category: 'Registration', confidence: 99, verified: true },
+      { key: 'sro', label: 'Sub-Registrar / Authority Office', value: parsed.sro, category: 'Registration', confidence: 95, verified: true },
+      { key: 'date', label: 'Date of Execution / Registration / Issue', value: parsed.date, category: 'Registration', confidence: 98, verified: true },
     ];
-
-    return initial;
   };
 
   const docEntities = getDocEntities();
 
-  const handleStartEdit = (entity: EntityField) => {
-    setEditingKey(entity.key);
-    setTempValue(entity.value);
-  };
-
+  const handleStartEdit = (entity: EntityField) => { setEditingKey(entity.key); setTempValue(entity.value); };
   const handleSaveEdit = (key: string) => {
-    const updated = docEntities.map((e) =>
-      e.key === key ? { ...e, value: tempValue, verified: true } : e
-    );
+    const updated = docEntities.map((e) => e.key === key ? { ...e, value: tempValue, verified: true } : e);
     setEntities({ ...entities, [currentDocId]: updated });
     setEditingKey(null);
   };
-
   const handleToggleVerify = (key: string) => {
-    const updated = docEntities.map((e) =>
-      e.key === key ? { ...e, verified: !e.verified } : e
-    );
+    const updated = docEntities.map((e) => e.key === key ? { ...e, verified: !e.verified } : e);
     setEntities({ ...entities, [currentDocId]: updated });
   };
-
   const handleCopy = (key: string, value: string) => {
     navigator.clipboard.writeText(value);
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
   };
-
   const handleExportJson = () => {
     const dataStr = JSON.stringify(docEntities, null, 2);
     const blob = new Blob([dataStr], { type: 'application/json' });
@@ -258,15 +174,13 @@ export const OcrDataGrid: React.FC<OcrDataGridProps> = ({
           </div>
           <div className="min-w-0">
             <h3 className="text-xs sm:text-sm font-bold theme-text-primary truncate">
-              OCR Evidence & Provenance Matrix
+              OCR Evidence &amp; Provenance Matrix
             </h3>
             <p className="text-[11px] text-slate-500 truncate">
               Extracted title entities cross-referenced against deed clauses with advocate verification stamp
             </p>
           </div>
         </div>
-
-        {/* Action Controls */}
         <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full lg:w-auto">
           <select
             value={selectedDocIndex}
@@ -275,12 +189,9 @@ export const OcrDataGrid: React.FC<OcrDataGridProps> = ({
             className="flex-1 sm:w-56 px-2.5 py-1.5 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium theme-text-primary focus:outline-none focus:ring-1 focus:ring-blue-500 truncate"
           >
             {docs.map((d, i) => (
-              <option key={d.id} value={i}>
-                {d.type}: {d.name}
-              </option>
+              <option key={d.id} value={i}>{d.type}: {d.name}</option>
             ))}
           </select>
-
           <button
             onClick={handleTranslateAllFields}
             disabled={isTranslatingGrid}
@@ -290,7 +201,6 @@ export const OcrDataGrid: React.FC<OcrDataGridProps> = ({
             <Sparkles className={`w-3.5 h-3.5 ${isTranslatingGrid ? 'animate-spin' : ''}`} />
             <span>{isTranslatingGrid ? 'Translating...' : 'Translate Fields'}</span>
           </button>
-
           <button
             onClick={handleExportJson}
             className="whitespace-nowrap flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-white dark:bg-slate-900 hover:bg-slate-50 text-slate-700 dark:text-slate-300 text-xs font-medium transition-colors shrink-0 border border-slate-300 dark:border-slate-700 cursor-pointer"
@@ -319,7 +229,6 @@ export const OcrDataGrid: React.FC<OcrDataGridProps> = ({
             </button>
           ))}
         </div>
-
         <div className="relative w-full sm:w-64">
           <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -354,12 +263,7 @@ export const OcrDataGrid: React.FC<OcrDataGridProps> = ({
                     key={item.key}
                     onClick={() => {
                       if (onSelectEntity) {
-                        onSelectEntity({
-                          key: item.key,
-                          label: item.label,
-                          value: item.value,
-                          category: item.category,
-                        });
+                        onSelectEntity({ key: item.key, label: item.label, value: item.value, category: item.category });
                       }
                     }}
                     className={`cursor-pointer transition-colors ${
@@ -368,23 +272,15 @@ export const OcrDataGrid: React.FC<OcrDataGridProps> = ({
                         : 'hover:bg-slate-50/60 dark:hover:bg-slate-800/30'
                     }`}
                   >
-                    {/* Parameter Name */}
                     <td className="p-2.5 pl-3 font-semibold text-slate-900 dark:text-slate-100">
                       <div>
                         <span className="block font-medium">{item.label}</span>
-                        <span className="text-[10px] font-mono text-slate-400">
-                          {item.category}
-                        </span>
+                        <span className="text-[10px] font-mono text-slate-400">{item.category}</span>
                       </div>
                     </td>
-
-                    {/* Parameter Value / Inline Editor */}
                     <td className="p-2.5">
                       {editingKey === item.key ? (
-                        <div
-                          className="flex items-center gap-1.5"
-                          onClick={(e) => e.stopPropagation()}
-                        >
+                        <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                           <input
                             type="text"
                             value={tempValue}
@@ -392,22 +288,13 @@ export const OcrDataGrid: React.FC<OcrDataGridProps> = ({
                             className="flex-1 px-2 py-0.5 rounded border border-blue-500 bg-white dark:bg-slate-950 text-xs text-slate-900 dark:text-slate-100 focus:outline-none"
                             autoFocus
                           />
-                          <button
-                            onClick={() => handleSaveEdit(item.key)}
-                            className="p-1 rounded bg-emerald-700 text-white hover:bg-emerald-600"
-                          >
+                          <button onClick={() => handleSaveEdit(item.key)} className="p-1 rounded bg-emerald-700 text-white hover:bg-emerald-600">
                             <Save className="w-3 h-3" />
                           </button>
                         </div>
                       ) : (
                         <div>
-                          <span
-                            className={`font-semibold block ${
-                              isSelected
-                                ? 'text-[#1D4ED8] dark:text-blue-300'
-                                : 'text-slate-800 dark:text-slate-200'
-                            }`}
-                          >
+                          <span className={`font-semibold block ${isSelected ? 'text-[#1D4ED8] dark:text-blue-300' : 'text-slate-800 dark:text-slate-200'}`}>
                             {item.value}
                           </span>
                           {item.originalValue && item.originalValue !== item.value && (
@@ -424,8 +311,6 @@ export const OcrDataGrid: React.FC<OcrDataGridProps> = ({
                         </div>
                       )}
                     </td>
-
-                    {/* Human Verification Status (DOMINANT VISUAL ELEMENT) */}
                     <td className="p-2.5 text-center" onClick={(e) => e.stopPropagation()}>
                       <button
                         onClick={() => handleToggleVerify(item.key)}
@@ -436,67 +321,35 @@ export const OcrDataGrid: React.FC<OcrDataGridProps> = ({
                         }`}
                       >
                         {item.verified ? (
-                          <>
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                            <span>Verified by Advocate</span>
-                          </>
+                          <><CheckCircle2 className="w-3 h-3 text-emerald-600" /><span>Verified by Advocate</span></>
                         ) : (
-                          <>
-                            <AlertCircle className="w-3 h-3 text-amber-600" />
-                            <span>Verify Field</span>
-                          </>
+                          <><AlertCircle className="w-3 h-3 text-amber-600" /><span>Verify Field</span></>
                         )}
                       </button>
                     </td>
-
-                    {/* AI Confidence (SUBORDINATE, QUIET) */}
                     <td className="p-2.5 text-center">
-                      <span className="text-[11px] font-mono text-slate-400">
-                        {item.confidence}% match
-                      </span>
+                      <span className="text-[11px] font-mono text-slate-400">{item.confidence}% match</span>
                     </td>
-
-                    {/* Quick Actions */}
                     <td className="p-2.5 pr-3 text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
                         <button
-                          onClick={() => {
-                            if (onSelectEntity) {
-                              onSelectEntity({
-                                key: item.key,
-                                label: item.label,
-                                value: item.value,
-                                category: item.category,
-                              });
-                            }
-                          }}
-                          className={`p-1 rounded transition-colors ${
-                            isSelected
-                              ? 'bg-[#1D4ED8] text-white'
-                              : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800'
-                          }`}
-                          title="Highlight in Document"
-                          aria-label="Highlight in Document"
+                          onClick={() => { if (onSelectEntity) onSelectEntity({ key: item.key, label: item.label, value: item.value, category: item.category }); }}
+                          className={`p-1 rounded transition-colors ${isSelected ? 'bg-[#1D4ED8] text-white' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800'}`}
+                          title="Highlight in Document" aria-label="Highlight in Document"
                         >
                           <Target className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => handleCopy(item.key, item.value)}
                           className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                          title="Copy field value"
-                          aria-label="Copy field value"
+                          title="Copy field value" aria-label="Copy field value"
                         >
-                          {copiedKey === item.key ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-500" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
+                          {copiedKey === item.key ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                         </button>
                         <button
                           onClick={() => handleStartEdit(item)}
                           className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
-                          title="Edit entity value"
-                          aria-label="Edit entity value"
+                          title="Edit entity value" aria-label="Edit entity value"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>

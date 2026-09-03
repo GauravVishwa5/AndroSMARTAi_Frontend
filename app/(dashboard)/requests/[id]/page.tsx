@@ -347,6 +347,25 @@ export default function RequestWorkspacePage() {
 
     ej = (ej && typeof ej === 'object') ? ej : {};
 
+    // Safe string converter — prevents "Objects are not valid as React child" errors
+    // when Gemini returns nested objects instead of scalar strings
+    const safeStr = (val: any): string => {
+      if (val === null || val === undefined) return '';
+      if (typeof val === 'string') return val;
+      if (typeof val === 'number' || typeof val === 'boolean') return String(val);
+      // Gracefully unwrap common monetary object shapes
+      if (typeof val === 'object') {
+        if (val.total_amount !== undefined) return `₹ ${Number(val.total_amount).toLocaleString('en-IN')}`;
+        if (val.amount !== undefined) return `₹ ${Number(val.amount).toLocaleString('en-IN')}`;
+        if (val.value !== undefined) return String(val.value);
+        if (val.name !== undefined) return String(val.name);
+        if (val.text !== undefined) return String(val.text);
+        // Last resort: compact JSON snippet
+        try { return JSON.stringify(val); } catch { return '[Object]'; }
+      }
+      return '';
+    };
+
     let fileUrl = '#';
     if (typeof d.file_url === 'string') {
       fileUrl = d.file_url;
@@ -376,23 +395,22 @@ export default function RequestWorkspacePage() {
       p?.role?.toLowerCase().includes('society')
     ) || (partiesList.length > 0 && !partySeller && !partyBuyer ? partiesList[0] : null);
 
-    const considerationVal =
-      ej.consideration ||
-      ej.consideration_amount ||
-      ej.amount ||
-      ej.loan_amount ||
-      (ej.financial_details?.consideration_or_value?.value !== undefined
-        ? (ej.financial_details.consideration_or_value.value === 0
-            ? '₹ 0 (Non-Monetary / Regulatory)'
-            : `₹ ${Number(ej.financial_details.consideration_or_value.value).toLocaleString('en-IN')}`)
-        : '');
+    // Resolve consideration — handles plain string, number, or object {part_payment, total_amount, ...}
+    const rawConsideration = ej.consideration || ej.consideration_amount || ej.amount || ej.loan_amount;
+    const considerationVal: string = rawConsideration
+      ? safeStr(rawConsideration)
+      : (ej.financial_details?.consideration_or_value?.value !== undefined
+          ? (ej.financial_details.consideration_or_value.value === 0
+              ? '₹ 0 (Non-Monetary / Regulatory)'
+              : `₹ ${Number(ej.financial_details.consideration_or_value.value).toLocaleString('en-IN')}`)
+          : '');
 
-    const stampDutyVal =
-      ej.stampDuty ||
-      ej.stamp_duty ||
-      (ej.financial_details?.stamp_duty_paid?.value
-        ? `₹ ${Number(ej.financial_details.stamp_duty_paid.value).toLocaleString('en-IN')}`
-        : '');
+    const rawStampDuty = ej.stampDuty || ej.stamp_duty;
+    const stampDutyVal: string = rawStampDuty
+      ? safeStr(rawStampDuty)
+      : (ej.financial_details?.stamp_duty_paid?.value
+          ? `₹ ${Number(ej.financial_details.stamp_duty_paid.value).toLocaleString('en-IN')}`
+          : '');
 
     return {
       id: d.id || d.doc_id || `doc-${idx + 1}`,
@@ -406,20 +424,20 @@ export default function RequestWorkspacePage() {
       ocrMeta: d.ocr_meta || {},
       extracted_json: ej,
       extracted: {
-        vendor: ej.vendor || ej.seller_names || ej.seller || ej.transferor || partySeller?.name || '',
-        vendee: ej.vendee || ej.purchaser_names || ej.purchaser || ej.transferee || ej.borrower || partyBuyer?.name || '',
+        vendor: safeStr(ej.vendor || ej.seller_names || ej.seller || ej.transferor || partySeller?.name || ''),
+        vendee: safeStr(ej.vendee || ej.purchaser_names || ej.purchaser || ej.transferee || ej.borrower || partyBuyer?.name || ''),
         authority: partyAuthority?.name ? `${partyAuthority.name}${partyAuthority.role ? ` (${partyAuthority.role})` : ''}` : '',
-        date: ej.date || ej.registration_date || ej.execution_date || ej.document_date || '',
+        date: safeStr(ej.date || ej.registration_date || ej.execution_date || ej.document_date || ''),
         consideration: considerationVal,
-        propertyDesc: ej.propertyDesc || ej.property_description || ej.schedule_property || ej.address || ej.property_details?.description || '',
-        cts: ej.cts || ej.cts_number || ej.survey_number || ej.gat_number || ej.property_details?.cts_number || '',
-        sro: ej.sro || ej.sro_name || ej.sub_registrar || ej.property_details?.revenue_village || '',
-        regNo: ej.regNo || ej.document_number || ej.registration_number || ej.doc_no || '',
+        propertyDesc: safeStr(ej.propertyDesc || ej.property_description || ej.schedule_property || ej.address || ej.property_details?.description || ''),
+        cts: safeStr(ej.cts || ej.cts_number || ej.survey_number || ej.gat_number || ej.property_details?.cts_number || ''),
+        sro: safeStr(ej.sro || ej.sro_name || ej.sub_registrar || ej.property_details?.revenue_village || ''),
+        regNo: safeStr(ej.regNo || ej.document_number || ej.registration_number || ej.doc_no || ''),
         stampDuty: stampDutyVal,
         remarks: Array.isArray(ej.encumbrances_or_remarks)
           ? ej.encumbrances_or_remarks.map((r: any) => (typeof r === 'string' ? r : r?.remark || r?.description || r?.text || JSON.stringify(r))).join(' • ')
-          : (ej.remarks || ''),
-        documentTitle: ej.document_title || ej.title || '',
+          : safeStr(ej.remarks || ''),
+        documentTitle: safeStr(ej.document_title || ej.title || ''),
       },
     };
   } catch (mapErr) {
@@ -476,139 +494,142 @@ export default function RequestWorkspacePage() {
       )}
 
       {/* Level 1: Case Header & Status Bar */}
-      <div className="p-4 rounded-lg theme-surface border shadow-2xs flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
-        {/* Left: Case Identity & Property Schedule */}
-        <div className="flex items-start sm:items-center gap-3">
-          <Link
-            href="/branch"
-            className="p-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors shrink-0 mt-0.5 sm:mt-0"
-            title="Back to Requests"
-            aria-label="Back to Requests"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </Link>
+      <div className="rounded-xl border theme-border shadow-sm overflow-hidden">
+        {/* Accent strip */}
+        <div className="h-1 w-full bg-gradient-to-r from-[#1D4ED8] via-indigo-500 to-violet-500" />
+        <div className="p-4 theme-surface flex flex-col lg:flex-row lg:items-center justify-between gap-3.5">
+          {/* Left: Case Identity & Property Schedule */}
+          <div className="flex items-start sm:items-center gap-3">
+            <Link
+              href="/branch"
+              className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-blue-400 transition-all shrink-0 mt-0.5 sm:mt-0"
+              title="Back to Requests"
+              aria-label="Back to Requests"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </Link>
 
-          <div className="space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-mono text-xs font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-[#1D4ED8] dark:text-blue-400 border border-slate-200 dark:border-slate-700">
-                {requestId}
-              </span>
-              <h1 className="text-base font-bold theme-text-primary tracking-tight">
-                {propName} {flatNo && <span className="font-normal text-slate-500">({flatNo})</span>}
-              </h1>
-              <span className="px-1.5 py-0.5 rounded text-[11px] font-mono bg-slate-100 dark:bg-slate-800 border theme-border text-slate-600 dark:text-slate-400">
-                CTS {cts}
-              </span>
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-mono text-xs font-bold px-2.5 py-0.5 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 text-[#1D4ED8] dark:text-blue-400 border border-blue-200 dark:border-blue-800">
+                  {requestId}
+                </span>
+                <h1 className="text-base font-bold theme-text-primary tracking-tight">
+                  {propName} {flatNo && <span className="font-normal text-slate-500">({flatNo})</span>}
+                </h1>
+                <span className="px-2 py-0.5 rounded-lg text-[11px] font-mono bg-slate-100 dark:bg-slate-800 border theme-border text-slate-600 dark:text-slate-400">
+                  CTS {cts}
+                </span>
+                {/* Status Badge */}
+                <StatusBadge status={requestStatus} />
+              </div>
 
-              {/* Status Badge */}
-              <StatusBadge status={requestStatus} />
-            </div>
-
-            {/* Metadata Bar */}
-            <div className="flex items-center gap-2 text-xs text-slate-500 flex-wrap">
-              <span>
-                Borrower: <strong className="theme-text-primary font-medium">{ownerName}</strong>
-              </span>
-              <span>&bull;</span>
-              <span className="truncate max-w-xs sm:max-w-md" title={location}>
-                {location}
-              </span>
-              <span>&bull;</span>
-              <span>{bankBranch}</span>
+              {/* Metadata chips */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] bg-slate-100 dark:bg-slate-800 border theme-border text-slate-600 dark:text-slate-400">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                  {ownerName}
+                </span>
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] bg-slate-100 dark:bg-slate-800 border theme-border text-slate-600 dark:text-slate-400">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                  <span className="truncate max-w-[200px]" title={location}>{location}</span>
+                </span>
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] bg-slate-100 dark:bg-slate-800 border theme-border text-slate-600 dark:text-slate-400">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                  {bankBranch}
+                </span>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Right: Controlled Legal Decision Actions */}
-        <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 theme-border">
-          {/* Refresh Button */}
-          <button
-            onClick={() => loadDetails(true)}
-            disabled={isLoading}
-            className="p-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 cursor-pointer"
-            title="Sync with live database"
-            aria-label="Sync with database"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
-          </button>
+          {/* Right: Legal Decision Actions */}
+          <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap shrink-0 pt-2 lg:pt-0 border-t lg:border-t-0 theme-border">
+            <button
+              onClick={() => loadDetails(true)}
+              disabled={isLoading}
+              className="p-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-blue-400 transition-all disabled:opacity-50 cursor-pointer"
+              title="Sync with live database"
+              aria-label="Sync with database"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-blue-600' : ''}`} />
+            </button>
 
-          {/* Edit Form */}
-          <button
-            onClick={handleOpenEditModal}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            title="Edit property details"
-          >
-            <Edit3 className="w-3.5 h-3.5 text-slate-500" />
-            <span>Edit Form</span>
-          </button>
+            <button
+              onClick={handleOpenEditModal}
+              className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-400 transition-all cursor-pointer"
+              title="Edit property details"
+            >
+              <Edit3 className="w-3.5 h-3.5 text-slate-500" />
+              <span>Edit</span>
+            </button>
 
-          {/* In Progress */}
-          <button
-            onClick={() => handleUpdateStatus('In Progress')}
-            disabled={isUpdatingStatus}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer ${
-              requestStatus === 'In Progress' || (requestStatus !== 'Verified' && requestStatus !== 'Rejected')
-                ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-semibold'
-                : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700 hover:bg-slate-50'
-            }`}
-          >
-            <Clock className="w-3.5 h-3.5 text-amber-600" />
-            <span>In Scrutiny</span>
-          </button>
+            <div className="w-px h-5 bg-slate-200 dark:bg-slate-700" />
 
-          {/* Clear Title */}
-          <button
-            onClick={() => handleUpdateStatus('Verified')}
-            disabled={isUpdatingStatus}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer ${
-              requestStatus === 'Verified'
-                ? 'bg-emerald-700 text-white font-semibold'
-                : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-100'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Clear Title</span>
-          </button>
+            <button
+              onClick={() => handleUpdateStatus('In Progress')}
+              disabled={isUpdatingStatus}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50 cursor-pointer ${
+                requestStatus === 'In Progress' || (requestStatus !== 'Verified' && requestStatus !== 'Rejected')
+                  ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-semibold shadow-sm'
+                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border border-slate-300 dark:border-slate-700 hover:bg-amber-50 hover:border-amber-300'
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5 text-amber-600" />
+              <span>Scrutiny</span>
+            </button>
 
-          {/* Flag Discrepancy */}
-          <button
-            onClick={() => handleUpdateStatus('Rejected')}
-            disabled={isUpdatingStatus}
-            className={`flex items-center gap-1 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors disabled:opacity-50 cursor-pointer ${
-              requestStatus === 'Rejected'
-                ? 'bg-rose-700 text-white font-semibold'
-                : 'bg-rose-50 dark:bg-rose-950/40 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-800 hover:bg-rose-100'
-            }`}
-          >
-            <AlertTriangle className="w-3.5 h-3.5 text-rose-600" />
-            <span>Flag Issue</span>
-          </button>
+            <button
+              onClick={() => handleUpdateStatus('Verified')}
+              disabled={isUpdatingStatus}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50 cursor-pointer ${
+                requestStatus === 'Verified'
+                  ? 'bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-semibold shadow-sm'
+                  : 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 hover:bg-emerald-50'
+              }`}
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Clear Title</span>
+            </button>
 
-          {/* View TSR Report */}
-          <button
-            onClick={() => setActiveTab('TSR_REPORT')}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold shadow-2xs transition-colors shrink-0 cursor-pointer"
-          >
-            <FileCheck2 className="w-3.5 h-3.5" />
-            <span>View TSR</span>
-          </button>
+            <button
+              onClick={() => handleUpdateStatus('Rejected')}
+              disabled={isUpdatingStatus}
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all disabled:opacity-50 cursor-pointer ${
+                requestStatus === 'Rejected'
+                  ? 'bg-gradient-to-r from-rose-600 to-rose-700 text-white font-semibold shadow-sm'
+                  : 'bg-white dark:bg-slate-900 text-rose-700 dark:text-rose-400 border border-rose-300 dark:border-rose-800 hover:bg-rose-50'
+              }`}
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span>Flag Issue</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('TSR_REPORT')}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#1D4ED8] to-indigo-600 hover:from-[#1E40AF] hover:to-indigo-700 text-white text-xs font-semibold shadow-md transition-all active:scale-95 shrink-0 cursor-pointer"
+            >
+              <FileCheck2 className="w-3.5 h-3.5" />
+              <span>View TSR</span>
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Main Dual-Pane Workstation */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[700px]">
-        {/* Left Column (5 Cols): Explicit Document-Specific Inspection Scope */}
-        <div className="lg:col-span-5 flex flex-col rounded-lg theme-surface border overflow-hidden shadow-2xs">
-          {/* Explicit Scope Header: Document Specific */}
-          <div className="px-3 py-2 border-b theme-border bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <FileText className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider truncate">
-                DOCUMENT INSPECTION: {currentDoc?.type || 'Deed'}
+        {/* Left Column (5 Cols): Document Inspection */}
+        <div className="lg:col-span-5 flex flex-col rounded-xl theme-surface border overflow-hidden shadow-sm">
+          {/* Scope Header: Document Specific */}
+          <div className="px-3 py-2.5 border-b theme-border bg-blue-50/60 dark:bg-blue-950/10 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-0.5 h-4 rounded-full bg-[#1D4ED8] shrink-0" />
+              <FileText className="w-3.5 h-3.5 text-[#1D4ED8] dark:text-blue-400 shrink-0" />
+              <span className="text-[11px] font-bold text-[#1D4ED8] dark:text-blue-300 uppercase tracking-wider truncate">
+                Document Inspection: {currentDoc?.type || 'Deed'}
               </span>
             </div>
-            <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-blue-50 dark:bg-blue-950/40 text-[#1D4ED8] dark:text-blue-300 border border-blue-200 dark:border-blue-800 shrink-0">
-              Doc Scope (Pg {selectedDocIndex + 1}/{docs.length})
+            <span className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-blue-100 dark:bg-blue-950/60 text-[#1D4ED8] dark:text-blue-300 border border-blue-200 dark:border-blue-800 shrink-0">
+              Pg {selectedDocIndex + 1}/{docs.length}
             </span>
           </div>
 
@@ -688,14 +709,15 @@ export default function RequestWorkspacePage() {
           </div>
         </div>
 
-        {/* Right Column (7 Cols): Explicit Case-Wide Analysis Scope */}
-        <div className="lg:col-span-7 flex flex-col rounded-lg theme-surface border overflow-hidden shadow-2xs">
-          {/* Explicit Scope Header: Case Wide Scrutiny */}
-          <div className="px-3 py-2 border-b theme-border bg-slate-50 dark:bg-slate-800/50 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <GitBranch className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-              <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider truncate">
-                CASE ANALYSIS: {
+        {/* Right Column (7 Cols): Case-Wide Analysis */}
+        <div className="lg:col-span-7 flex flex-col rounded-xl theme-surface border overflow-hidden shadow-sm">
+          {/* Scope Header: Case Wide */}
+          <div className="px-3 py-2.5 border-b theme-border bg-violet-50/60 dark:bg-violet-950/10 flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-0.5 h-4 rounded-full bg-violet-500 shrink-0" />
+              <GitBranch className="w-3.5 h-3.5 text-violet-600 dark:text-violet-400 shrink-0" />
+              <span className="text-[11px] font-bold text-violet-700 dark:text-violet-300 uppercase tracking-wider truncate">
+                Case Analysis: {
                   activeTab === 'TIMELINE' ? 'Flow of Title Devolution' :
                   activeTab === 'EXTRACTED_OCR' ? 'OCR Evidence & Source Provenance' :
                   activeTab === 'IGR_SEARCH' ? 'Land Registry Cross-Verification' :
@@ -705,10 +727,11 @@ export default function RequestWorkspacePage() {
                 }
               </span>
             </div>
-            <span className="px-1.5 py-0.2 rounded text-[10px] font-mono bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border theme-border shrink-0">
-              Case Scope (All Documents)
+            <span className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-violet-100 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800 shrink-0">
+              All Docs
             </span>
           </div>
+
 
           {/* 1280x800 Optimized Segmented Tab Bar */}
           <div className="border-b theme-border bg-white dark:bg-slate-900 p-1.5 flex items-center justify-between gap-1 overflow-x-auto">
