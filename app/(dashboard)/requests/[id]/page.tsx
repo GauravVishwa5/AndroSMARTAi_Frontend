@@ -302,7 +302,51 @@ export default function RequestWorkspacePage() {
   }
 
   const docs = rawDocsList.length > 0 ? rawDocsList.map((d: any, idx: number) => {
-    const ej = d.extracted_json || d.data || d.extracted_data || (requestData?.extracted_json ? requestData.extracted_json[d.document_type || d.type] : null) || {};
+    // 1. Resolve extracted_json from document itself or from requestData.extracted_json
+    let ej: any = d.extracted_json || d.data || d.extracted_data || null;
+
+    if (!ej && requestData?.extracted_json) {
+      const typeKey = d.document_type || d.type;
+      const allEntries = requestData.extracted_json;
+
+      if (typeKey && allEntries[typeKey]) {
+        ej = allEntries[typeKey];
+      } else {
+        for (const [k, v] of Object.entries(allEntries)) {
+          if (v && typeof v === 'object') {
+            const pf = (v as any).processed_files;
+            if (Array.isArray(pf)) {
+              const match = pf.find((p: any) =>
+                (p.file_name && d.file_name && p.file_name === d.file_name) ||
+                (p.name && d.name && p.name === d.name) ||
+                (p.doc_id && d.doc_id && p.doc_id === d.doc_id)
+              );
+              if (match) {
+                ej = match.data || match;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // 2. Unwrap processed_files container if present
+    if (ej && typeof ej === 'object' && Array.isArray(ej.processed_files) && ej.processed_files.length > 0) {
+      const match = ej.processed_files.find((p: any) =>
+        (p.file_name && d.file_name && p.file_name === d.file_name) ||
+        (p.name && d.name && p.name === d.name) ||
+        (p.doc_id && d.doc_id && p.doc_id === d.doc_id)
+      ) || ej.processed_files[0];
+      ej = match?.data || match || {};
+    }
+
+    if (ej && typeof ej === 'object' && ej.data && typeof ej.data === 'object') {
+      ej = ej.data;
+    }
+
+    ej = (ej && typeof ej === 'object') ? ej : {};
+
     let fileUrl = '#';
     if (typeof d.file_url === 'string') {
       fileUrl = d.file_url;
@@ -311,6 +355,45 @@ export default function RequestWorkspacePage() {
     } else if (d.url) {
       fileUrl = d.url;
     }
+
+    // Resolve parties safely
+    const partiesList: any[] = Array.isArray(ej.parties) ? ej.parties : [];
+    const partySeller = partiesList.find((p: any) =>
+      p?.role?.toLowerCase().includes('seller') ||
+      p?.role?.toLowerCase().includes('vendor') ||
+      p?.role?.toLowerCase().includes('transferor')
+    );
+    const partyBuyer = partiesList.find((p: any) =>
+      p?.role?.toLowerCase().includes('buyer') ||
+      p?.role?.toLowerCase().includes('purchaser') ||
+      p?.role?.toLowerCase().includes('vendee') ||
+      p?.role?.toLowerCase().includes('borrower')
+    );
+    const partyAuthority = partiesList.find((p: any) =>
+      p?.role?.toLowerCase().includes('authority') ||
+      p?.role?.toLowerCase().includes('registrar') ||
+      p?.role?.toLowerCase().includes('officer') ||
+      p?.role?.toLowerCase().includes('society')
+    ) || (partiesList.length > 0 && !partySeller && !partyBuyer ? partiesList[0] : null);
+
+    const considerationVal =
+      ej.consideration ||
+      ej.consideration_amount ||
+      ej.amount ||
+      ej.loan_amount ||
+      (ej.financial_details?.consideration_or_value?.value !== undefined
+        ? (ej.financial_details.consideration_or_value.value === 0
+            ? '₹ 0 (Non-Monetary / Regulatory)'
+            : `₹ ${Number(ej.financial_details.consideration_or_value.value).toLocaleString('en-IN')}`)
+        : '');
+
+    const stampDutyVal =
+      ej.stampDuty ||
+      ej.stamp_duty ||
+      (ej.financial_details?.stamp_duty_paid?.value
+        ? `₹ ${Number(ej.financial_details.stamp_duty_paid.value).toLocaleString('en-IN')}`
+        : '');
+
     return {
       id: d.id || d.doc_id || `doc-${idx + 1}`,
       name: d.file_name || d.name || `Document_${idx + 1}.pdf`,
@@ -323,15 +406,18 @@ export default function RequestWorkspacePage() {
       ocrMeta: d.ocr_meta || {},
       extracted_json: ej,
       extracted: {
-        vendor: ej.vendor || ej.seller_names || ej.seller || ej.transferor || ej.parties?.seller || '',
-        vendee: ej.vendee || ej.purchaser_names || ej.purchaser || ej.transferee || ej.borrower || ej.parties?.purchaser || '',
-        date: ej.date || ej.registration_date || ej.execution_date || '',
-        consideration: ej.consideration || ej.consideration_amount || ej.amount || ej.loan_amount || '',
-        propertyDesc: ej.propertyDesc || ej.property_description || ej.schedule_property || ej.address || '',
-        cts: ej.cts || ej.cts_number || ej.survey_number || ej.gat_number || '',
-        sro: ej.sro || ej.sro_name || ej.sub_registrar || '',
+        vendor: ej.vendor || ej.seller_names || ej.seller || ej.transferor || partySeller?.name || '',
+        vendee: ej.vendee || ej.purchaser_names || ej.purchaser || ej.transferee || ej.borrower || partyBuyer?.name || '',
+        authority: partyAuthority?.name ? `${partyAuthority.name}${partyAuthority.role ? ` (${partyAuthority.role})` : ''}` : '',
+        date: ej.date || ej.registration_date || ej.execution_date || ej.document_date || '',
+        consideration: considerationVal,
+        propertyDesc: ej.propertyDesc || ej.property_description || ej.schedule_property || ej.address || ej.property_details?.description || '',
+        cts: ej.cts || ej.cts_number || ej.survey_number || ej.gat_number || ej.property_details?.cts_number || '',
+        sro: ej.sro || ej.sro_name || ej.sub_registrar || ej.property_details?.revenue_village || '',
         regNo: ej.regNo || ej.document_number || ej.registration_number || ej.doc_no || '',
-        stampDuty: ej.stampDuty || ej.stamp_duty || '',
+        stampDuty: stampDutyVal,
+        remarks: Array.isArray(ej.encumbrances_or_remarks) ? ej.encumbrances_or_remarks.join(' • ') : (ej.remarks || ''),
+        documentTitle: ej.document_title || ej.title || '',
       },
     };
   }) : [];

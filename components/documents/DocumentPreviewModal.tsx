@@ -18,6 +18,9 @@ import {
   AlertCircle,
   Play,
   Globe,
+  Braces,
+  Code,
+  FileJson,
 } from 'lucide-react';
 import { requestsApi } from '@/lib/api/requests';
 
@@ -30,6 +33,7 @@ interface DocumentItem {
   ocrStatus?: string;
   date?: string;
   extracted?: any;
+  extracted_json?: any;
   ocrMeta?: {
     total_pages?: number;
     char_count?: number;
@@ -59,6 +63,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   const [zoomLevel, setZoomLevel] = useState(100);
   const [rotation, setRotation] = useState(0);
   const [copied, setCopied] = useState(false);
+  const [copiedJson, setCopiedJson] = useState(false);
+  const [entityViewMode, setEntityViewMode] = useState<'JSON' | 'CARDS'>('JSON');
   const [searchQuery, setSearchQuery] = useState('');
   const [isRetryingOcr, setIsRetryingOcr] = useState(false);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -66,6 +72,13 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   const [localRawText, setLocalRawText] = useState<string>('');
   const [localOcrStatus, setLocalOcrStatus] = useState<string>('');
   const [feedbackMsg, setFeedbackMsg] = useState<string | null>(null);
+
+  const handleCopyJson = (jsonObj: any) => {
+    if (!jsonObj) return;
+    navigator.clipboard.writeText(JSON.stringify(jsonObj, null, 2));
+    setCopiedJson(true);
+    setTimeout(() => setCopiedJson(false), 2000);
+  };
 
   useEffect(() => {
     if (doc) {
@@ -485,50 +498,239 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                 </div>
               )}
 
-              {/* Tab 2: Structured Entities */}
-              {activeTab === 'ENTITIES' && (
-                <div className="flex-1 p-4 overflow-auto space-y-3 bg-slate-50/40 dark:bg-slate-950/30">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Gemini Extracted Fields</span>
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                      Verified
-                    </span>
-                  </div>
+              {/* Tab 2: Structured Entities / Extracted JSON */}
+              {activeTab === 'ENTITIES' && (() => {
+                const rawJsonToDisplay =
+                  (doc.extracted_json && typeof doc.extracted_json === 'object' && Object.keys(doc.extracted_json).length > 0)
+                    ? doc.extracted_json
+                    : (doc.extracted && typeof doc.extracted === 'object' && Object.values(doc.extracted).some(Boolean))
+                    ? doc.extracted
+                    : null;
 
-                  <div className="space-y-2.5 text-xs">
-                    <div className="p-3 rounded-xl border border-blue-100 dark:border-blue-900/40 bg-white dark:bg-slate-900 shadow-xs space-y-1">
-                      <span className="text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400 font-mono">Vendor / Transferor</span>
-                      <p className="font-semibold text-slate-900 dark:text-slate-100">{doc.extracted?.vendor || 'Not Specified'}</p>
-                    </div>
+                const jsonKeyCount = rawJsonToDisplay ? Object.keys(rawJsonToDisplay).length : 0;
 
-                    <div className="p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/40 bg-white dark:bg-slate-900 shadow-xs space-y-1">
-                      <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 font-mono">Vendee / Purchaser / Borrower</span>
-                      <p className="font-semibold text-slate-900 dark:text-slate-100">{doc.extracted?.vendee || 'Not Specified'}</p>
-                    </div>
-
-                    <div className="p-3 rounded-xl border border-amber-100 dark:border-amber-900/40 bg-white dark:bg-slate-900 shadow-xs space-y-1">
-                      <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 font-mono">Consideration & Stamp Duty</span>
-                      <p className="font-semibold text-slate-900 dark:text-slate-100">{doc.extracted?.consideration || 'Institutional / Legal Terms'}</p>
-                    </div>
-
-                    <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-1">
-                      <span className="text-[10px] font-bold uppercase text-slate-500 font-mono">Property Schedule & CTS</span>
-                      <p className="font-semibold text-slate-900 dark:text-slate-100">{doc.extracted?.propertyDesc || 'Property Schedule'} {doc.extracted?.cts ? `(${doc.extracted.cts})` : ''}</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <div className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
-                        <span className="text-[9px] font-bold uppercase text-slate-500 font-mono block">Document No</span>
-                        <p className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{doc.extracted?.regNo || 'DOC-REG'}</p>
+                return (
+                  <div className="flex-1 p-4 overflow-auto space-y-3 bg-slate-50/40 dark:bg-slate-950/30 flex flex-col">
+                    {/* Header with Extracted JSON vs Cards Switcher & Copy Button */}
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800 shrink-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                          <Sparkles className="w-3.5 h-3.5 text-blue-500" />
+                          <span>Gemini Extracted Fields</span>
+                        </span>
+                        {jsonKeyCount > 0 && (
+                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50">
+                            {jsonKeyCount} fields
+                          </span>
+                        )}
                       </div>
-                      <div className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
-                        <span className="text-[9px] font-bold uppercase text-slate-500 font-mono block">Execution Date</span>
-                        <p className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{doc.extracted?.date || 'Recorded'}</p>
+
+                      <div className="flex items-center gap-1.5">
+                        {/* View Switcher: JSON vs Cards */}
+                        <div className="flex items-center p-0.5 rounded-lg bg-slate-200/80 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-semibold">
+                          <button
+                            onClick={() => setEntityViewMode('JSON')}
+                            className={`flex items-center gap-1 px-2.5 py-0.5 rounded-md transition-all ${
+                              entityViewMode === 'JSON'
+                                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                            }`}
+                            title="View Extracted JSON"
+                          >
+                            <Braces className="w-3 h-3" />
+                            <span>Extracted JSON</span>
+                          </button>
+                          <button
+                            onClick={() => setEntityViewMode('CARDS')}
+                            className={`flex items-center gap-1 px-2.5 py-0.5 rounded-md transition-all ${
+                              entityViewMode === 'CARDS'
+                                ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 font-bold shadow-xs'
+                                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+                            }`}
+                            title="View Summary Cards"
+                          >
+                            <Layers className="w-3 h-3" />
+                            <span>Cards</span>
+                          </button>
+                        </div>
+
+                        {/* Copy JSON Button */}
+                        {rawJsonToDisplay && (
+                          <button
+                            onClick={() => handleCopyJson(rawJsonToDisplay)}
+                            className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-semibold border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-blue-500 transition-all"
+                            title="Copy Extracted JSON to Clipboard"
+                          >
+                            {copiedJson ? (
+                              <>
+                                <Check className="w-3 h-3 text-emerald-500" />
+                                <span className="text-emerald-600 dark:text-emerald-400">Copied</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3 text-slate-500" />
+                                <span>Copy JSON</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                          Verified
+                        </span>
                       </div>
                     </div>
+
+                    {/* Content View 1: Extracted JSON View (Default) */}
+                    {entityViewMode === 'JSON' && (
+                      <div className="flex-1 flex flex-col overflow-hidden space-y-2">
+                        {rawJsonToDisplay ? (
+                          <div className="flex-1 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-900 text-slate-100 p-3.5 font-mono text-[11px] leading-relaxed overflow-auto select-text shadow-inner max-h-[500px]">
+                            <pre className="whitespace-pre-wrap break-words">
+                              {JSON.stringify(rawJsonToDisplay, null, 2)}
+                            </pre>
+                          </div>
+                        ) : (
+                          <div className="h-full flex flex-col items-center justify-center text-center p-8 text-slate-400 space-y-3">
+                            <div className="p-3 rounded-2xl bg-blue-50 dark:bg-blue-950/50 text-blue-500 border border-blue-100 dark:border-blue-900/50">
+                              <Braces className="w-8 h-8 opacity-80" />
+                            </div>
+                            <div>
+                              <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                No extracted JSON available yet.
+                              </p>
+                              <p className="text-[10px] text-slate-500 mt-0.5 max-w-xs">
+                                OCR text must be extracted first to produce structured Gemini JSON.
+                              </p>
+                            </div>
+                            <button
+                              onClick={handleTriggerOcr}
+                              disabled={isRetryingOcr}
+                              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md active:scale-95 transition-all disabled:opacity-50"
+                            >
+                              <RefreshCw className={`w-3.5 h-3.5 ${isRetryingOcr ? 'animate-spin' : ''}`} />
+                              <span>{isRetryingOcr ? 'Extracting...' : 'Run Extraction'}</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Content View 2: Formatted Field Cards View */}
+                    {entityViewMode === 'CARDS' && (
+                      <div className="space-y-2.5 text-xs overflow-auto flex-1">
+                        {doc.extracted?.documentTitle && (
+                          <div className="p-3 rounded-xl border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/50 dark:bg-indigo-950/20 shadow-xs space-y-1">
+                            <span className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400 font-mono">
+                              Document Title & Category
+                            </span>
+                            <p className="font-semibold text-slate-900 dark:text-slate-100">
+                              {doc.extracted.documentTitle} ({doc.type || 'Legal Document'})
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Authority / Issuing Body (for SRC, Certificates, NOCs) */}
+                        {doc.extracted?.authority && (
+                          <div className="p-3 rounded-xl border border-purple-100 dark:border-purple-900/40 bg-white dark:bg-slate-900 shadow-xs space-y-1">
+                            <span className="text-[10px] font-bold uppercase text-purple-600 dark:text-purple-400 font-mono">
+                              Issuing Authority / Society Office
+                            </span>
+                            <p className="font-semibold text-slate-900 dark:text-slate-100">
+                              {doc.extracted.authority}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="p-3 rounded-xl border border-blue-100 dark:border-blue-900/40 bg-white dark:bg-slate-900 shadow-xs space-y-1">
+                          <span className="text-[10px] font-bold uppercase text-blue-600 dark:text-blue-400 font-mono">
+                            Vendor / Transferor
+                          </span>
+                          <p className="font-semibold text-slate-900 dark:text-slate-100">
+                            {doc.extracted?.vendor || 'Not Specified (Regulatory / Certificate Document)'}
+                          </p>
+                        </div>
+
+                        <div className="p-3 rounded-xl border border-emerald-100 dark:border-emerald-900/40 bg-white dark:bg-slate-900 shadow-xs space-y-1">
+                          <span className="text-[10px] font-bold uppercase text-emerald-600 dark:text-emerald-400 font-mono">
+                            Vendee / Purchaser / Beneficiary
+                          </span>
+                          <p className="font-semibold text-slate-900 dark:text-slate-100">
+                            {doc.extracted?.vendee || 'Not Specified'}
+                          </p>
+                        </div>
+
+                        <div className="p-3 rounded-xl border border-amber-100 dark:border-amber-900/40 bg-white dark:bg-slate-900 shadow-xs space-y-1">
+                          <span className="text-[10px] font-bold uppercase text-amber-600 dark:text-amber-400 font-mono">
+                            Consideration & Stamp Duty
+                          </span>
+                          <p className="font-semibold text-slate-900 dark:text-slate-100">
+                            {doc.extracted?.consideration || 'Institutional / Legal Terms'}
+                            {doc.extracted?.stampDuty ? ` (Stamp Duty: ${doc.extracted.stampDuty})` : ''}
+                          </p>
+                        </div>
+
+                        <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-1">
+                          <span className="text-[10px] font-bold uppercase text-slate-500 font-mono">
+                            Property Schedule & CTS
+                          </span>
+                          <p className="font-semibold text-slate-900 dark:text-slate-100">
+                            {doc.extracted?.propertyDesc || 'Property Schedule'}{' '}
+                            {doc.extracted?.cts ? `(CTS: ${doc.extracted.cts})` : ''}
+                            {doc.extracted?.sro ? ` — ${doc.extracted.sro}` : ''}
+                          </p>
+                        </div>
+
+                        {doc.extracted?.remarks && (
+                          <div className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-1">
+                            <span className="text-[10px] font-bold uppercase text-slate-500 font-mono">
+                              Statutory Remarks & Provisions
+                            </span>
+                            <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                              {doc.extracted.remarks}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          <div className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+                            <span className="text-[9px] font-bold uppercase text-slate-500 font-mono block">
+                              Document No
+                            </span>
+                            <p className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                              {doc.extracted?.regNo || 'DOC-REG'}
+                            </p>
+                          </div>
+                          <div className="p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs">
+                            <span className="text-[9px] font-bold uppercase text-slate-500 font-mono block">
+                              Execution / Issue Date
+                            </span>
+                            <p className="font-mono text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                              {doc.extracted?.date || 'Recorded'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Expandable Raw JSON Accordion inside Cards view */}
+                        {rawJsonToDisplay && (
+                          <div className="pt-2">
+                            <button
+                              onClick={() => setEntityViewMode('JSON')}
+                              className="w-full flex items-center justify-between p-2.5 rounded-xl border border-blue-200 dark:border-blue-900/50 bg-blue-50/40 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 font-semibold text-xs hover:bg-blue-100/50 transition-colors"
+                            >
+                              <span className="flex items-center gap-1.5">
+                                <Braces className="w-3.5 h-3.5" />
+                                <span>View Full Extracted JSON Tree ({jsonKeyCount} fields)</span>
+                              </span>
+                              <span className="text-[10px] uppercase font-mono tracking-wider">Expand &rarr;</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Tab 3: English Translation */}
               {activeTab === 'TRANSLATION' && (
