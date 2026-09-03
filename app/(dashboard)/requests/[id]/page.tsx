@@ -301,7 +301,7 @@ export default function RequestWorkspacePage() {
     }
   }
 
-  const docs = rawDocsList.length > 0 ? rawDocsList.map((d: any, idx: number) => {
+  const docs = rawDocsList.length > 0 ? rawDocsList.map((d: any, idx: number) => { try {
     // 1. Resolve extracted_json from document itself or from requestData.extracted_json
     let ej: any = d.extracted_json || d.data || d.extracted_data || null;
 
@@ -416,10 +416,28 @@ export default function RequestWorkspacePage() {
         sro: ej.sro || ej.sro_name || ej.sub_registrar || ej.property_details?.revenue_village || '',
         regNo: ej.regNo || ej.document_number || ej.registration_number || ej.doc_no || '',
         stampDuty: stampDutyVal,
-        remarks: Array.isArray(ej.encumbrances_or_remarks) ? ej.encumbrances_or_remarks.join(' • ') : (ej.remarks || ''),
+        remarks: Array.isArray(ej.encumbrances_or_remarks)
+          ? ej.encumbrances_or_remarks.map((r: any) => (typeof r === 'string' ? r : r?.remark || r?.description || r?.text || JSON.stringify(r))).join(' • ')
+          : (ej.remarks || ''),
         documentTitle: ej.document_title || ej.title || '',
       },
     };
+  } catch (mapErr) {
+    console.warn('[docs.map] Error processing document at index', idx, mapErr);
+    return {
+      id: d.id || d.doc_id || `doc-${idx + 1}`,
+      name: d.file_name || d.name || `Document_${idx + 1}.pdf`,
+      type: d.document_type || d.type || 'Property Deed',
+      status: (d.verification_status || d.status || 'clear') as 'clear' | 'rejected' | 'pending',
+      ocrStatus: d.ocr_status || 'pending',
+      date: d.created_at || d.uploaded_at || 'Recent',
+      fileUrl: typeof d.file_url === 'string' ? d.file_url : (d.url || '#'),
+      rawText: d.raw_text || '',
+      ocrMeta: {},
+      extracted_json: {},
+      extracted: {},
+    };
+  }
   }) : [];
 
   const currentDoc = docs[Math.min(selectedDocIndex, Math.max(0, docs.length - 1))] || null;
