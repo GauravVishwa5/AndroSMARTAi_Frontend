@@ -63,12 +63,16 @@ export const applicantApi = {
   },
 
   getApplications: async (): Promise<{ success: boolean; applications: ApplicantApplicationSummary[] }> => {
-    const response = await apiClient.get('/api/applicant/applications');
+    const response = await apiClient.get('/api/applicant/applications', {
+      headers: { 'X-Skip-Auth-Redirect': 'true' },
+    });
     return response.data;
   },
 
   getApplicationDetail: async (id: string | number): Promise<{ success: boolean; application: ApplicantApplicationDetail }> => {
-    const response = await apiClient.get(`/api/applicant/applications/${id}`);
+    const response = await apiClient.get(`/api/applicant/applications/${id}`, {
+      headers: { 'X-Skip-Auth-Redirect': 'true' },
+    });
     return response.data;
   },
 

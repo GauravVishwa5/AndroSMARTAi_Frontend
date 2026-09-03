@@ -56,8 +56,13 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
-        // Clear invalid token if unauthorized and not on login page
-        if (!window.location.pathname.includes('/login')) {
+        const pathname = window.location.pathname;
+        const isApplicantRoute = pathname.startsWith('/applicant');
+        const isLoginRoute = pathname.includes('/login');
+        const skipRedirect = (error.config?.headers as any)?.['X-Skip-Auth-Redirect'] === 'true';
+
+        // Clear invalid token and redirect only if not on public/demo/applicant routes
+        if (!isLoginRoute && !isApplicantRoute && !skipRedirect) {
           localStorage.removeItem('andropvs_token');
           localStorage.removeItem('andropvs_user');
           localStorage.removeItem('andropvs_modules');
