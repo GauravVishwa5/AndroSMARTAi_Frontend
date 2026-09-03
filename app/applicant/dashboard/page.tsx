@@ -23,10 +23,11 @@ import {
 
 const DEMO_APPLICATIONS: ApplicantApplicationSummary[] = [
   {
-    id: 'demo-app-1',
+    id: 101,
     application_number: 'APP-2026-8941',
     property_name: 'Sunshine Heights CHSL, Flat 402, 4th Floor',
     bank_name: 'State Bank of India — Nariman Point Branch',
+    applicant_name: 'Rahul Sharma',
     city: 'Borivali West',
     district: 'Mumbai Suburban',
     status: 'In Scrutiny (Stage 3 of 4)',
@@ -34,10 +35,11 @@ const DEMO_APPLICATIONS: ApplicantApplicationSummary[] = [
     pending_deficiencies_count: 1,
   },
   {
-    id: 'demo-app-2',
+    id: 102,
     application_number: 'APP-2026-7209',
     property_name: 'Deepali Residency, Unit 104, Deepali Enclave',
     bank_name: 'Punjab National Bank — Pitampura Branch',
+    applicant_name: 'Rahul Sharma',
     city: 'Pitampura',
     district: 'North West Delhi',
     status: 'Verified & Clear',
@@ -45,10 +47,11 @@ const DEMO_APPLICATIONS: ApplicantApplicationSummary[] = [
     pending_deficiencies_count: 0,
   },
   {
-    id: 'demo-app-3',
+    id: 103,
     application_number: 'APP-2026-6104',
     property_name: 'Grand Palm Tower, Flat 802, Wing-A',
     bank_name: 'HDFC Bank — Andheri Commercial Branch',
+    applicant_name: 'Rahul Sharma',
     city: 'Andheri West',
     district: 'Mumbai Suburban',
     status: 'Action Required',

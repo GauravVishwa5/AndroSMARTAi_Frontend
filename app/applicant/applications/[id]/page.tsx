@@ -22,9 +22,10 @@ import {
 
 const DEMO_APPLICATION_DETAILS: Record<string, ApplicantApplicationDetail> = {
   'APP-2026-8941': {
-    id: 'demo-app-1',
+    id: 101,
     application_number: 'APP-2026-8941',
     property_name: 'Sunshine Heights CHSL, Flat 402, 4th Floor',
+    applicant_name: 'Rahul Sharma',
     address: 'Wing-B, New Link Road, Borivali West, Mumbai, Maharashtra 400092',
     city: 'Borivali West',
     district: 'Mumbai Suburban',
@@ -53,9 +54,10 @@ const DEMO_APPLICATION_DETAILS: Record<string, ApplicantApplicationDetail> = {
     ],
   },
   'APP-2026-7209': {
-    id: 'demo-app-2',
+    id: 102,
     application_number: 'APP-2026-7209',
     property_name: 'Deepali Residency, Unit 104, Deepali Enclave',
+    applicant_name: 'Rahul Sharma',
     address: 'Pitampura, North West Delhi, Delhi 110034',
     city: 'Pitampura',
     district: 'North West Delhi',
@@ -76,9 +78,10 @@ const DEMO_APPLICATION_DETAILS: Record<string, ApplicantApplicationDetail> = {
     ],
   },
   'APP-2026-6104': {
-    id: 'demo-app-3',
+    id: 103,
     application_number: 'APP-2026-6104',
     property_name: 'Grand Palm Tower, Flat 802, Wing-A',
+    applicant_name: 'Rahul Sharma',
     address: 'Veera Desai Road, Andheri West, Mumbai 400053',
     city: 'Andheri West',
     district: 'Mumbai Suburban',
@@ -126,7 +129,7 @@ export default function ApplicationDetailPage() {
     setError(null);
 
     // Check if ID matches demo items
-    const demoItem = DEMO_APPLICATION_DETAILS[id] || Object.values(DEMO_APPLICATION_DETAILS).find((d) => d.id === id);
+    const demoItem = DEMO_APPLICATION_DETAILS[id] || Object.values(DEMO_APPLICATION_DETAILS).find((d) => String(d.id) === id);
     if (demoItem) {
       setDetail(demoItem);
       setIsDemoMode(true);
