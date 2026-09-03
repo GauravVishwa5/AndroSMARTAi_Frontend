@@ -35,7 +35,7 @@ export const requestsApi = {
     const cacheKey = `req_details_${requestId}`;
     if (!forceRefresh) {
       const cached = localCache.get<BankForm>(cacheKey);
-      if (cached) return cached;
+      if (cached && (cached.id || cached.propertyName || (cached as any).property_name)) return cached;
     }
 
     const response = await apiClient.get(`/api/request/${requestId}`);

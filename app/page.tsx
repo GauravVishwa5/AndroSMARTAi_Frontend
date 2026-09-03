@@ -31,8 +31,10 @@ import {
   Award,
   Zap,
   Globe,
+  Play,
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
+import { DemoVideoGallery } from '@/components/landing/DemoVideoGallery';
 
 export default function HomePage() {
   const router = useRouter();
@@ -62,6 +64,10 @@ export default function HomePage() {
 
         {/* Desktop Navigation Links */}
         <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold theme-text-secondary shrink-0">
+          <a href="#video-demos" className="hover:theme-text-primary transition-colors flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold">
+            <Play className="w-3.5 h-3.5 fill-current" />
+            <span>14 Video Demos</span>
+          </a>
           <a href="#features" className="hover:theme-text-primary transition-colors">Features</a>
           <a href="#workflow" className="hover:theme-text-primary transition-colors">How It Works</a>
           <a href="#igr-coverage" className="hover:theme-text-primary transition-colors">State IGR Registries</a>
@@ -128,6 +134,14 @@ export default function HomePage() {
       {mobileMenuOpen && (
         <div className="md:hidden fixed inset-x-0 top-16 sm:top-20 z-30 theme-surface border-b theme-border p-5 space-y-4 shadow-xl animate-fadeIn">
           <nav className="flex flex-col space-y-3 text-sm font-semibold theme-text-primary">
+            <a
+              href="#video-demos"
+              onClick={() => setMobileMenuOpen(false)}
+              className="p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold flex items-center gap-2"
+            >
+              <Play className="w-4 h-4 fill-current" />
+              <span>14 Video Demonstration Series</span>
+            </a>
             <a
               href="#features"
               onClick={() => setMobileMenuOpen(false)}
@@ -228,17 +242,25 @@ export default function HomePage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
             <Link
               href="/requests/new"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-95"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-95"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>Create New Verification Request</span>
+              <span>Create Verification Request</span>
             </Link>
 
-            <Link
-              href="/requests/REQ-3"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl theme-card border hover:border-blue-500 theme-text-primary font-semibold text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+            <a
+              href="#video-demos"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold text-xs sm:text-sm shadow-md transition-all hover:scale-[1.02] active:scale-95 border border-slate-700"
             >
-              <span>Explore Live Case Workspace</span>
+              <Play className="w-4 h-4 text-blue-400 fill-current" />
+              <span>Watch 14 Video Demos</span>
+            </a>
+
+            <Link
+              href="/requests/7"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl theme-card border hover:border-blue-500 theme-text-primary font-semibold text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+            >
+              <span>Explore Workspace</span>
               <ArrowRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />
             </Link>
           </div>
@@ -460,6 +482,9 @@ export default function HomePage() {
             <p className="text-[11px] theme-text-muted">SBI, HDFC, Axis, ICICI & PNB</p>
           </div>
         </div>
+
+        {/* ── 14-Video Demonstration Showcase ──────────────────────── */}
+        <DemoVideoGallery />
 
         {/* ── 6 Core Platform Capabilities ──────────────────────────── */}
         <section id="features" className="space-y-8 pt-6">

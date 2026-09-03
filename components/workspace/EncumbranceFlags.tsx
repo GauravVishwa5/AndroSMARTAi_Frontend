@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { apiClient } from '@/lib/api/client';
 import {
   AlertTriangle,
   ShieldCheck,
@@ -98,7 +99,38 @@ export const EncumbranceFlags: React.FC<EncumbranceFlagsProps> = ({
     status: 'PENDING',
   });
 
-  const handleResolve = (id: string) => {
+  useEffect(() => {
+    if (!requestId) return;
+    const fetchConflicts = async () => {
+      try {
+        const res = await apiClient.get(`/api/request/${requestId}/conflicts`);
+        const report = res.data?.report;
+        if (report && report.conflicts && report.conflicts.length > 0) {
+          const conflictChecks: DiscrepancyCheck[] = report.conflicts.map((c: any) => ({
+            id: c.conflict_id,
+            category: 'Cross-Deed Legal Conflict',
+            title: c.description || `Conflict on ${c.field}`,
+            description: `Source A (${c.doc_a?.name || 'Doc 1'}, Page ${c.doc_a?.page ?? '?'}) states: "${c.doc_a?.value}" vs Source B (${c.doc_b?.name || 'Doc 2'}, Page ${c.doc_b?.page ?? '?'}) states: "${c.doc_b?.value}". Evidence: "${c.doc_a?.evidence || c.doc_b?.evidence || 'Discrepancy found in title deeds.'}"`,
+            severity: c.severity === 'CRITICAL' ? 'CRITICAL' : 'WARNING',
+            status: c.resolution_status === 'resolved' ? 'RESOLVED' : 'PENDING',
+            mitigationNote: c.resolution_note || undefined,
+          }));
+
+          setChecks((prev) => {
+            const existingIds = new Set(conflictChecks.map((x) => x.id));
+            const filteredPrev = prev.filter((p) => !existingIds.has(p.id));
+            return [...conflictChecks, ...filteredPrev];
+          });
+        }
+      } catch (err) {
+        // Fall back to baseline checks gracefully
+      }
+    };
+    fetchConflicts();
+  }, [requestId]);
+
+  const handleResolve = async (id: string) => {
+    const note = mitigationText || 'Verified and reconciled against physical deeds by Legal Scrutinizer.';
     setChecks((prev) =>
       prev.map((c) =>
         c.id === id
@@ -106,13 +138,25 @@ export const EncumbranceFlags: React.FC<EncumbranceFlagsProps> = ({
               ...c,
               status: 'RESOLVED',
               severity: 'CLEAR',
-              mitigationNote: mitigationText || 'Verified and approved by Legal Counsel.',
+              mitigationNote: note,
             }
           : c
       )
     );
     setResolvingId(null);
     setMitigationText('');
+
+    // If this is a backend cross-document conflict, sync resolution to server
+    if (id.startsWith('conf-') && requestId) {
+      try {
+        const formData = new FormData();
+        formData.append('resolution_status', 'resolved');
+        formData.append('resolution_note', note);
+        await apiClient.patch(`/api/request/${requestId}/conflicts/${id}`, formData);
+      } catch (err) {
+        console.warn('Failed to sync conflict resolution to backend:', err);
+      }
+    }
   };
 
   const handleAddCustomFlag = (e: React.FormEvent) => {

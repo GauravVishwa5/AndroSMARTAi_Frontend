@@ -27,6 +27,9 @@ export interface EntityField {
   category: 'Parties' | 'Property' | 'Registration' | 'Financial';
   confidence: number;
   verified: boolean;
+  originalValue?: string;
+  evidenceSnippet?: string;
+  verificationRequired?: boolean;
 }
 
 interface OcrDataGridProps {
@@ -400,29 +403,51 @@ export const OcrDataGrid: React.FC<OcrDataGridProps> = ({
                           </button>
                         </div>
                       ) : (
-                        <span
-                          className={`font-medium ${
-                            isSelected
-                              ? 'text-blue-700 dark:text-blue-300 font-bold'
-                              : 'text-slate-800 dark:text-slate-200'
-                          }`}
-                        >
-                          {item.value}
-                        </span>
+                        <div>
+                          <span
+                            className={`font-medium block ${
+                              isSelected
+                                ? 'text-blue-700 dark:text-blue-300 font-bold'
+                                : 'text-slate-800 dark:text-slate-200'
+                            }`}
+                          >
+                            {item.value}
+                          </span>
+                          {item.originalValue && item.originalValue !== item.value && (
+                            <div className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
+                              <span className="text-[9px] uppercase font-bold px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-mono">
+                                Regional Source
+                              </span>
+                              <span className="font-serif italic text-slate-300">{item.originalValue}</span>
+                            </div>
+                          )}
+                          {item.evidenceSnippet && (
+                            <div className="text-[10px] text-indigo-400/90 bg-indigo-500/10 px-2 py-0.5 rounded-md mt-1 font-mono line-clamp-1 border border-indigo-500/20">
+                              Snippet: &ldquo;{item.evidenceSnippet}&rdquo;
+                            </div>
+                          )}
+                        </div>
                       )}
                     </td>
 
-                    {/* Confidence Meter */}
+                    {/* Confidence & Evidence Meter */}
                     <td className="p-3 text-center">
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold font-mono ${
-                          item.confidence >= 95
-                            ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30'
-                            : 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
-                        }`}
-                      >
-                        {item.confidence}% Match
-                      </span>
+                      {item.verificationRequired ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold font-mono bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30">
+                          <AlertCircle className="w-3 h-3" />
+                          Requires Scrutiny
+                        </span>
+                      ) : (
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold font-mono ${
+                            item.confidence >= 95
+                              ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30'
+                              : 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
+                          }`}
+                        >
+                          {item.confidence}% Match
+                        </span>
+                      )}
                     </td>
 
                     {/* Verification Status */}

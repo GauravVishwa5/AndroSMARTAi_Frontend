@@ -167,7 +167,7 @@ export default function RequestWorkspacePage() {
 
   useEffect(() => {
     if (requestId) {
-      loadDetails();
+      loadDetails(true);
     }
   }, [requestId]);
 
@@ -287,17 +287,37 @@ export default function RequestWorkspacePage() {
     }
   };
 
-  const rawDocs = requestData?.documents;
-  const docs = (Array.isArray(rawDocs) && rawDocs.length > 0) ? rawDocs.map((d: any, idx: number) => {
+  let rawDocsList: any[] = [];
+  const candidateDocs = requestData?.documents || requestData?.documents_report || requestData?.lsr_documents || [];
+  if (Array.isArray(candidateDocs)) {
+    rawDocsList = candidateDocs;
+  } else if (typeof candidateDocs === 'string') {
+    try {
+      const parsed = JSON.parse(candidateDocs);
+      if (Array.isArray(parsed)) rawDocsList = parsed;
+    } catch {
+      rawDocsList = [];
+    }
+  }
+
+  const docs = rawDocsList.length > 0 ? rawDocsList.map((d: any, idx: number) => {
     const ej = d.extracted_json || d.data || d.extracted_data || (requestData?.extracted_json ? requestData.extracted_json[d.document_type || d.type] : null) || {};
+    let fileUrl = '#';
+    if (typeof d.file_url === 'string') {
+      fileUrl = d.file_url;
+    } else if (Array.isArray(d.file_url) && d.file_url.length > 0) {
+      fileUrl = d.file_url[0];
+    } else if (d.url) {
+      fileUrl = d.url;
+    }
     return {
-      id: d.doc_id || `doc-${idx + 1}`,
-      name: d.file_name || `Document_${idx + 1}.pdf`,
+      id: d.id || d.doc_id || `doc-${idx + 1}`,
+      name: d.file_name || d.name || `Document_${idx + 1}.pdf`,
       type: d.document_type || d.type || 'Property Deed',
-      status: (d.verification_status || 'clear') as 'clear' | 'rejected' | 'pending',
+      status: (d.verification_status || d.status || 'clear') as 'clear' | 'rejected' | 'pending',
       ocrStatus: d.ocr_status || (d.raw_text && d.raw_text.trim().length > 0 ? 'done' : 'pending'),
-      date: d.uploaded_at || 'Recent',
-      fileUrl: typeof d.file_url === 'string' ? d.file_url : (Array.isArray(d.file_url) ? d.file_url[0] : '#'),
+      date: d.created_at || d.uploaded_at || 'Recent',
+      fileUrl,
       rawText: d.raw_text || d.full_text || d.raw_ocr_text || '',
       ocrMeta: d.ocr_meta || {},
       extracted_json: ej,
@@ -1031,7 +1051,7 @@ export default function RequestWorkspacePage() {
               message: `${files.length} document(s) successfully uploaded to request!`,
             });
           }
-          await loadDetails();
+          await loadDetails(true);
           setTimeout(() => setStatusFeedback(null), 5000);
         }}
       />
