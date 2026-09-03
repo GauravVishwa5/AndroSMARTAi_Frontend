@@ -178,137 +178,137 @@ export default function AdminHealthPage() {
     <RoleGuard allowedRoles={['Super Admin', 'Admin', 'Advocate', 'Bank Advocate', 'Investigator']}>
       <div className="space-y-6 animate-fadeIn">
         {/* Top Header Banner */}
-        <div className="p-6 rounded-2xl theme-surface border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs">
+        <div className="p-4 sm:p-5 rounded-lg theme-surface border flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-2xs">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full flex items-center gap-1.5 w-fit">
-                <ShieldCheck className="w-3.5 h-3.5" />
+              <span className="text-[11px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 px-2 py-0.5 rounded flex items-center gap-1.5 w-fit">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
                 All Subsystems Operational
               </span>
-              <span className="text-xs font-mono text-slate-500">
-                Latency: <strong className="text-blue-600 dark:text-blue-400">{latency}ms</strong>
+              <span className="text-[11px] font-mono text-slate-500">
+                Probe Latency: <strong className="text-[#1D4ED8] dark:text-blue-400">{latency}ms</strong>
               </span>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold theme-text-primary tracking-tight mt-2">
-              System Health & IGR Scraper Monitor
+            <h1 className="text-lg sm:text-xl font-bold theme-text-primary tracking-tight mt-1.5">
+              System Telemetry & Land Registry Service Monitor
             </h1>
-            <p className="text-xs theme-text-secondary mt-1">
-              Real-time operational monitoring for FastAPI Core, OCR Processing Queues, AWS Lambda Scrapers, and Land Revenue Registry Nodes.
+            <p className="text-xs text-slate-500 mt-0.5">
+              Operational diagnostics for FastAPI Core, OCR Processing Queues, AWS Lambda Scrapers, and Land Registry Connectors.
             </p>
           </div>
 
           <button
             onClick={fetchLiveTelemetry}
             disabled={isRefreshing}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md active:scale-95 transition-all disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
           >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-            <span>{isRefreshing ? 'Probing Systems...' : 'Refresh All Systems'}</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>{isRefreshing ? 'Probing Systems...' : 'Refresh Telemetry'}</span>
           </button>
         </div>
 
         {/* 5-Node Infrastructure Health Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {/* Card 1: FastAPI */}
-          <div className="p-5 rounded-2xl theme-card border space-y-3 shadow-xs">
+          <div className="p-4 rounded-lg theme-card border space-y-2.5 shadow-2xs">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                   <Server className="w-4 h-4" />
                 </div>
                 <h3 className="text-xs font-bold theme-text-primary">FastAPI Core & DB</h3>
               </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                <CheckCircle2 className="w-3 h-3" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                 {systemHealth.fastApi.status}
               </span>
             </div>
-            <p className="text-xs theme-text-secondary">{systemHealth.fastApi.details}</p>
-            <div className="text-[10px] theme-text-muted font-mono pt-2 border-t theme-border flex items-center justify-between">
+            <p className="text-xs text-slate-600 dark:text-slate-400">{systemHealth.fastApi.details}</p>
+            <div className="text-[10px] text-slate-500 font-mono pt-2 border-t theme-border flex items-center justify-between">
               <span>Port: 8000</span>
               <span>Uvicorn 0.34.0</span>
             </div>
           </div>
 
           {/* Card 2: Celery OCR */}
-          <div className="p-5 rounded-2xl theme-card border space-y-3 shadow-xs">
+          <div className="p-4 rounded-lg theme-card border space-y-2.5 shadow-2xs">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                   <Cpu className="w-4 h-4" />
                 </div>
                 <h3 className="text-xs font-bold theme-text-primary">Celery OCR Engine</h3>
               </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                <CheckCircle2 className="w-3 h-3" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                 {systemHealth.celeryOcr.status}
               </span>
             </div>
-            <p className="text-xs theme-text-secondary">{systemHealth.celeryOcr.details}</p>
-            <div className="text-[10px] theme-text-muted font-mono pt-2 border-t theme-border flex items-center justify-between">
+            <p className="text-xs text-slate-600 dark:text-slate-400">{systemHealth.celeryOcr.details}</p>
+            <div className="text-[10px] text-slate-500 font-mono pt-2 border-t theme-border flex items-center justify-between">
               <span>Fallback: Auto-OCR</span>
               <span>Tesseract 5.x</span>
             </div>
           </div>
 
           {/* Card 3: Delhi DORIS */}
-          <div className="p-5 rounded-2xl theme-card border space-y-3 shadow-xs">
+          <div className="p-4 rounded-lg theme-card border space-y-2.5 shadow-2xs">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                   <Radio className="w-4 h-4" />
                 </div>
                 <h3 className="text-xs font-bold theme-text-primary">Delhi DORIS Scraper</h3>
               </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                <CheckCircle2 className="w-3 h-3" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                 {systemHealth.delhiDoris.status}
               </span>
             </div>
-            <p className="text-xs theme-text-secondary">{systemHealth.delhiDoris.details}</p>
-            <div className="text-[10px] theme-text-muted font-mono pt-2 border-t theme-border flex items-center justify-between">
+            <p className="text-xs text-slate-600 dark:text-slate-400">{systemHealth.delhiDoris.details}</p>
+            <div className="text-[10px] text-slate-500 font-mono pt-2 border-t theme-border flex items-center justify-between">
               <span>Lambda: Active</span>
               <span>AWS ap-south-1</span>
             </div>
           </div>
 
           {/* Card 4: Maharashtra IGR */}
-          <div className="p-5 rounded-2xl theme-card border space-y-3 shadow-xs">
+          <div className="p-4 rounded-lg theme-card border space-y-2.5 shadow-2xs">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                   <Database className="w-4 h-4" />
                 </div>
                 <h3 className="text-xs font-bold theme-text-primary">Maharashtra e-Search</h3>
               </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                <CheckCircle2 className="w-3 h-3" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                 {systemHealth.maharashtraIgr.status}
               </span>
             </div>
-            <p className="text-xs theme-text-secondary">{systemHealth.maharashtraIgr.details}</p>
-            <div className="text-[10px] theme-text-muted font-mono pt-2 border-t theme-border flex items-center justify-between">
+            <p className="text-xs text-slate-600 dark:text-slate-400">{systemHealth.maharashtraIgr.details}</p>
+            <div className="text-[10px] text-slate-500 font-mono pt-2 border-t theme-border flex items-center justify-between">
               <span>Index-II: Operational</span>
               <span>Multi-Year Scraper</span>
             </div>
           </div>
 
           {/* Card 5: Cloud Storage */}
-          <div className="p-5 rounded-2xl theme-card border space-y-3 shadow-xs sm:col-span-2 lg:col-span-2">
+          <div className="p-4 rounded-lg theme-card border space-y-2.5 shadow-2xs sm:col-span-2 lg:col-span-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
                   <Layers className="w-4 h-4" />
                 </div>
                 <h3 className="text-xs font-bold theme-text-primary">Cloud Document Storage & S3 Buckets</h3>
               </div>
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                <CheckCircle2 className="w-3 h-3" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
                 {systemHealth.storageS3.status}
               </span>
             </div>
-            <p className="text-xs theme-text-secondary">{systemHealth.storageS3.details}</p>
-            <div className="text-[10px] theme-text-muted font-mono pt-2 border-t theme-border flex items-center justify-between">
+            <p className="text-xs text-slate-600 dark:text-slate-400">{systemHealth.storageS3.details}</p>
+            <div className="text-[10px] text-slate-500 font-mono pt-2 border-t theme-border flex items-center justify-between">
               <span>Bucket: case-order-pdf</span>
               <span>Last Checked: {lastChecked}</span>
             </div>
@@ -316,8 +316,8 @@ export default function AdminHealthPage() {
         </div>
 
         {/* Live Scraper Jobs Table */}
-        <div className="rounded-2xl border theme-border theme-surface overflow-hidden shadow-xs">
-          <div className="p-4 border-b theme-border bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between">
+        <div className="rounded-lg border theme-border theme-surface overflow-hidden shadow-2xs">
+          <div className="p-3 border-b theme-border bg-slate-50 dark:bg-slate-800/60 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Activity className="w-4 h-4 text-blue-500" />
               <h3 className="text-xs font-bold theme-text-primary">

@@ -5,23 +5,18 @@ import Link from 'next/link';
 import {
   FileCheck2,
   AlertOctagon,
-  ShieldCheck,
   FileText,
   Search,
-  Sparkles,
   ArrowRight,
-  Eye,
-  CheckCircle,
-  XCircle,
-  Clock,
-  Filter,
-  Layers,
-  Scale,
-  Building2,
-  ExternalLink,
   RefreshCw,
+  Scale,
+  Building,
+  User,
+  CheckCircle2,
+  Clock,
 } from 'lucide-react';
 import { requestsApi } from '@/lib/api/requests';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 export default function LegalScrutinyPage() {
   const [activeTab, setActiveTab] = useState<'PENDING' | 'VERIFIED' | 'REJECTED'>('PENDING');
@@ -160,68 +155,68 @@ export default function LegalScrutinyPage() {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b theme-border">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold theme-text-primary tracking-tight flex items-center gap-2">
-              <Scale className="w-6 h-6 text-blue-500 dark:text-blue-400" />
-              Legal Scrutiny Queue
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl font-bold theme-text-primary tracking-tight flex items-center gap-2">
+              <Scale className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+              <span>Legal Scrutiny Queue</span>
             </h1>
             {isLiveConnected ? (
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Live DB
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Live Database
               </span>
             ) : (
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30">
-                Demo
+              <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                Demo Mode
               </span>
             )}
           </div>
           <p className="text-xs theme-text-secondary mt-1">
-            Side-by-side title tree verification, AI cross-matching against IGR Maharashtra & Delhi DORIS records.
+            Advocate title scrutiny queue: unbroken chain of title review, IGR registration cross-match, and legal opinion sign-off.
           </p>
         </div>
 
-        {/* Controls */}
-        <div className="flex items-center gap-3">
+        {/* Status Tab Switcher & Refresh */}
+        <div className="flex items-center gap-2">
           <button
             onClick={fetchLegalCases}
             disabled={isLoading}
-            className="p-2 rounded-xl theme-card border theme-text-secondary hover:theme-text-primary transition-colors disabled:opacity-50"
-            title="Refresh"
+            className="p-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 cursor-pointer"
+            title="Refresh queue"
+            aria-label="Refresh queue"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
 
-          {/* Quick Tab Switcher */}
-          <div className="flex items-center gap-1.5 theme-surface border p-1 rounded-xl overflow-x-auto max-w-full pb-1 sm:pb-1">
+          <div className="flex items-center gap-1 p-0.5 bg-slate-100 dark:bg-slate-800/80 rounded-md border theme-border">
             <button
               onClick={() => setActiveTab('PENDING')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-3 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${
                 activeTab === 'PENDING'
-                  ? 'bg-blue-600 text-white shadow-md'
-                  : 'theme-text-secondary hover:theme-text-primary'
+                  ? 'bg-white dark:bg-slate-900 text-[#1D4ED8] dark:text-blue-400 font-semibold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Pending ({pendingList.length})
             </button>
             <button
               onClick={() => setActiveTab('VERIFIED')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-3 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${
                 activeTab === 'VERIFIED'
-                  ? 'bg-emerald-600 text-white shadow-md'
-                  : 'theme-text-secondary hover:theme-text-primary'
+                  ? 'bg-white dark:bg-slate-900 text-emerald-700 dark:text-emerald-400 font-semibold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Verified ({verifiedList.length})
             </button>
             <button
               onClick={() => setActiveTab('REJECTED')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`px-3 py-1 rounded text-xs font-medium transition-colors cursor-pointer ${
                 activeTab === 'REJECTED'
-                  ? 'bg-red-600 text-white shadow-md'
-                  : 'theme-text-secondary hover:theme-text-primary'
+                  ? 'bg-white dark:bg-slate-900 text-rose-700 dark:text-rose-400 font-semibold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Flagged ({rejectedList.length})
@@ -230,104 +225,82 @@ export default function LegalScrutinyPage() {
         </div>
       </div>
 
-      {/* Scrutiny Queue Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Scrutiny Case Docket Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         {isLoading ? (
-          <div className="col-span-2 py-16 text-center theme-text-muted">
+          <div className="col-span-2 py-12 text-center theme-text-muted">
             <div className="flex flex-col items-center justify-center gap-2">
-              <RefreshCw className="w-6 h-6 animate-spin text-blue-500" />
-              <p>Loading legal verification cases from backend...</p>
+              <RefreshCw className="w-5 h-5 animate-spin text-blue-600" />
+              <p className="text-xs">Loading legal scrutiny files from database...</p>
             </div>
           </div>
         ) : filteredCases.length === 0 ? (
-          <div className="col-span-2 py-12 text-center theme-text-muted theme-surface rounded-2xl border p-8">
-            <p>No legal scrutiny cases found in this category.</p>
+          <div className="col-span-2 py-10 text-center theme-text-muted bg-white dark:bg-[#111827] rounded-lg border theme-border p-6">
+            <p className="text-xs font-medium">No legal scrutiny cases found in this category.</p>
           </div>
         ) : (
           filteredCases.map((item) => {
             const reqId = item.id || `REQ-${item.raw_id || ''}`;
-            const propName = item.propertyName || item.property_name || 'Property Record';
+            const propName = item.propertyName || item.property_name || 'Property Unit';
             const flatNo = item.flatNumber || item.flat_number ? `Flat ${item.flatNumber || item.flat_number}` : '';
             const location = item.district || item.city || item.location || item.address || 'Maharashtra';
             const owner = item.ownerName || item.owner_name || 'Borrower';
-            const advocate = item.advocateName || item.advocate || 'Assigned Legal Investigator';
-            const searchName = item.searchName || 'Title Search 2026';
+            const advocate = item.advocateName || item.advocate || 'Assigned Legal Scrutinizer';
             const dateStr = item.date_raised || item.date || item.created_at || 'Recent';
-            const statusStr = item.status || 'Sent for Investigation';
+            const statusStr = item.status || 'Pending';
 
             return (
               <div
                 key={reqId}
-                className="p-5 rounded-2xl theme-surface border transition-all shadow-sm flex flex-col justify-between group space-y-4"
+                className="p-4 rounded-lg bg-white dark:bg-[#111827] border theme-border flex flex-col justify-between shadow-2xs space-y-3"
               >
                 <div>
-                  {/* Card Header: Case ID, Risk Tag, AI Match */}
-                  <div className="flex items-start justify-between gap-3">
+                  {/* Docket Header */}
+                  <div className="flex items-start justify-between gap-3 pb-2.5 border-b theme-border">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">
+                        <span className="font-mono text-xs font-bold text-[#1D4ED8] dark:text-blue-400">
                           {reqId}
                         </span>
-                        <span className="text-xs text-slate-400">&bull;</span>
-                        <span className="text-xs theme-text-muted">{dateStr}</span>
+                        <span className="text-[11px] text-slate-400">&bull;</span>
+                        <span className="text-[11px] text-slate-500">{dateStr}</span>
                       </div>
-                      <h3 className="text-base font-bold theme-text-primary group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors mt-1">
-                        {propName} {flatNo && <span className="font-normal text-slate-400">({flatNo})</span>}
+                      <h3 className="text-sm font-bold theme-text-primary mt-1">
+                        {propName} {flatNo && <span className="font-normal text-slate-500">({flatNo})</span>}
                       </h3>
-                      <p className="text-xs theme-text-secondary mt-0.5">
-                        {location} &bull; Borrower: <strong className="theme-text-primary">{owner}</strong>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {location}
                       </p>
                     </div>
 
-                    {/* AI Score Badge */}
-                    <div className="text-right">
-                      <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold shadow-sm">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>AI Cross-Verified</span>
-                      </div>
-                      <p className="text-[10px] theme-text-muted mt-1 font-medium">
-                        {searchName}
-                      </p>
-                    </div>
+                    <StatusBadge status={statusStr} />
                   </div>
 
-                  {/* Details summary */}
-                  <div className="mt-4 pt-3 border-t theme-border space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="theme-text-secondary">Assigned Advocate:</span>
-                      <span className="font-medium theme-text-primary">{advocate}</span>
+                  {/* Scrutiny Metadata */}
+                  <div className="pt-2 space-y-1.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500">Borrower / Mortgagor:</span>
+                      <span className="font-medium theme-text-primary">{owner}</span>
                     </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="theme-text-secondary">Current Stage:</span>
-                      <span className="font-mono font-semibold theme-text-primary">{statusStr}</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-500">Assigned Advocate:</span>
+                      <span className="text-slate-700 dark:text-slate-300 font-medium">{advocate}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Bottom Action Footer */}
-                <div className="pt-3 border-t theme-border flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {statusStr.toLowerCase().includes('clear') || statusStr.toLowerCase().includes('verified') ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                        Title Clean & Clear
-                      </span>
-                    ) : statusStr.toLowerCase().includes('flagged') || statusStr.toLowerCase().includes('rejected') ? (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-700 dark:text-red-400 border border-red-500/30">
-                        Attention Required
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/30">
-                        Scrutiny in Progress
-                      </span>
-                    )}
-                  </div>
+                <div className="pt-2.5 border-t theme-border flex items-center justify-between">
+                  <span className="text-[11px] text-slate-500">
+                    Source: Registered Land Records
+                  </span>
 
                   <Link
                     href={`/requests/${reqId}`}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md shadow-blue-600/25 transition-all group"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold transition-colors shadow-2xs"
                   >
-                    <span>Launch Workspace</span>
-                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+                    <span>Scrutinize Case</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
               </div>

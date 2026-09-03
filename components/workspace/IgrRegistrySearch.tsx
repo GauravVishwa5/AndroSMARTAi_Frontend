@@ -568,16 +568,16 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t theme-border">
           <div className="flex items-center gap-2 text-[11px] text-slate-500 font-mono">
-            <span className="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-            <span>{searchStatus || 'Ready to execute live automated search against registry (1996 - 2026)'}</span>
+            <span className="inline-block w-2 h-2 rounded-full bg-[#1D4ED8]" />
+            <span>{searchStatus || 'Ready to query official state land records registry'}</span>
           </div>
 
           <button
             type="submit"
             disabled={isSearching}
-            className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-blue-500/25 active:scale-95 transition-all disabled:opacity-50"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
           >
             {isSearching ? (
               <>
@@ -587,7 +587,7 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
             ) : (
               <>
                 <Search className="w-3.5 h-3.5" />
-                <span>Execute Live IGR Search</span>
+                <span>Query Land Registry</span>
               </>
             )}
           </button>
@@ -595,10 +595,10 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
       </form>
 
       {/* Registry Search Results Table */}
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
-        <div className="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+      <div className="rounded-lg border theme-border bg-white dark:bg-slate-900 overflow-hidden shadow-2xs">
+        <div className="p-3 border-b theme-border bg-slate-50 dark:bg-slate-800/60 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
           <div className="flex items-center gap-2">
-            <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">
+            <h4 className="text-xs font-bold theme-text-primary">
               Registered Transactions Found ({filteredRecords.length})
             </h4>
             <span className="text-[10px] font-mono text-slate-500">

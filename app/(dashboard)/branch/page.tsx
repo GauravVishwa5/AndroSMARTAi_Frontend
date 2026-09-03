@@ -5,26 +5,18 @@ import Link from 'next/link';
 import {
   FileText,
   Clock,
-  CheckCircle,
+  CheckCircle2,
   AlertTriangle,
-  PlusCircle,
+  Plus,
   Search,
-  Filter,
-  ArrowUpRight,
-  Sparkles,
-  Building,
   RefreshCw,
   TrendingUp,
   ChevronRight,
-  ExternalLink,
   ShieldCheck,
-  FileCheck2,
-  Download,
-  SlidersHorizontal,
-  Wifi,
-  WifiOff,
+  Building,
 } from 'lucide-react';
 import { requestsApi } from '@/lib/api/requests';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 
 export default function BranchDashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -115,7 +107,6 @@ export default function BranchDashboardPage() {
         setRequests(data);
         setIsLiveConnected(true);
       } else if (Array.isArray(data)) {
-        // Backend connected but 0 requests in DB
         setRequests(data);
         setIsLiveConnected(true);
       } else {
@@ -163,239 +154,211 @@ export default function BranchDashboardPage() {
   });
 
   const totalCasesCount = displayRequests.length;
-  const pendingCount = displayRequests.filter(r => {
+  const pendingCount = displayRequests.filter((r) => {
     const s = String(r.status || '').toUpperCase();
     return s.includes('INVESTIGATION') || s.includes('PENDING') || s.includes('REVIEW');
   }).length;
-  const verifiedCount = displayRequests.filter(r => {
+  const verifiedCount = displayRequests.filter((r) => {
     const s = String(r.status || '').toUpperCase();
     return s.includes('VERIFIED') || s.includes('COMPLETED') || s.includes('CLEAR');
   }).length;
-  const flaggedCount = displayRequests.filter(r => {
+  const flaggedCount = displayRequests.filter((r) => {
     const s = String(r.status || '').toUpperCase();
     return s.includes('REJECTED') || s.includes('CLARIFICATION');
   }).length;
 
   return (
     <div className="space-y-6">
-      {/* Top Banner & Quick Intake Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Top Header & Intake Action */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b theme-border">
         <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-bold theme-text-primary tracking-tight">
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl font-bold theme-text-primary tracking-tight">
               Branch Operations Dashboard
             </h1>
             {isLiveConnected ? (
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Live Postgres & S3
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                Live Database
               </span>
             ) : (
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                Demo Cache
+              <span className="px-2 py-0.5 rounded text-[11px] font-medium bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800">
+                Demo Mode
               </span>
             )}
           </div>
           <p className="text-xs theme-text-secondary mt-1">
-            Real-time title investigation tracking, OCR queue status, and bank legal clearances.
+            Institutional title verification pipeline, legal scrutiny queue, and bank mortgage clearances.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <button
             onClick={fetchLiveRequests}
             disabled={isLoading}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl theme-card border text-xs font-semibold theme-text-primary transition-all shadow-sm active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50 cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-            <span>{isLoading ? 'Fetching...' : 'Sync Live'}</span>
+            <span>{isLoading ? 'Syncing...' : 'Refresh'}</span>
           </button>
 
           <Link
             href="/requests/new"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/25 hover:shadow-blue-600/35 transition-all active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold transition-colors shadow-2xs"
           >
-            <PlusCircle className="w-4 h-4" />
-            <span>New Title Request</span>
+            <Plus className="w-4 h-4" />
+            <span>New Request</span>
           </Link>
         </div>
       </div>
 
-      {/* KPI Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Active Requests */}
-        <div className="p-5 rounded-2xl theme-card border transition-all shadow-sm group">
+      {/* KPI Metrics Cards with Clear Priority Hierarchy */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        {/* Under Investigation (Highest Operational Priority) */}
+        <div className="p-4 rounded-lg bg-white dark:bg-[#111827] border border-amber-300 dark:border-amber-800/80 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold theme-text-secondary">Total Cases</span>
-            <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
-              <FileText className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold theme-text-primary">{totalCasesCount}</span>
-            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
-              <TrendingUp className="w-3 h-3" /> Live DB
+            <span className="text-xs font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
+              Pending Scrutiny
             </span>
+            <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
           </div>
-          <div className="mt-3 w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
-            <div className="bg-blue-500 h-1.5 rounded-full w-full" />
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-2xl font-bold theme-text-primary">{pendingCount}</span>
+            <span className="text-xs text-amber-700 dark:text-amber-400 font-medium">Under Review</span>
           </div>
-          <p className="text-[10px] theme-text-muted mt-2">Active loan origination pipeline</p>
-        </div>
-
-        {/* Pending Scrutiny */}
-        <div className="p-5 rounded-2xl theme-card border transition-all shadow-sm group">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold theme-text-secondary">Under Investigation</span>
-            <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <Clock className="w-4 h-4" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold theme-text-primary">{pendingCount}</span>
-            <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400">In Progress</span>
-          </div>
-          <div className="mt-3 w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
-            <div
-              className="bg-amber-500 h-1.5 rounded-full"
-              style={{ width: `${totalCasesCount ? Math.round((pendingCount / totalCasesCount) * 100) : 0}%` }}
-            />
-          </div>
-          <p className="text-[10px] theme-text-muted mt-2">Sent to legal scrutiny</p>
+          <p className="text-[11px] theme-text-muted mt-2">Active cases with legal panel advocates</p>
         </div>
 
         {/* Verified Titles */}
-        <div className="p-5 rounded-2xl theme-card border transition-all shadow-sm group">
+        <div className="p-4 rounded-lg bg-white dark:bg-[#111827] border border-emerald-300 dark:border-emerald-800/80 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold theme-text-secondary">Verified Titles</span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <CheckCircle className="w-4 h-4" />
-            </div>
+            <span className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
+              Verified Titles
+            </span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold theme-text-primary">{verifiedCount}</span>
-            <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">Clear Title</span>
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-2xl font-bold theme-text-primary">{verifiedCount}</span>
+            <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">Clear Title</span>
           </div>
-          <div className="mt-3 w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
-            <div
-              className="bg-emerald-500 h-1.5 rounded-full"
-              style={{ width: `${totalCasesCount ? Math.round((verifiedCount / totalCasesCount) * 100) : 0}%` }}
-            />
-          </div>
-          <p className="text-[10px] theme-text-muted mt-2">Ready for mortgage disbursement</p>
+          <p className="text-[11px] theme-text-muted mt-2">Ready for loan disbursement</p>
         </div>
 
-        {/* AI OCR / Flagged */}
-        <div className="p-5 rounded-2xl theme-card border transition-all shadow-sm group">
+        {/* Flagged / Discrepancy */}
+        <div className="p-4 rounded-lg bg-white dark:bg-[#111827] border border-rose-300 dark:border-rose-800/80 shadow-2xs">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold theme-text-secondary">Flagged / Issues</span>
-            <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
-              <Sparkles className="w-4 h-4" />
-            </div>
+            <span className="text-xs font-semibold text-rose-800 dark:text-rose-300 uppercase tracking-wider">
+              Flagged / Issues
+            </span>
+            <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400" />
           </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold theme-text-primary">{flaggedCount}</span>
-            <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">AI Guardrail</span>
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-2xl font-bold theme-text-primary">{flaggedCount}</span>
+            <span className="text-xs text-rose-700 dark:text-rose-400 font-medium">Action Required</span>
           </div>
-          <div className="mt-3 w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
-            <div className="bg-indigo-500 h-1.5 rounded-full w-[99%]" />
+          <p className="text-[11px] theme-text-muted mt-2">Title conflict or missing documents</p>
+        </div>
+
+        {/* Total Pipeline Cases */}
+        <div className="p-4 rounded-lg bg-white dark:bg-[#111827] border theme-border shadow-2xs">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold theme-text-secondary uppercase tracking-wider">
+              Total Pipeline
+            </span>
+            <FileText className="w-4 h-4 text-slate-500" />
           </div>
-          <p className="text-[10px] theme-text-muted mt-2">OCR cross-validation engine</p>
+          <div className="mt-2.5 flex items-baseline gap-2">
+            <span className="text-2xl font-bold theme-text-primary">{totalCasesCount}</span>
+            <span className="text-xs theme-text-muted font-medium">All Branches</span>
+          </div>
+          <p className="text-[11px] theme-text-muted mt-2">Historical and active applications</p>
         </div>
       </div>
 
       {/* Filter Tabs & Search Controls */}
-      <div className="p-4 rounded-2xl theme-surface border flex flex-col md:flex-row md:items-center justify-between gap-3">
-        {/* Status Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+      <div className="p-3 rounded-lg bg-white dark:bg-[#111827] border theme-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Status Filter Chips */}
+        <div className="flex items-center gap-1 overflow-x-auto">
           {[
             { label: 'All Cases', value: 'ALL', count: totalCasesCount },
-            { label: 'Under Investigation', value: 'PENDING', count: pendingCount },
+            { label: 'Pending Scrutiny', value: 'PENDING', count: pendingCount },
             { label: 'Verified Titles', value: 'VERIFIED', count: verifiedCount },
-            { label: 'Flagged / Clarification', value: 'REJECTED', count: flaggedCount },
-          ].map((tab) => (
-            <button
-              key={tab.value}
-              onClick={() => setStatusFilter(tab.value)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                statusFilter === tab.value
-                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20'
-                  : 'theme-text-secondary hover:theme-text-primary hover:bg-slate-100 dark:hover:bg-slate-800'
-              }`}
-            >
-              <span>{tab.label}</span>
-              <span
-                className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                  statusFilter === tab.value
-                    ? 'bg-white/20 text-white'
-                    : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+            { label: 'Flagged', value: 'REJECTED', count: flaggedCount },
+          ].map((tab) => {
+            const isSelected = statusFilter === tab.value;
+            return (
+              <button
+                key={tab.value}
+                onClick={() => setStatusFilter(tab.value)}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap flex items-center gap-1.5 cursor-pointer ${
+                  isSelected
+                    ? 'bg-[#1D4ED8] text-white'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
                 }`}
               >
-                {tab.count}
-              </span>
-            </button>
-          ))}
+                <span>{tab.label}</span>
+                <span
+                  className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${
+                    isSelected ? 'bg-white/20 text-white' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  {tab.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Search Bar & Export */}
-        <div className="flex items-center gap-2.5">
-          <div className="relative w-full md:w-64">
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Filter by REQ, Owner, City..."
-              className="w-full theme-input border rounded-xl pl-8 pr-3 py-1.5 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-          </div>
-
-          <button
-            onClick={fetchLiveRequests}
-            title="Refresh list"
-            className="p-2 rounded-xl theme-card border theme-text-secondary hover:theme-text-primary transition-colors"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
+        {/* Search Input */}
+        <div className="relative w-full sm:w-64">
+          <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Filter cases by ID, Owner, City..."
+            aria-label="Filter cases"
+            className="w-full theme-input border border-slate-300 dark:border-slate-700 rounded-md pl-8 pr-3 py-1 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          />
         </div>
       </div>
 
-      {/* Modern High-Speed Data Grid Table */}
-      <div className="rounded-2xl theme-surface border overflow-hidden shadow-sm">
+      {/* Institutional Data Table */}
+      <div className="rounded-lg bg-white dark:bg-[#111827] border theme-border overflow-hidden shadow-2xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs theme-text-secondary">
-            <thead className="bg-slate-100/80 dark:bg-slate-950/80 border-b theme-border text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[10px] font-bold">
+            <thead className="bg-slate-50 dark:bg-slate-800/60 border-b theme-border text-slate-600 dark:text-slate-400 uppercase tracking-wider text-[11px] font-semibold">
               <tr>
-                <th className="px-5 py-3.5">Case ID</th>
-                <th className="px-5 py-3.5">Property & Location</th>
-                <th className="px-5 py-3.5">Borrower / Owner</th>
-                <th className="px-5 py-3.5">Raised By / Branch</th>
-                <th className="px-5 py-3.5 text-center">Docs</th>
-                <th className="px-5 py-3.5">Date Raised</th>
-                <th className="px-5 py-3.5">Status</th>
-                <th className="px-5 py-3.5 text-right">Actions</th>
+                <th className="px-4 py-3">Case ID</th>
+                <th className="px-4 py-3">Property Schedule</th>
+                <th className="px-4 py-3">Borrower / Applicant</th>
+                <th className="px-4 py-3">Branch Branch</th>
+                <th className="px-4 py-3 text-center">Docs</th>
+                <th className="px-4 py-3">Date Raised</th>
+                <th className="px-4 py-3">Legal Status</th>
+                <th className="px-4 py-3 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y theme-border">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center theme-text-muted">
+                  <td colSpan={8} className="px-4 py-10 text-center theme-text-muted">
                     <div className="flex flex-col items-center justify-center gap-2">
-                      <RefreshCw className="w-5 h-5 animate-spin text-blue-500" />
-                      <span>Loading institutional requests from backend...</span>
+                      <RefreshCw className="w-5 h-5 animate-spin text-blue-600" />
+                      <span>Loading case queue...</span>
                     </div>
                   </td>
                 </tr>
               ) : filteredRequests.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center theme-text-muted">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <p>No property requests found.</p>
+                  <td colSpan={8} className="px-4 py-10 text-center theme-text-muted">
+                    <div className="flex flex-col items-center justify-center gap-1.5">
+                      <p className="font-medium text-slate-700 dark:text-slate-300">No property cases found matching criteria.</p>
                       <Link
                         href="/requests/new"
-                        className="text-blue-600 dark:text-blue-400 font-semibold hover:underline"
+                        className="text-[#1D4ED8] dark:text-blue-400 font-medium hover:underline text-xs"
                       >
-                        + Create your first request now
+                        + Create a new title verification request
                       </Link>
                     </div>
                   </td>
@@ -403,36 +366,34 @@ export default function BranchDashboardPage() {
               ) : (
                 filteredRequests.map((req) => {
                   const reqId = req.id || `REQ-${req.raw_id || ''}`;
-                  const propName = req.propertyName || req.property_name || 'Property Record';
+                  const propName = req.propertyName || req.property_name || 'Property Unit';
                   const flatNo = req.flatNumber || req.flat_number ? `Flat ${req.flatNumber || req.flat_number}` : '';
                   const location = req.district || req.city || req.location || req.address || 'Maharashtra';
                   const owner = req.ownerName || req.owner_name || 'Borrower';
-                  const raisedBy = req.raised_by || req.Bank_branch || req.bankBranch || 'Branch User';
+                  const raisedBy = req.raised_by || req.Bank_branch || req.bankBranch || 'Branch Officer';
                   const dateRaised = req.date_raised || req.date || req.created_at || 'Today';
-                  const statusStr = req.status || 'Sent for Investigation';
+                  const statusStr = req.status || 'Pending';
                   const docCount = req.documents
-                    ? (Array.isArray(req.documents) ? req.documents.length : ((req.documents.lsr ? 1 : 0) + (req.documents.scr ? 1 : 0) + (req.documents.sr ? 1 : 0)))
-                    : 0;
+                    ? Array.isArray(req.documents)
+                      ? req.documents.length
+                      : (req.documents.lsr ? 1 : 0) + (req.documents.scr ? 1 : 0) + (req.documents.sr ? 1 : 0)
+                    : req.docCount || 0;
 
                   return (
                     <tr
                       key={reqId}
-                      className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors group"
+                      className="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
                     >
                       {/* Case ID */}
-                      <td className="px-5 py-4 font-mono font-bold text-blue-600 dark:text-blue-400">
-                        <Link
-                          href={`/requests/${reqId}`}
-                          className="hover:underline flex items-center gap-1"
-                        >
+                      <td className="px-4 py-3 font-mono font-semibold text-[#1D4ED8] dark:text-blue-400">
+                        <Link href={`/requests/${reqId}`} className="hover:underline">
                           {reqId}
-                          <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </Link>
                       </td>
 
-                      {/* Property & CTS */}
-                      <td className="px-5 py-4">
-                        <p className="font-semibold theme-text-primary group-hover:text-blue-600 dark:group-hover:text-blue-300 transition-colors">
+                      {/* Property Schedule */}
+                      <td className="px-4 py-3">
+                        <p className="font-semibold theme-text-primary">
                           {propName} {flatNo && <span className="font-normal theme-text-secondary">({flatNo})</span>}
                         </p>
                         <p className="text-[11px] theme-text-muted mt-0.5">
@@ -440,57 +401,40 @@ export default function BranchDashboardPage() {
                         </p>
                       </td>
 
-                      {/* Borrower / Owner */}
-                      <td className="px-5 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-800 border theme-border flex items-center justify-center font-bold text-[10px] theme-text-primary">
-                            {owner[0] || 'U'}
-                          </div>
-                          <span className="font-medium theme-text-primary">{owner}</span>
-                        </div>
+                      {/* Borrower */}
+                      <td className="px-4 py-3 font-medium theme-text-primary">
+                        {owner}
                       </td>
 
-                      {/* Bank Branch / Raised By */}
-                      <td className="px-5 py-4 theme-text-secondary text-[11px]">
+                      {/* Bank Branch */}
+                      <td className="px-4 py-3 text-slate-500 text-[11px]">
                         {raisedBy}
                       </td>
 
-                      {/* Deeds Uploaded */}
-                      <td className="px-5 py-4 text-center">
-                        <span className="px-2 py-0.5 rounded-md theme-card border font-mono text-[11px] theme-text-primary">
-                          {docCount} docs
+                      {/* Document Count */}
+                      <td className="px-4 py-3 text-center">
+                        <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 font-mono text-[11px] text-slate-700 dark:text-slate-300 border theme-border">
+                          {docCount}
                         </span>
                       </td>
 
                       {/* Date Raised */}
-                      <td className="px-5 py-4 text-[11px] theme-text-secondary">
+                      <td className="px-4 py-3 text-[11px] text-slate-500">
                         {dateRaised}
                       </td>
 
-                      {/* Status */}
-                      <td className="px-5 py-4">
-                        {statusStr.toLowerCase().includes('clear') || statusStr.toLowerCase().includes('verified') || statusStr.toLowerCase().includes('completed') ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                            <ShieldCheck className="w-3.5 h-3.5" /> {statusStr}
-                          </span>
-                        ) : statusStr.toLowerCase().includes('flagged') || statusStr.toLowerCase().includes('rejected') ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-500/15 text-red-700 dark:text-red-400 border border-red-500/30">
-                            <AlertTriangle className="w-3.5 h-3.5" /> {statusStr}
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30">
-                            <Clock className="w-3.5 h-3.5" /> {statusStr}
-                          </span>
-                        )}
+                      {/* Status Badge */}
+                      <td className="px-4 py-3">
+                        <StatusBadge status={statusStr} />
                       </td>
 
-                      {/* Action Button */}
-                      <td className="px-5 py-4 text-right">
+                      {/* Action */}
+                      <td className="px-4 py-3 text-right">
                         <Link
                           href={`/requests/${reqId}`}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-600/15 hover:bg-blue-600/30 text-blue-600 dark:text-blue-400 border border-blue-500/30 text-xs font-semibold transition-all shadow-sm"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-[#1D4ED8] dark:text-blue-400 border border-slate-300 dark:border-slate-700 text-xs font-medium transition-colors shadow-2xs"
                         >
-                          <span>Examine</span>
+                          <span>Inspect</span>
                           <ChevronRight className="w-3.5 h-3.5" />
                         </Link>
                       </td>

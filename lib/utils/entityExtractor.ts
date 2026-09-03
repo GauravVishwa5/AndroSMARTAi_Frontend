@@ -57,7 +57,8 @@ export function extractEntitiesFromRawText(
     normalized.match(/(?:प्रमाणित करण्यात येत आहे की|certify that)\s*[,:\-–]?\s*([A-Za-z0-9\s\[\]\(\)]+?)(?:,|\s+यांस|\s+residing|\n)/i) ||
     normalized.match(/(?:Mr\.|Mrs\.|Ms\.|Shri|Smt\.|श्री|श्रीमती)\s+([A-Za-z\u0900-\u097F\s]+?)(?:,|\s+residing|\s+son of|\s+daughter of|\s+wife of|\n)/i);
   if (vendeeMatch) {
-    vendee = vendeeMatch[1].trim().replace(/,\s*Residing.*$/i, '').replace(/\[.*?\]/g, '').trim();
+    const val = vendeeMatch[1] || vendeeMatch[0] || '';
+    vendee = val.trim().replace(/,\s*Residing.*$/i, '').replace(/\[.*?\]/g, '').trim();
   }
 
   // 2. Extract Lender / Vendor / Seller / Society / Issuing Authority
@@ -68,7 +69,7 @@ export function extractEntitiesFromRawText(
     normalized.match(/([A-Za-z0-9\u0900-\u097F\s]+(?:गृहनिर्माण|Housing|Society)[^\n,]*)/i) ||
     normalized.match(/Between\s+([^,\n]+)/i);
   if (vendorMatch) {
-    vendor = vendorMatch[1].trim();
+    vendor = (vendorMatch[1] || vendorMatch[0] || '').trim();
   }
 
   // 3. Extract Property Description
@@ -78,13 +79,15 @@ export function extractEntitiesFromRawText(
     normalized.match(/(Flat\s+No[^\n]+|Plot\s+No[^\n]+|Unit\s+No[^\n]+)/i) ||
     normalized.match(/(?:सदनिका क्रमांक|फ्लॅट क्र|प्लॉट क्र|जागा)\s*[:\-–]?\s*([^\n]+)/i);
   if (propMatch) {
-    propertyDesc = propMatch[1].trim();
+    propertyDesc = (propMatch[1] || propMatch[0] || '').trim();
   } else {
     // If society or land record, build from village and numbers
     const maujeMatch = normalized.match(/मौजे\s+([A-Za-z0-9\u0900-\u097F\s]+?)(?:,|\n|;)/i);
     const ctsCheck = normalized.match(/(?:नगर भूमापन क्रमांक|CTS\s*No\.?|न\.भू\.क्र\.)\s*[:\-–]?\s*([#0-9A-Za-z\s,ते\-]+)/i);
     if (maujeMatch || ctsCheck) {
-      propertyDesc = `Property at Mauje ${maujeMatch ? maujeMatch[1].trim() : 'Local Area'}, ${ctsCheck ? `CTS ${ctsCheck[1].trim()}` : ''}`;
+      const maujeVal = maujeMatch ? (maujeMatch[1] || maujeMatch[0] || '').trim() : 'Local Area';
+      const ctsVal = ctsCheck ? (ctsCheck[1] || ctsCheck[0] || '').trim() : '';
+      propertyDesc = `Property at Mauje ${maujeVal}${ctsVal ? `, CTS ${ctsVal}` : ''}`;
     }
   }
 
@@ -93,7 +96,7 @@ export function extractEntitiesFromRawText(
   const ctsMatch =
     normalized.match(/(?:नगर भूमापन क्रमांक|City Survey No\.?|CTS\s+No\.?|CTS\s+Number|CTS#?|न\.भू\.क्र\.)\s*[:\-–]?\s*([A-Za-z0-9#\/\-_\sते,]+?)(?:,|\n|;|\.|$)/i);
   if (ctsMatch) {
-    cts = `CTS ${ctsMatch[1].trim()}`;
+    cts = `CTS ${(ctsMatch[1] || ctsMatch[0] || '').trim()}`;
   }
 
   // Extract Survey / Gat Number
@@ -101,7 +104,7 @@ export function extractEntitiesFromRawText(
   const surveyMatch =
     normalized.match(/(?:Survey\s+No\.?|Khasra\s+No\.?|Gat\s+No\.?|सर्व्हे नंबर|सर्व्हे क्र\.?|गट नंबर|गट क्र\.?)\s*[:\-–]?\s*([A-Za-z0-9\/\-_]+)/i);
   if (surveyMatch) {
-    surveyNo = `Survey No ${surveyMatch[1].trim()}`;
+    surveyNo = `Survey No ${(surveyMatch[1] || surveyMatch[0] || '').trim()}`;
   }
 
   // 5. Extract Loan Amount / Consideration / Valuation
@@ -110,7 +113,7 @@ export function extractEntitiesFromRawText(
     normalized.match(/(?:Loan Amount|Consideration Amount|Consideration|Total Price|Facility Amount|मोबदला|रक्कम|मूल्यांकन)\s*[:\-–]?\s*([^\n]+)/i) ||
     normalized.match(/(?:Rs\.?|रु\.?|INR)\s*([\d,]+(?:\/\-)?(?:\s*\([^\)]+\))?)/i);
   if (considerMatch) {
-    consideration = considerMatch[1].trim();
+    consideration = (considerMatch[1] || considerMatch[0] || '').trim();
   }
 
   // 6. Extract Registration Number / Act
@@ -118,9 +121,9 @@ export function extractEntitiesFromRawText(
   const regMatch =
     normalized.match(/(?:Registration\s+No\.?|Reg\s+No\.?|Document\s+No\.?|Doc\s+#?|नोंदणी क्रमांक|दस्त क्रमांक|अधिनियम क्रमांक)\s*[:\-–]?\s*([^\n,]+)/i) ||
     normalized.match(/(?:Doc|Registration)\s+#?\s*([0-9\/\-_]+)/i) ||
-    normalized.match(/(?:कलम\s*[0-9\(\)\s]+अन्वये|Act\s*[0-9\/\-_]+)/i);
+    normalized.match(/(कलम\s*[0-9\(\)\s]+अन्वये|Act\s*[0-9\/\-_]+)/i);
   if (regMatch) {
-    regNo = regMatch[1].trim();
+    regNo = (regMatch[1] || regMatch[0] || '').trim();
   }
 
   // 7. Extract Execution / Registration Date
@@ -129,7 +132,7 @@ export function extractEntitiesFromRawText(
     normalized.match(/(?:दिनांक|तारीख|dated|date of execution|registered on|made on|on this)\s*[:\-–>\s]*([0-9]{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]+,?\s+[0-9]{4}|[0-9]{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{4})/i) ||
     normalized.match(/([0-9]{1,2}[\/\-][0-9]{1,2}[\/\-][0-9]{4})/i);
   if (dateMatch) {
-    date = dateMatch[1].trim();
+    date = (dateMatch[1] || dateMatch[0] || '').trim();
   }
 
   // 8. Extract SRO Sub-Registrar Office / Authority
@@ -138,7 +141,7 @@ export function extractEntitiesFromRawText(
     normalized.match(/(?:Sub-Registrar Office|Sub-Registrar|SRO|Office of the Sub Registrar|दुय्यम निबंधक|सहाय्यक निबंधक|निबंधक कार्यालय)\s*[:\-–]?\s*([^\n,\.]+)/i) ||
     normalized.match(/(SRO\s+[A-Za-z0-9\-\s]+)/i);
   if (sroMatch) {
-    sro = sroMatch[1].trim();
+    sro = (sroMatch[1] || sroMatch[0] || '').trim();
   }
 
   return {

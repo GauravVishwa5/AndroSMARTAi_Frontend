@@ -66,6 +66,7 @@ export function Logo({
             width={140}
             height={28}
             className={`${sizeClasses.img} object-contain transition-transform duration-200 hover:scale-[1.02]`}
+            style={{ width: 'auto', height: 'auto' }}
             priority
           />
         )}

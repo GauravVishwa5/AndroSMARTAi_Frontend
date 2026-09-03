@@ -11,12 +11,9 @@ import {
   FileText,
   ShieldAlert,
   Activity,
-  PlusCircle,
-  Sparkles,
+  Plus,
   X,
   LogOut,
-  ChevronLeft,
-  ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
@@ -24,6 +21,19 @@ import { useEntitlements } from '@/lib/hooks/useEntitlements';
 import { useUIStore } from '@/lib/store/uiStore';
 import { useAuthStore } from '@/lib/store/authStore';
 import { Logo } from '@/components/ui/Logo';
+
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  show: boolean;
+  badge?: string;
+}
+
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -37,59 +47,71 @@ export function Sidebar() {
     (typeof user?.role === 'string' && (user.role.toLowerCase().includes('admin') || user.role.toLowerCase().includes('dev')))
   );
 
-  const navItems = [
+  // Grouped task structure for institutional banking/legal workflows
+  const navSections: NavSection[] = [
     {
-      label: 'Branch Dashboard',
-      href: '/branch',
-      icon: LayoutDashboard,
-      show: true,
+      title: 'OPERATIONS',
+      items: [
+        {
+          label: 'Branch Dashboard',
+          href: '/branch',
+          icon: LayoutDashboard,
+          show: true,
+        },
+        {
+          label: 'Property Requests',
+          href: '/requests',
+          icon: FileSpreadsheet,
+          show: true,
+        },
+      ],
     },
     {
-      label: 'Legal Scrutiny Queue',
-      href: '/legal',
-      icon: FileCheck2,
-      show: true,
-      badge: '42',
-      badgeColor: 'amber',
+      title: 'LEGAL',
+      items: [
+        {
+          label: 'Legal Scrutiny',
+          href: '/legal',
+          icon: FileCheck2,
+          show: true,
+          badge: '42',
+        },
+        {
+          label: 'Reports (TSR / LSR)',
+          href: '/requests/reports',
+          icon: FileText,
+          show: hasModuleAccess('case_analyzer') || isSuperAdmin,
+        },
+      ],
     },
     {
-      label: 'Property Requests',
-      href: '/requests',
-      icon: FileSpreadsheet,
-      show: true,
+      title: 'VERIFICATION',
+      items: [
+        {
+          label: 'IGR Land Registry',
+          href: '/requests/search',
+          icon: Database,
+          show: hasModuleAccess('due_diligence') || isSuperAdmin,
+        },
+      ],
     },
     {
-      label: 'New Request Wizard',
-      href: '/requests/new',
-      icon: PlusCircle,
-      show: true,
-      highlight: true,
-    },
-    {
-      label: 'IGR Land Registry',
-      href: '/requests/search',
-      icon: Database,
-      show: hasModuleAccess('due_diligence') || isSuperAdmin,
-    },
-    {
-      label: 'IGR Scrape Jobs',
-      href: '/admin/igr-jobs',
-      icon: Activity,
-      show: isSuperAdmin,
-      badge: 'Admin',
-      badgeColor: 'blue',
-    },
-    {
-      label: 'LSR & SCR Reports',
-      href: '/requests/reports',
-      icon: FileText,
-      show: hasModuleAccess('case_analyzer') || isSuperAdmin,
-    },
-    {
-      label: 'System Health & AI',
-      href: '/admin',
-      icon: ShieldAlert,
-      show: isSuperAdmin,
+      title: 'SYSTEM',
+      items: [
+        {
+          label: 'System Health',
+          href: '/admin',
+          icon: ShieldAlert,
+          show: isSuperAdmin,
+        },
+        {
+          label: 'IGR Scrape Jobs',
+          href: '/admin/igr-jobs',
+          icon: Activity,
+          show: isSuperAdmin,
+          badge: 'Ops',
+        },
+      ],
     },
   ];
 
@@ -104,26 +126,26 @@ export function Sidebar() {
   };
 
   const renderSidebarContent = (isCollapsed: boolean) => (
-    <div className="flex flex-col justify-between h-full">
-      <div>
+    <div className="flex flex-col justify-between h-full bg-white dark:bg-[#111827]">
+      <div className="overflow-y-auto">
         {/* Brand Logo & Collapse Header */}
         <div className={`h-16 border-b theme-border px-4 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
           {isCollapsed ? (
             <button
               onClick={toggleSidebarCollapsed}
-              title="Click to Expand Sidebar"
-              className="p-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95"
+              title="Expand Sidebar"
+              className="p-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <Logo variant="icon" size="sm" showBadge={false} href="/branch" />
             </button>
           ) : (
             <>
               <Logo variant="nobg" size="sm" showBadge={true} href="/branch" />
-              {/* Desktop Compress Toggle Button */}
               <button
                 onClick={toggleSidebarCollapsed}
                 title="Collapse Sidebar"
-                className="hidden lg:flex p-1.5 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white theme-card border hover:border-blue-500/50 transition-all active:scale-95 shrink-0 ml-2"
+                aria-label="Collapse Sidebar"
+                className="hidden lg:flex p-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:hover:text-white border border-slate-200 dark:border-slate-800 hover:border-slate-300 transition-colors shrink-0 ml-2"
               >
                 <PanelLeftClose className="w-4 h-4" />
               </button>
@@ -133,87 +155,95 @@ export function Sidebar() {
           {/* Close button on mobile */}
           <button
             onClick={closeMobileMenu}
-            className="lg:hidden p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+            aria-label="Close navigation menu"
+            className="lg:hidden p-1.5 rounded-md text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Quick Action Button */}
+        {/* Primary Intake Action */}
         <div className="p-3">
           {isCollapsed ? (
             <Link
               href="/requests/new"
-              title="Create New Request"
-              className="w-full flex items-center justify-center p-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg shadow-blue-600/20 hover:shadow-blue-600/35 transition-all group active:scale-95"
+              title="Create New Verification Request"
+              className="w-full flex items-center justify-center p-2 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white transition-colors shadow-2xs"
             >
-              <PlusCircle className="w-4 h-4 transition-transform group-hover:rotate-90" />
+              <Plus className="w-4 h-4" />
             </Link>
           ) : (
             <Link
               href="/requests/new"
               onClick={closeMobileMenu}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/20 hover:shadow-blue-600/35 transition-all group active:scale-95"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold transition-colors shadow-2xs"
             >
-              <PlusCircle className="w-4 h-4 transition-transform group-hover:rotate-90" />
-              <span>Create New Request</span>
+              <Plus className="w-4 h-4" />
+              <span>New Request</span>
             </Link>
           )}
         </div>
 
-        {/* Navigation Section */}
-        <nav className="px-2.5 space-y-1 mt-1">
-          {!isCollapsed && (
-            <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-              Workspaces
-            </p>
-          )}
-          {navItems
-            .filter((item) => item.show)
-            .map((item) => {
-              const Icon = item.icon;
-              const isActive = isItemActive(item.href);
+        {/* Task-Categorized Navigation Sections */}
+        <nav className="px-2 space-y-4 mt-1 pb-4">
+          {navSections.map((section) => {
+            const visibleItems = section.items.filter((i) => i.show);
+            if (visibleItems.length === 0) return null;
 
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={closeMobileMenu}
-                  title={isCollapsed ? item.label : undefined}
-                  className={`flex items-center ${isCollapsed ? 'justify-center p-2.5' : 'justify-between px-3 py-2.5'} rounded-xl text-xs font-medium transition-all group ${
-                    isActive
-                      ? 'bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-500/30 shadow-sm font-semibold'
-                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <Icon
-                      className={`w-4 h-4 shrink-0 transition-colors ${
+            return (
+              <div key={section.title} className="space-y-1">
+                {!isCollapsed && (
+                  <p className="px-2.5 py-1 text-[11px] font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase select-none">
+                    {section.title}
+                  </p>
+                )}
+
+                {visibleItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = isItemActive(item.href);
+
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={closeMobileMenu}
+                      title={isCollapsed ? item.label : undefined}
+                      className={`flex items-center ${isCollapsed ? 'justify-center p-2 rounded-md' : 'justify-between px-2.5 py-1.5 rounded-md'} text-xs font-medium transition-colors ${
                         isActive
-                          ? 'text-blue-600 dark:text-blue-400'
-                          : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-300'
+                          ? 'bg-blue-50 dark:bg-blue-950/40 text-[#1D4ED8] dark:text-blue-400 font-semibold border-l-2 border-[#1D4ED8] rounded-l-none'
+                          : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800/60'
                       }`}
-                    />
-                    {!isCollapsed && <span>{item.label}</span>}
-                  </div>
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Icon
+                          className={`w-4 h-4 shrink-0 ${
+                            isActive
+                              ? 'text-[#1D4ED8] dark:text-blue-400'
+                              : 'text-slate-500 dark:text-slate-400'
+                          }`}
+                        />
+                        {!isCollapsed && <span>{item.label}</span>}
+                      </div>
 
-                  {!isCollapsed && item.badge && (
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-300 border border-amber-500/30">
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
+                      {!isCollapsed && item.badge && (
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                          {item.badge}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          })}
         </nav>
       </div>
 
-      {/* Footer Area: User / Logout */}
-      <div className="p-3 border-t theme-border space-y-2">
-        {/* User Card with Logout Button */}
-        <div className={`pt-2 border-t theme-border flex items-center ${isCollapsed ? 'justify-center flex-col gap-2' : 'justify-between gap-2'}`}>
+      {/* Footer Area: User Profile & Logout */}
+      <div className="p-3 border-t theme-border bg-slate-50/50 dark:bg-[#111827]">
+        <div className={`flex items-center ${isCollapsed ? 'justify-center flex-col gap-2' : 'justify-between gap-2'}`}>
           <div className="flex items-center gap-2 overflow-hidden">
-            <div className="w-7 h-7 rounded-lg bg-blue-600/15 border border-blue-500/30 flex items-center justify-center font-bold text-xs text-blue-600 dark:text-blue-400 shrink-0">
+            <div className="w-7 h-7 rounded-md bg-[#1D4ED8] flex items-center justify-center font-bold text-xs text-white shrink-0 select-none">
               {user?.first_name
                 ? user.first_name[0]
                 : user?.username?.toLowerCase().includes('admin') || pathname.startsWith('/admin')
@@ -229,13 +259,13 @@ export function Sidebar() {
                     ? 'System Admin'
                     : user?.username || 'Branch Officer'}
                 </p>
-                <p className="text-[10px] text-slate-400 truncate">
+                <p className="text-[11px] text-slate-400 truncate">
                   {user?.role
                     ? user.role
                     : pathname.startsWith('/admin') || user?.is_admin
                     ? 'Super Admin'
                     : pathname.startsWith('/legal')
-                    ? 'Legal Counsel'
+                    ? 'Legal Scrutinizer'
                     : 'Branch Officer'}
                 </p>
               </div>
@@ -244,11 +274,11 @@ export function Sidebar() {
 
           <button
             onClick={() => logout()}
-            title="Log Out (Sign Out)"
-            className={`flex items-center gap-1 ${isCollapsed ? 'p-2' : 'px-2.5 py-1.5'} rounded-lg text-xs font-medium text-slate-500 hover:text-red-500 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all active:scale-95 shrink-0`}
+            title="Sign Out"
+            aria-label="Sign Out"
+            className="flex items-center gap-1 p-1.5 rounded-md text-slate-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors shrink-0 cursor-pointer"
           >
-            <LogOut className="w-3.5 h-3.5" />
-            {!isCollapsed && <span>Logout</span>}
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -257,10 +287,10 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Desktop Sticky Sidebar (>= 1024px) with dynamic width */}
+      {/* Desktop Sticky Sidebar (>= 1024px) */}
       <aside
-        className={`hidden lg:flex flex-col justify-between shrink-0 h-screen sticky top-0 border-r theme-border theme-surface transition-all duration-300 ease-in-out z-20 ${
-          isSidebarCollapsed ? 'w-20' : 'w-64'
+        className={`hidden lg:flex flex-col justify-between shrink-0 h-screen sticky top-0 border-r theme-border transition-all duration-200 z-20 ${
+          isSidebarCollapsed ? 'w-16' : 'w-56'
         }`}
       >
         {renderSidebarContent(isSidebarCollapsed)}
@@ -269,14 +299,11 @@ export function Sidebar() {
       {/* Mobile Slide-over Drawer (< 1024px) */}
       {isMobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
-          {/* Backdrop Blur */}
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/50 transition-opacity"
             onClick={closeMobileMenu}
           />
-
-          {/* Drawer Panel */}
-          <div className="relative flex-1 flex flex-col max-w-xs w-full theme-surface border-r theme-border h-full shadow-2xl z-50 animate-slideInLeft">
+          <div className="relative flex-1 flex flex-col max-w-xs w-full theme-surface border-r theme-border h-full shadow-lg z-50 animate-fadeIn">
             {renderSidebarContent(false)}
           </div>
         </div>

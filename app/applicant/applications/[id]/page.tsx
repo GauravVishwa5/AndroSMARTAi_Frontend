@@ -101,20 +101,22 @@ export default function ApplicationDetailPage() {
   const pendingDeficiencies = (detail?.deficiency_requests || []).filter((d) => d.status === 'pending');
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+    <div className="min-h-screen bg-[#0B0F14] text-slate-100 flex flex-col">
       {/* Header */}
-      <header className="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur-md sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <header className="border-b border-slate-800 bg-[#111827]/90 sticky top-0 z-20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/applicant/dashboard')}
-              className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              title="Back to Applications"
+              aria-label="Back to Applications"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-white">{detail?.application_number}</span>
-              <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="text-xs sm:text-sm font-bold text-white font-mono">{detail?.application_number}</span>
+              <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-950/40 text-emerald-300 border border-emerald-800">
                 {detail?.status}
               </span>
             </div>
@@ -122,7 +124,7 @@ export default function ApplicationDetailPage() {
 
           <button
             onClick={fetchDetail}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800 transition-colors cursor-pointer border border-slate-700"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             <span>Refresh</span>
@@ -130,28 +132,28 @@ export default function ApplicationDetailPage() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Application Overview Card */}
-        <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-800/80">
+        <div className="bg-[#111827] border border-slate-800 rounded-lg p-5 shadow-2xs">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-800">
             <div>
-              <span className="text-xs font-semibold text-indigo-400 uppercase tracking-wider">Property Details</span>
-              <h1 className="text-xl font-bold text-white mt-1">{detail?.property_name}</h1>
+              <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Property Subject to Legal Scrutiny</span>
+              <h1 className="text-lg sm:text-xl font-bold text-white mt-0.5">{detail?.property_name}</h1>
               <p className="text-xs text-slate-400 mt-0.5">{detail?.address || [detail?.city, detail?.district].filter(Boolean).join(', ')}</p>
             </div>
             {detail?.bank_name && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-xs text-slate-200">
-                <Building className="w-4 h-4 text-indigo-400" />
-                <span>Lending Bank: <strong>{detail.bank_name}</strong></span>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-slate-900 border border-slate-700 text-xs text-slate-200">
+                <Building className="w-3.5 h-3.5 text-blue-400" />
+                <span>Lending Bank: <strong className="font-semibold">{detail.bank_name}</strong></span>
               </div>
             )}
           </div>
 
           {/* 4-Step Milestone Progress */}
-          <div className="pt-6">
-            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-6">Verification Milestones</h3>
+          <div className="pt-5">
+            <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-5">Verification Milestones</h3>
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 relative">
-              {detail?.timeline.map((step, idx) => {
+              {detail?.timeline.map((step) => {
                 const isDone = step.state === 'completed';
                 const isCurrent = step.state === 'in_progress';
 
@@ -159,19 +161,19 @@ export default function ApplicationDetailPage() {
                   <div key={step.id} className="relative flex sm:flex-col items-start gap-3 sm:gap-2">
                     <div className="flex items-center sm:justify-center">
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all ${
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 transition-colors ${
                           isDone
-                            ? 'bg-emerald-500 text-slate-950 ring-4 ring-emerald-500/20'
+                            ? 'bg-emerald-600 text-white'
                             : isCurrent
-                            ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20 animate-pulse'
-                            : 'bg-slate-800 text-slate-500'
+                            ? 'bg-[#1D4ED8] text-white'
+                            : 'bg-slate-800 text-slate-500 border border-slate-700'
                         }`}
                       >
-                        {isDone ? <CheckCircle2 className="w-4 h-4" /> : step.id}
+                        {isDone ? <CheckCircle2 className="w-3.5 h-3.5" /> : step.id}
                       </div>
                     </div>
                     <div>
-                      <h4 className={`text-xs font-bold ${isDone || isCurrent ? 'text-white' : 'text-slate-500'}`}>
+                      <h4 className={`text-xs font-semibold ${isDone || isCurrent ? 'text-white' : 'text-slate-500'}`}>
                         {step.title}
                       </h4>
                       <p className="text-[11px] text-slate-400 mt-0.5">{step.description}</p>
@@ -185,32 +187,32 @@ export default function ApplicationDetailPage() {
 
         {/* Action Required: Deficiency Requests Banner */}
         {pendingDeficiencies.length > 0 && (
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 shadow-xl space-y-4">
-            <div className="flex items-center gap-2.5 text-amber-400">
-              <AlertTriangle className="w-5 h-5 shrink-0" />
-              <h3 className="text-sm font-bold tracking-tight">Action Required: Missing Documents Requested</h3>
+          <div className="bg-amber-950/20 border border-amber-800/80 rounded-lg p-5 shadow-2xs space-y-3.5">
+            <div className="flex items-center gap-2 text-amber-300">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <h3 className="text-xs sm:text-sm font-bold">Action Required: Supplementary Document Requested</h3>
             </div>
-            <p className="text-xs text-amber-300/80">
-              Our legal scrutinizer requires the following documents to complete title verification. Please upload clean, official copies.
+            <p className="text-xs text-amber-200/80">
+              Our bank panel advocate requires the following documents to complete title verification. Please upload clean, official copies.
             </p>
 
             {uploadSuccessMessage && (
-              <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <div className="p-3 bg-emerald-950/40 border border-emerald-800 rounded-md text-emerald-300 text-xs flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
                 <span>{uploadSuccessMessage}</span>
               </div>
             )}
 
-            <div className="space-y-3 pt-2">
+            <div className="space-y-2.5 pt-1">
               {pendingDeficiencies.map((d) => (
                 <div
                   key={d.id}
-                  className="bg-slate-900/90 border border-amber-500/20 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                  className="bg-[#111827] border border-amber-800/60 rounded-md p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                 >
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold text-white">{d.document_title}</span>
-                      <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded bg-amber-500/20 text-amber-400">
+                      <span className="text-[10px] uppercase font-semibold px-1.5 py-0.2 rounded bg-amber-950/60 text-amber-300 border border-amber-800">
                         Required
                       </span>
                     </div>
@@ -219,8 +221,8 @@ export default function ApplicationDetailPage() {
                     )}
                   </div>
 
-                  <label className="relative inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-500 cursor-pointer transition-all shadow-md shrink-0">
-                    <UploadCloud className="w-4 h-4" />
+                  <label className="relative inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold text-white bg-[#1D4ED8] hover:bg-[#1E40AF] cursor-pointer transition-colors shadow-2xs shrink-0">
+                    <UploadCloud className="w-3.5 h-3.5" />
                     <span>{uploadingDeficiencyId === d.id ? 'Uploading & Queuing...' : 'Upload Document'}</span>
                     <input
                       type="file"
@@ -237,19 +239,19 @@ export default function ApplicationDetailPage() {
         )}
 
         {/* Uploaded Documents List */}
-        <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 shadow-xl">
-          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Your Uploaded Documents</h3>
+        <div className="bg-[#111827] border border-slate-800 rounded-lg p-5 shadow-2xs">
+          <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3.5">Your Uploaded Documents</h3>
           {(detail?.uploaded_documents || []).length === 0 ? (
-            <div className="text-center py-8 text-slate-500 text-xs">
+            <div className="text-center py-6 text-slate-500 text-xs">
               No supplementary documents have been uploaded through this portal yet.
             </div>
           ) : (
-            <div className="divide-y divide-slate-800/80">
+            <div className="divide-y divide-slate-800">
               {detail?.uploaded_documents.map((doc) => (
-                <div key={doc.doc_id} className="py-3.5 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-400">
-                      <FileText className="w-4 h-4" />
+                <div key={doc.doc_id} className="py-3 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded bg-slate-800 flex items-center justify-center text-slate-400">
+                      <FileText className="w-3.5 h-3.5" />
                     </div>
                     <div>
                       <h5 className="text-xs font-semibold text-white">{doc.file_name}</h5>
@@ -257,7 +259,7 @@ export default function ApplicationDetailPage() {
                     </div>
                   </div>
 
-                  <span className="text-xs px-2.5 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  <span className="text-[11px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700">
                     {doc.verification_status}
                   </span>
                 </div>

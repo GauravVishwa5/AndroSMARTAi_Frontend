@@ -219,30 +219,30 @@ export default function HomePage() {
       )}
 
       {/* ── Main Hero Section ─────────────────────────────────────── */}
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-14 space-y-16">
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 space-y-12">
         {/* Hero Top Copy */}
-        <div className="text-center max-w-4xl mx-auto space-y-5">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-semibold text-blue-600 dark:text-blue-400 shadow-xs">
-            <Sparkles className="w-3.5 h-3.5 animate-pulse" />
-            <span>Next-Gen AI Legal Title Verification & Search Platform</span>
+        <div className="text-center max-w-4xl mx-auto space-y-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-xs font-semibold text-[#1D4ED8] dark:text-blue-300">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#1D4ED8] dark:text-blue-400" />
+            <span>Institutional Property Due-Diligence & Legal Scrutiny Architecture</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold theme-text-primary tracking-tight leading-[1.15]">
-            Institutional Property Title Clearances & TSR Reports in{' '}
-            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 dark:from-blue-400 dark:via-indigo-300 dark:to-blue-500 bg-clip-text text-transparent">
-              Minutes, Not Weeks.
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold theme-text-primary tracking-tight leading-[1.2]">
+            Automated 30-Year Title Search &{' '}
+            <span className="text-[#1D4ED8] dark:text-blue-400">
+              Bank-Standard Legal Clearance.
             </span>
           </h1>
 
-          <p className="text-sm sm:text-base lg:text-lg theme-text-secondary leading-relaxed max-w-2xl mx-auto">
-            Automated 30-year chain of title devolution, direct online cross-verification against Maharashtra & Delhi IGR registries, high-precision OCR extraction, and 1-click bank-formatted Title Search Reports (TSR / LSR).
+          <p className="text-xs sm:text-sm lg:text-base text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto">
+            Empanelled banking advocate workstation for mortgage title scrutiny. Direct cross-referencing against Maharashtra & Delhi land registries, multi-deed OCR evidence extraction, and 1-click Title Search Report (TSR / LSR) generation.
           </p>
 
           {/* Action CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2">
             <Link
               href="/requests/new"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-xs sm:text-sm shadow-xl shadow-blue-600/30 transition-all hover:scale-[1.02] active:scale-95"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white font-semibold text-xs sm:text-sm shadow-2xs transition-colors cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
               <span>Create Verification Request</span>
@@ -250,24 +250,24 @@ export default function HomePage() {
 
             <a
               href="#video-demos"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white font-semibold text-xs sm:text-sm shadow-md transition-all hover:scale-[1.02] active:scale-95 border border-slate-700"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-md bg-white dark:bg-slate-900 hover:bg-slate-50 text-slate-800 dark:text-slate-200 font-semibold text-xs sm:text-sm shadow-2xs transition-colors border border-slate-300 dark:border-slate-700 cursor-pointer"
             >
-              <Play className="w-4 h-4 text-blue-400 fill-current" />
-              <span>Watch 14 Video Demos</span>
+              <Play className="w-3.5 h-3.5 text-[#1D4ED8] dark:text-blue-400 fill-current" />
+              <span>Watch 14 Video Demonstrations</span>
             </a>
 
             <Link
               href="/requests/7"
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl theme-card border hover:border-blue-500 theme-text-primary font-semibold text-xs sm:text-sm shadow-sm transition-all hover:scale-[1.02] active:scale-95"
+              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 text-slate-700 dark:text-slate-300 font-medium text-xs sm:text-sm shadow-2xs transition-colors cursor-pointer"
             >
-              <span>Explore Workspace</span>
-              <ArrowRight className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span>Explore Case Docket</span>
+              <ArrowRight className="w-3.5 h-3.5 text-slate-500" />
             </Link>
           </div>
         </div>
 
         {/* ── Interactive Live Workspace Simulator ──────────────────── */}
-        <div className="rounded-3xl border theme-border theme-surface shadow-2xl overflow-hidden backdrop-blur-xl">
+        <div className="rounded-lg border theme-border theme-surface shadow-2xs overflow-hidden">
           {/* Top Window Bar */}
           <div className="border-b theme-border bg-slate-50 dark:bg-slate-950/80 p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">

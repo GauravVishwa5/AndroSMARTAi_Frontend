@@ -233,39 +233,39 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
   }
 
   return (
-    <div className="space-y-5 animate-fadeIn">
+    <div className="space-y-4">
       {/* Top Banner & Continuity Metric */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-            <GitBranch className="w-5 h-5" />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-lg bg-white dark:bg-slate-900 border theme-border shadow-2xs">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+            <GitBranch className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+            <h3 className="text-xs sm:text-sm font-bold theme-text-primary">
               30-Year Chain of Title Devolution Graph
             </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Sequential legal ownership genealogy from parent allotment to current borrower
+            <p className="text-[11px] text-slate-500">
+              Sequential legal ownership genealogy from parent allotment to current mortgagor
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           {continuityGaps.length === 0 ? (
-            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 shadow-xs">
-              <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Chain Intact (100% Unbroken)</span>
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Chain Intact (Unbroken)</span>
             </span>
           ) : (
-            <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 shadow-xs">
-              <AlertTriangle className="w-3.5 h-3.5" />
-              <span>{continuityGaps.length} Potential Chain Gap(s)</span>
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
+              <span>{continuityGaps.length} Potential Gap(s)</span>
             </span>
           )}
 
           <button
             onClick={handleOpenAddModal}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md active:scale-95 transition-all"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold shadow-2xs transition-colors cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Add Title Deed</span>
@@ -274,39 +274,35 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
       </div>
 
       {/* Timeline Steps Visualization */}
-      <div className="relative pl-6 sm:pl-8 space-y-6 before:absolute before:left-3 sm:before:left-4 before:top-4 before:bottom-4 before:w-0.5 before:bg-gradient-to-b before:from-blue-500 before:via-emerald-500 before:to-indigo-500">
+      <div className="relative pl-6 sm:pl-7 space-y-4 before:absolute before:left-2.5 sm:before:left-3 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-300 dark:before:bg-slate-700">
         {nodes.map((node, index) => {
           const isLast = index === nodes.length - 1;
           const isFirst = index === 0;
 
           return (
-            <div key={node.id} className="relative group animate-fadeIn">
+            <div key={node.id} className="relative group">
               {/* Node Bullet Marker */}
               <div
-                className={`absolute -left-6 sm:-left-8 top-3 w-4 h-4 rounded-full border-2 border-white dark:border-slate-900 shadow-md flex items-center justify-center transition-transform group-hover:scale-125 ${
+                className={`absolute -left-6 sm:-left-7 top-3 w-3 h-3 rounded-full border-2 border-white dark:border-slate-900 shadow-2xs ${
                   isLast
-                    ? 'bg-indigo-600'
+                    ? 'bg-[#1D4ED8]'
                     : isFirst
-                    ? 'bg-blue-600'
+                    ? 'bg-slate-700'
                     : 'bg-emerald-600'
                 }`}
-              >
-                <div className="w-1.5 h-1.5 rounded-full bg-white" />
-              </div>
+              />
 
               {/* Node Card */}
               <div
-                className={`p-4 rounded-2xl border shadow-sm transition-all hover:shadow-md ${
+                className={`p-3.5 rounded-lg border shadow-2xs transition-colors ${
                   isLast
-                    ? 'bg-indigo-500/5 dark:bg-indigo-950/20 border-indigo-500/30'
-                    : isFirst
-                    ? 'bg-white dark:bg-slate-900 border-blue-500/30'
+                    ? 'bg-blue-50/40 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900'
                     : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800'
                 }`}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
                   <div className="flex items-center gap-2">
-                    <span className="px-2.5 py-0.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-mono">
+                    <span className="px-2 py-0.5 rounded text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-mono">
                       {node.year}
                     </span>
                     <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">
@@ -317,7 +313,7 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
                   <div className="flex items-center gap-2 text-[11px] font-mono text-slate-500">
                     <span>{node.date}</span>
                     <span>&bull;</span>
-                    <span className="text-blue-600 dark:text-blue-400 font-semibold">{node.regNo}</span>
+                    <span className="text-[#1D4ED8] dark:text-blue-400 font-semibold">{node.regNo}</span>
 
                     {/* Action Controls: Edit & Delete */}
                     <div className="flex items-center gap-1 ml-2">
@@ -325,6 +321,7 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
                         onClick={() => handleOpenEditModal(node)}
                         className="p-1 rounded text-slate-400 hover:text-blue-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                         title="Edit title deed details"
+                        aria-label="Edit deed details"
                       >
                         <Edit2 className="w-3.5 h-3.5" />
                       </button>
@@ -332,7 +329,8 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
                         <button
                           onClick={() => handleDeleteNode(node.id)}
                           className="p-1 rounded text-slate-400 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                          title="Delete link"
+                          title="Delete deed from chain"
+                          aria-label="Delete deed from chain"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -342,8 +340,8 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
                 </div>
 
                 {/* Parties & Devolution Flow */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 text-xs">
-                  <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border border-slate-200/70 dark:border-slate-800">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2.5 text-xs">
+                  <div className="p-2 rounded-md bg-slate-50 dark:bg-slate-950/60 border border-slate-200/70 dark:border-slate-800">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block mb-0.5">
                       Grantor / Transferor (Vendor)
                     </span>

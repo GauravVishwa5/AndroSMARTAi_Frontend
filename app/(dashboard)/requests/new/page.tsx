@@ -344,31 +344,34 @@ export default function NewRequestPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Top Title & Step Indicator */}
-      <div className="p-4 sm:p-6 rounded-2xl theme-surface border backdrop-blur-md shadow-sm">
+      <div className="p-4 sm:p-5 rounded-lg theme-surface border shadow-2xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h1 className="text-lg sm:text-xl font-bold theme-text-primary tracking-tight">Create Property Request (BankForm)</h1>
-            <p className="text-xs theme-text-secondary mt-0.5">Initiate property title investigation and document OCR queue</p>
+            <h1 className="text-lg sm:text-xl font-bold theme-text-primary tracking-tight">Create Property Verification Request</h1>
+            <p className="text-xs theme-text-secondary mt-0.5">Initiate banking due-diligence intake, land registry search, and document OCR queue</p>
           </div>
-          <span className="text-xs font-mono px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-bold w-fit">
+          <span className="text-xs font-mono px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-[#1D4ED8] dark:text-blue-400 border theme-border font-semibold w-fit">
             Step {currentStep} of 3
           </span>
         </div>
 
-
         {/* Stepper Progress */}
-        <div className="grid grid-cols-3 gap-2 mt-6">
+        <div className="grid grid-cols-3 gap-3 mt-4">
           {[
-            { step: 1, title: '1. Bank & Case Details' },
-            { step: 2, title: '2. Geography & Property' },
-            { step: 3, title: '3. Document Upload' },
+            { step: 1, title: '1. Applicant & Loan' },
+            { step: 2, title: '2. Property & Geography' },
+            { step: 3, title: '3. Documents & Priority' },
           ].map((s) => (
-            <div
-              key={s.step}
-              className={`h-2 rounded-full transition-all ${
-                currentStep >= s.step ? 'bg-gradient-to-r from-blue-600 to-indigo-600' : 'bg-slate-200 dark:bg-slate-800'
-              }`}
-            />
+            <div key={s.step} className="space-y-1">
+              <div
+                className={`h-1.5 rounded-full transition-colors ${
+                  currentStep >= s.step ? 'bg-[#1D4ED8]' : 'bg-slate-200 dark:bg-slate-800'
+                }`}
+              />
+              <p className={`text-[11px] truncate ${currentStep === s.step ? 'text-[#1D4ED8] dark:text-blue-400 font-semibold' : 'text-slate-500'}`}>
+                {s.title}
+              </p>
+            </div>
           ))}
         </div>
       </div>
@@ -382,10 +385,10 @@ export default function NewRequestPage() {
 
       {/* Step 1: Bank & Case Details */}
       {currentStep === 1 && (
-        <div className="p-6 rounded-2xl theme-surface border space-y-4 shadow-sm">
-          <h2 className="text-sm font-bold theme-text-primary flex items-center gap-2">
-            <Building className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-            <span>Bank & Case Intake Details</span>
+        <div className="p-5 sm:p-6 rounded-lg theme-surface border space-y-4 shadow-2xs">
+          <h2 className="text-sm font-bold theme-text-primary flex items-center gap-2 pb-2 border-b theme-border">
+            <Building className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+            <span>Applicant & Case Intake Details</span>
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -399,7 +402,7 @@ export default function NewRequestPage() {
                 value={formData.ownerName}
                 onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
                 placeholder="e.g. Ajay Kumar"
-                className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full theme-input border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
               />
             </div>
 
@@ -410,7 +413,7 @@ export default function NewRequestPage() {
                 value={formData.applicantName}
                 onChange={(e) => setFormData({ ...formData, applicantName: e.target.value })}
                 placeholder="e.g. Ajay Kumar (leave empty if same as owner)"
-                className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full theme-input border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
               />
             </div>
 
@@ -420,7 +423,7 @@ export default function NewRequestPage() {
                 type="text"
                 value={formData.bankName}
                 onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
-                className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full theme-input border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
               />
             </div>
 
@@ -430,7 +433,7 @@ export default function NewRequestPage() {
                 type="text"
                 value={formData.Bank_branch}
                 onChange={(e) => setFormData({ ...formData, Bank_branch: e.target.value })}
-                className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full theme-input border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
               />
             </div>
 
@@ -439,7 +442,7 @@ export default function NewRequestPage() {
               <select
                 value={formData.caseType}
                 onChange={(e) => setFormData({ ...formData, caseType: e.target.value })}
-                className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full theme-input border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-xs theme-text-primary focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
               >
                 <option value="General">General / Standard</option>
                 <option value="SRA">SRA (Slum Rehabilitation Authority)</option>
@@ -454,19 +457,19 @@ export default function NewRequestPage() {
                 type="number"
                 value={formData.from_year}
                 onChange={(e) => setFormData({ ...formData, from_year: parseInt(e.target.value) || 2000 })}
-                className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full theme-input border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
               />
             </div>
           </div>
 
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-end pt-3 border-t theme-border">
             <button
               type="button"
               onClick={() => setCurrentStep(2)}
               disabled={!formData.ownerName}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md transition-all disabled:opacity-50 active:scale-95"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
             >
-              <span>Next: Geography & Property</span>
+              <span>Next: Property & Geography</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -843,11 +846,11 @@ export default function NewRequestPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4">
+          <div className="flex items-center justify-between pt-3 border-t theme-border">
             <button
               type="button"
               onClick={() => setCurrentStep(1)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl theme-card border theme-text-primary text-xs font-semibold hover:border-blue-500 transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back</span>
@@ -856,7 +859,7 @@ export default function NewRequestPage() {
               type="button"
               onClick={() => setCurrentStep(3)}
               disabled={!formData.propertyName}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md disabled:opacity-50 active:scale-95"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
             >
               <span>Next: Upload Documents</span>
               <ArrowRight className="w-4 h-4" />
@@ -867,18 +870,18 @@ export default function NewRequestPage() {
 
       {/* Step 3: Document Upload with Sub-type Hierarchy */}
       {currentStep === 3 && (
-        <div className="p-6 rounded-2xl theme-surface border space-y-5 shadow-sm">
-          <h2 className="text-sm font-bold theme-text-primary flex items-center gap-2">
-            <FileText className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+        <div className="p-5 sm:p-6 rounded-lg theme-surface border space-y-4 shadow-2xs">
+          <h2 className="text-sm font-bold theme-text-primary flex items-center gap-2 pb-2 border-b theme-border">
+            <FileText className="w-4 h-4 text-slate-700 dark:text-slate-300" />
             <span>Document Intake & Sub-Type Classification</span>
           </h2>
 
           {/* Upload Dropzone */}
-          <div className="border-2 border-dashed theme-border hover:border-blue-500/60 rounded-2xl p-8 text-center transition-all theme-card">
-            <Upload className="w-10 h-10 text-blue-500 dark:text-blue-400 mx-auto mb-3 animate-bounce" />
-            <p className="text-sm font-semibold theme-text-primary">Drag & drop scanned title deeds, NOCs, or Index-II PDFs</p>
-            <p className="text-xs theme-text-secondary mt-1">Supports PDF, JPG, PNG, DOCX (up to 50MB per file)</p>
-            <label className="mt-4 inline-block px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold cursor-pointer shadow-md active:scale-95">
+          <div className="border border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 rounded-lg p-6 text-center transition-colors bg-slate-50/50 dark:bg-slate-900/50">
+            <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+            <p className="text-xs font-semibold theme-text-primary">Drag & drop scanned title deeds, NOCs, or Index-II PDFs</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Supports PDF, JPG, PNG, DOCX (up to 50MB per file)</p>
+            <label className="mt-3 inline-block px-3.5 py-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 cursor-pointer shadow-2xs transition-colors">
               <span>Browse Files</span>
               <input type="file" multiple onChange={handleFileUpload} className="hidden" />
             </label>
@@ -965,11 +968,11 @@ export default function NewRequestPage() {
           )}
 
           {/* Submit Button */}
-          <div className="flex items-center justify-between pt-4">
+          <div className="flex items-center justify-between pt-3 border-t theme-border">
             <button
               type="button"
               onClick={() => setCurrentStep(2)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl theme-card border theme-text-primary text-xs font-semibold hover:border-blue-500 transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back</span>
@@ -978,14 +981,14 @@ export default function NewRequestPage() {
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/25 disabled:opacity-50 active:scale-95"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold shadow-2xs disabled:opacity-50 transition-colors cursor-pointer"
             >
               {isSubmitting ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Submit & Queue OCR Extraction</span>
+                  <span>Submit & Queue Verification</span>
                 </>
               )}
             </button>

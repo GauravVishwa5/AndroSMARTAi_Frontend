@@ -416,33 +416,33 @@ Enrolment No: D/4819/2004
   };
 
   return (
-    <div className="space-y-4 animate-fadeIn">
+    <div className="space-y-3.5">
       {/* Top Header & Actions Toolbar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 sm:p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-lg bg-white dark:bg-slate-900 border theme-border shadow-2xs">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 sm:p-2.5 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
-            <FileCheck2 className="w-4 h-4 sm:w-5 sm:h-5" />
+          <div className="p-2 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0">
+            <FileCheck2 className="w-4 h-4" />
           </div>
           <div>
-            <h3 className="text-xs sm:text-sm font-bold text-slate-900 dark:text-slate-100">
+            <h3 className="text-xs sm:text-sm font-bold theme-text-primary">
               Title Search Report (TSR) & Legal Opinion Editor
             </h3>
-            <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
-              Draft, customize, preview, and export institutional bank title search reports
+            <p className="text-[11px] text-slate-500">
+              Draft, customize clauses, preview, and export institutional bank title search reports
             </p>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-1.5">
           {/* View Mode Toggle: Edit Mode vs Document View */}
-          <div className="flex items-center p-0.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-xs font-semibold">
+          <div className="flex items-center p-0.5 rounded-md bg-slate-100 dark:bg-slate-800 border theme-border text-xs font-medium">
             <button
               type="button"
               onClick={() => setViewMode('editor')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs transition-colors cursor-pointer ${
                 viewMode === 'editor'
-                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  ? 'bg-white dark:bg-slate-900 text-[#1D4ED8] dark:text-blue-400 font-semibold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Edit3 className="w-3.5 h-3.5" />
@@ -451,10 +451,10 @@ Enrolment No: D/4819/2004
             <button
               type="button"
               onClick={() => setViewMode('preview')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1 rounded text-xs transition-colors cursor-pointer ${
                 viewMode === 'preview'
-                  ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs font-bold'
-                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
+                  ? 'bg-white dark:bg-slate-900 text-[#1D4ED8] dark:text-blue-400 font-semibold shadow-2xs'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               <Eye className="w-3.5 h-3.5" />
@@ -466,7 +466,8 @@ Enrolment No: D/4819/2004
           <select
             value={selectedBankTemplate}
             onChange={(e) => setSelectedBankTemplate(e.target.value)}
-            className="px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-semibold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            aria-label="Select bank report template"
+            className="px-2.5 py-1 rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500"
           >
             <option value="Axis Bank Format">Axis Bank Format</option>
             <option value="State Bank of India (SBI)">State Bank of India (SBI)</option>
@@ -474,14 +475,15 @@ Enrolment No: D/4819/2004
             <option value="ICICI Bank Format">ICICI Bank Format</option>
             <option value="PNB Housing Format">PNB Housing Format</option>
             <option value="DCB Bank Format">DCB Bank Format</option>
-            <option value="Standard Bank Format">Standard Bank Legal Format</option>
+            <option value="Standard Bank Format">Standard Legal Format</option>
           </select>
 
           {/* Full Screen View Report Button */}
           <button
             onClick={() => setShowFullReportModal(true)}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-semibold shadow-xs active:scale-95 transition-all hover:bg-blue-100"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium shadow-2xs hover:bg-slate-50 transition-colors cursor-pointer"
             title="Open Full-Screen Report Modal"
+            aria-label="Open Full-Screen Report Modal"
           >
             <Maximize2 className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Full View</span>
@@ -490,8 +492,9 @@ Enrolment No: D/4819/2004
           <button
             onClick={handleDownloadDocx}
             disabled={isDownloading}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold shadow-xs active:scale-95 transition-all disabled:opacity-50"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 text-slate-700 dark:text-slate-300 text-xs font-medium shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
             title="Download DOCX Report"
+            aria-label="Download DOCX Report"
           >
             {isDownloading ? (
               <RefreshCw className="w-3.5 h-3.5 animate-spin" />
@@ -503,7 +506,7 @@ Enrolment No: D/4819/2004
 
           <button
             onClick={handlePrintPdf}
-            className="flex items-center gap-1 px-3.5 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md active:scale-95 transition-all shrink-0"
+            className="flex items-center gap-1 px-3 py-1 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold shadow-2xs transition-colors shrink-0 cursor-pointer"
             title="Print Official Legal Document as PDF"
           >
             <Printer className="w-3.5 h-3.5" />
@@ -516,7 +519,7 @@ Enrolment No: D/4819/2004
       {viewMode === 'editor' ? (
         <form
           onSubmit={handleSaveDraft}
-          className="p-4 sm:p-6 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm space-y-4 sm:space-y-5 text-xs leading-relaxed overflow-hidden"
+          className="p-4 sm:p-5 rounded-lg border theme-border bg-white dark:bg-slate-900 shadow-2xs space-y-4 text-xs leading-relaxed overflow-hidden"
         >
           {/* Document Official Header Banner */}
           <div className="text-center border-b border-slate-200 dark:border-slate-800 pb-4 space-y-1">
