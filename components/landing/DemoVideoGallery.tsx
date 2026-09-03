@@ -211,17 +211,17 @@ export const DEMO_VIDEOS: DemoVideoItem[] = [
     keyFeatures: ['30-Year Devolution Synthesis', 'Customizable Legal Clauses Editor', 'Institutional Bank DOCX Export']
   },
   {
-    id: '13_wopi_collaboration',
+    id: '13_document_scrutinizer',
     videoNumber: '13',
-    title: 'Live Document Collaboration (WOPI)',
+    title: 'Live Document Scrutinizer & TSR Editor',
     category: 'Field & Reports',
-    tag: 'Office Online WOPI',
-    durationLabel: 'In-Browser Drafting',
-    description: 'Zero-leakage Microsoft Office Online / WOPI collaborative drafting: direct .docx report editing in the browser without local workstation file downloads, featuring lock token sync.',
-    routes: '/requests/7 (TSR Report / WOPI)',
+    tag: 'Live Document Editor',
+    durationLabel: 'In-Browser Scrutiny',
+    description: 'Zero-leakage legal document scrutiny: review, edit, and annotate title search reports directly in the browser with real-time autosave and instant S3 delivery, without third-party office dependencies.',
+    routes: '/requests/7 (TSR Report / Live Editor)',
     poster: '/audit/19_workspace_req7_modal_fullscreen_doc.png',
-    videoSrc: '/videos/13_wopi_collaboration.webm',
-    keyFeatures: ['WOPI Host Protocol Architecture', 'Zero Local File Storage Policy', 'Real-Time Synchronized Saves']
+    videoSrc: '/videos/13_document_scrutinizer.webm',
+    keyFeatures: ['In-browser legal scrutinizer', 'Direct S3 instant sync', 'Version tracking', 'Branch-legal comments']
   }
 ];
 
