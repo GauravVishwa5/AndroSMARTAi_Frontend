@@ -44,10 +44,13 @@ export default function NewRequestPage() {
     state: 'Maharashtra', // Default to Maharashtra
     district_id: '',
     district: 'Mumbai Suburban',
+    district_mr: 'मुंबई उपनगर',
     taluka_id: '',
     taluka: '',
+    taluka_mr: '',
     city: '',
     village: '',
+    village_mr: '',
     pinCode: '',
     ctsNumber: '',
     propertyNumbers: ['235-GF'], // Chip input
@@ -141,15 +144,17 @@ export default function NewRequestPage() {
           const distList = Array.isArray(dist) ? dist : [];
           setDistricts(distList);
           // If a district is already set or default to first
-          const defaultDist = distList.find((d: any) => (d.district_name || d.name) === 'Mumbai Suburban') || distList[0];
+          const defaultDist = distList.find((d: any) => (d.district_name || d.name || d.name_en) === 'Mumbai Suburban') || distList[0];
           if (defaultDist) {
-            const dName = (defaultDist as any).district_name || (defaultDist as any).name;
+            const dName = (defaultDist as any).district_name || (defaultDist as any).name_en || (defaultDist as any).name;
+            const dNameMr = (defaultDist as any).name_mr || (defaultDist as any).district_name_mr || dName;
             setFormData((prev) => ({
               ...prev,
               district_id: String(defaultDist.id),
               district: dName,
+              district_mr: dNameMr,
             }));
-            handleDistrictChange(String(defaultDist.id), dName);
+            handleDistrictChange(String(defaultDist.id), dName, dNameMr);
           }
         })
         .catch((err) => {
@@ -160,17 +165,21 @@ export default function NewRequestPage() {
   }, [formData.state]);
 
   // Handle District Change
-  const handleDistrictChange = async (districtId: string, districtName?: string) => {
-    const selectedDist = districts.find((d) => String(d.id) === districtId);
-    const dName = districtName || (selectedDist as any)?.district_name || (selectedDist as any)?.name || '';
+  const handleDistrictChange = async (districtId: string, districtName?: string, districtNameMr?: string) => {
+    const selectedDist = districts.find((d: any) => String(d.id || d.district_id) === String(districtId));
+    const dName = districtName || (selectedDist as any)?.district_name || (selectedDist as any)?.name_en || (selectedDist as any)?.name || '';
+    const dNameMr = districtNameMr || (selectedDist as any)?.name_mr || (selectedDist as any)?.district_name_mr || dName;
 
     setFormData((prev) => ({
       ...prev,
       district_id: districtId,
       district: dName,
+      district_mr: dNameMr,
       taluka_id: '',
       taluka: '',
+      taluka_mr: '',
       village: '',
+      village_mr: '',
     }));
     setVillageSearch('');
 
@@ -178,8 +187,8 @@ export default function NewRequestPage() {
       setIsLoadingLocations(true);
       try {
         const [talukaList, villageList] = await Promise.all([
-          requestsApi.getTalukas(Number(districtId)).catch(() => []),
-          requestsApi.getVillages(undefined, Number(districtId)).catch(() => []),
+          requestsApi.getTalukas(districtId).catch(() => []),
+          requestsApi.getVillages(undefined, districtId).catch(() => []),
         ]);
         setTalukas(talukaList);
         setVillages(villageList);
@@ -196,21 +205,24 @@ export default function NewRequestPage() {
 
   // Handle Taluka Change
   const handleTalukaChange = async (talukaId: string) => {
-    const selectedTaluka = talukas.find((t) => String(t.id) === talukaId);
-    const tName = (selectedTaluka as any)?.taluka_name || (selectedTaluka as any)?.name || '';
+    const selectedTaluka = talukas.find((t: any) => String(t.id || t.taluk_id) === String(talukaId));
+    const tName = (selectedTaluka as any)?.taluka_name || (selectedTaluka as any)?.name_en || (selectedTaluka as any)?.name || '';
+    const tNameMr = (selectedTaluka as any)?.name_mr || (selectedTaluka as any)?.taluka_name_mr || tName;
 
     setFormData((prev) => ({
       ...prev,
       taluka_id: talukaId,
       taluka: tName,
+      taluka_mr: tNameMr,
       village: '',
+      village_mr: '',
     }));
     setVillageSearch('');
 
     if (talukaId) {
       setIsLoadingLocations(true);
       try {
-        const villageList = await requestsApi.getVillages(Number(talukaId)).catch(() => []);
+        const villageList = await requestsApi.getVillages(talukaId, formData.district_id).catch(() => []);
         setVillages(villageList);
       } catch (e) {
         console.warn('Failed to load villages for taluka', e);
@@ -219,7 +231,7 @@ export default function NewRequestPage() {
       }
     } else if (formData.district_id) {
       // Fall back to district villages
-      requestsApi.getVillages(undefined, Number(formData.district_id)).then(setVillages).catch(() => []);
+      requestsApi.getVillages(undefined, formData.district_id).then(setVillages).catch(() => []);
     }
   };
 
@@ -294,6 +306,8 @@ export default function NewRequestPage() {
 
     try {
       // 1. Create BankForm Request
+      // For Maharashtra, send Marathi values in district, taluka, village so Lambda receives the exact Marathi portal strings:
+      const isMaha = formData.state === 'Maharashtra';
       const payload = {
         ownerName: formData.ownerName,
         applicantName: formData.applicantName || formData.ownerName,
@@ -303,10 +317,15 @@ export default function NewRequestPage() {
         flatNumber: formData.flatNumber,
         address: formData.address,
         state: formData.state,
-        district: formData.district,
-        taluka: formData.taluka,
+        district: isMaha && formData.district_mr ? formData.district_mr : formData.district,
+        district_id: formData.district_id,
+        district_eng: formData.district,
+        taluka: isMaha && formData.taluka_mr ? formData.taluka_mr : formData.taluka,
+        taluka_id: formData.taluka_id,
+        taluka_eng: formData.taluka,
         city: formData.city,
-        village: formData.village,
+        village: isMaha && formData.village_mr ? formData.village_mr : formData.village,
+        village_eng: formData.village,
         pinCode: formData.pinCode,
         ctsNumber: formData.ctsNumber,
         propertyNumbers: formData.propertyNumbers,
@@ -713,9 +732,14 @@ export default function NewRequestPage() {
                         value={formData.village}
                         onChange={(e) => {
                           const vName = e.target.value;
+                          const selectedVillage = villages.find(
+                            (v: any) => (v.village_name || v.name_en || v.name) === vName
+                          );
+                          const vNameMr = (selectedVillage as any)?.name_mr || (selectedVillage as any)?.village_name_mr || vName;
                           setFormData({
                             ...formData,
                             village: vName,
+                            village_mr: vNameMr,
                           });
                         }}
                         disabled={villages.length === 0}

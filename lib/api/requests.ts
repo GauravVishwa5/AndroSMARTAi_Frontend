@@ -207,22 +207,27 @@ export const requestsApi = {
     return response.data;
   },
 
-  getTalukas: async (districtId: number): Promise<Taluka[]> => {
+  getTalukas: async (districtId: number | string): Promise<Taluka[]> => {
     const cacheKey = `master_talukas_${districtId}`;
     const cached = localCache.get<Taluka[]>(cacheKey);
     if (cached) return cached;
 
-    const response = await apiClient.get('/api/taluka', { params: { district_id: districtId } });
+    const response = await apiClient.get('/api/taluka', { params: { district_id: String(districtId) } });
     localCache.set(cacheKey, response.data, 30);
     return response.data;
   },
 
-  getVillages: async (talukaId?: number, districtId?: number): Promise<Village[]> => {
+  getVillages: async (talukaId?: number | string, districtId?: number | string): Promise<Village[]> => {
     const cacheKey = `master_villages_${talukaId || 'none'}_${districtId || 'none'}`;
     const cached = localCache.get<Village[]>(cacheKey);
     if (cached) return cached;
 
-    const response = await apiClient.get('/api/villages', { params: { taluka_id: talukaId, district_id: districtId } });
+    const response = await apiClient.get('/api/villages', {
+      params: {
+        taluka_id: talukaId !== undefined ? String(talukaId) : undefined,
+        district_id: districtId !== undefined ? String(districtId) : undefined,
+      },
+    });
     localCache.set(cacheKey, response.data, 30);
     return response.data;
   },
