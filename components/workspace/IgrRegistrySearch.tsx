@@ -346,6 +346,7 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
         setSearchStatus(`Querying Maharashtra IGR (e-Search Portal) for ${selectedDistrict} • ${selectedArea}...`);
         await igrApi.scrapeMaharashtraV2(requestId, {
           district: selectedDistrict,
+          village: selectedArea,
           area: selectedArea,
           property_number: ctsQuery,
           from_year: startYear,
