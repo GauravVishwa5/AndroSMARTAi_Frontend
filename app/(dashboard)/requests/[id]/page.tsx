@@ -40,6 +40,9 @@ import {
   Search,
   FileSearch,
   Lock,
+  Award,
+  History,
+  ShieldAlert,
 } from 'lucide-react';
 import { SitePhotoInspection } from '@/components/survey/SitePhotoInspection';
 import { DocumentPreviewModal } from '@/components/documents/DocumentPreviewModal';
@@ -53,14 +56,36 @@ import { TsrLiveEditor } from '@/components/workspace/TsrLiveEditor';
 import { DocumentViewer, ActiveHighlightEntity } from '@/components/workspace/DocumentViewer';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { requestsApi } from '@/lib/api/requests';
+import { useAuthStore } from '@/lib/store/authStore';
+import { DisbursementBanner } from '@/components/workspace/DisbursementBanner';
+import { RiskScoreGauge } from '@/components/workspace/RiskScoreGauge';
+import { CaseFindingsList } from '@/components/workspace/CaseFindingsList';
+import { MakerCheckerSignOff } from '@/components/workspace/MakerCheckerSignOff';
+import { AuditTimelineDrawer } from '@/components/workspace/AuditTimelineDrawer';
+import {
+  CaseFinding,
+  CollateralRiskScore,
+  DisbursementReadiness,
+  AdvocateReview,
+  CaseAuditEvent,
+} from '@/types/enterprise';
 
 export default function RequestWorkspacePage() {
   const params = useParams();
   const requestId = (params?.id as string) || 'REQ-349';
+  const { user } = useAuthStore();
 
   // Active Workspace Tab
   const [activeTab, setActiveTab] = useState<
-    'TIMELINE' | 'EXTRACTED_OCR' | 'IGR_SEARCH' | 'SITE_SURVEY' | 'DISCREPANCIES' | 'TSR_REPORT'
+    | 'TIMELINE'
+    | 'EXTRACTED_OCR'
+    | 'IGR_SEARCH'
+    | 'SITE_SURVEY'
+    | 'DISCREPANCIES'
+    | 'FINDINGS'
+    | 'LEGAL_SIGN_OFF'
+    | 'AUDIT_TRAIL'
+    | 'TSR_REPORT'
   >('TIMELINE');
 
   // Interactive Entity Highlighting State (Syncs OCR Grid <-> Document Viewer)
@@ -74,6 +99,15 @@ export default function RequestWorkspacePage() {
   const [zoomLevel, setZoomLevel] = useState(100);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [statusFeedback, setStatusFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Enterprise Collateral Intelligence State (Phases 1 - 6)
+  const [readiness, setReadiness] = useState<DisbursementReadiness | null>(null);
+  const [collateralRisk, setCollateralRisk] = useState<CollateralRiskScore | null>(null);
+  const [caseFindings, setCaseFindings] = useState<CaseFinding[]>([]);
+  const [advocateReview, setAdvocateReview] = useState<AdvocateReview | null>(null);
+  const [auditEvents, setAuditEvents] = useState<CaseAuditEvent[]>([]);
+  const [totalAuditEvents, setTotalAuditEvents] = useState(0);
+  const [isEnterpriseLoading, setIsEnterpriseLoading] = useState(false);
 
   // Documents & Preview State
   const [selectedDocIndex, setSelectedDocIndex] = useState(0);
@@ -166,9 +200,45 @@ export default function RequestWorkspacePage() {
     }
   };
 
+  const loadEnterpriseData = async (forceRefresh = false) => {
+    if (!requestId) return;
+    setIsEnterpriseLoading(true);
+    try {
+      const [readinessRes, riskRes, findingsRes, advocateRes, auditRes] = await Promise.allSettled([
+        requestsApi.getDisbursementReadiness(requestId, forceRefresh),
+        requestsApi.getRiskAssessment(requestId, forceRefresh),
+        requestsApi.getFindings(requestId, forceRefresh),
+        requestsApi.getAdvocateReview(requestId, forceRefresh),
+        requestsApi.getAuditTrail(requestId, { limit: 50, offset: 0 }, forceRefresh),
+      ]);
+
+      if (readinessRes.status === 'fulfilled' && readinessRes.value) {
+        setReadiness(readinessRes.value);
+      }
+      if (riskRes.status === 'fulfilled' && riskRes.value) {
+        setCollateralRisk(riskRes.value);
+      }
+      if (findingsRes.status === 'fulfilled' && findingsRes.value?.findings) {
+        setCaseFindings(findingsRes.value.findings);
+      }
+      if (advocateRes.status === 'fulfilled' && advocateRes.value?.review) {
+        setAdvocateReview(advocateRes.value.review);
+      }
+      if (auditRes.status === 'fulfilled' && auditRes.value?.events) {
+        setAuditEvents(auditRes.value.events);
+        setTotalAuditEvents(auditRes.value.total || auditRes.value.events.length);
+      }
+    } catch (err) {
+      console.warn('Could not load enterprise collateral metrics:', err);
+    } finally {
+      setIsEnterpriseLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (requestId) {
       loadDetails(true);
+      loadEnterpriseData(true);
     }
   }, [requestId]);
 
@@ -467,6 +537,30 @@ export default function RequestWorkspacePage() {
   const location = requestData?.address || `${requestData?.city || 'Pitampura'}, ${requestData?.state || 'New Delhi'}`;
   const bankBranch = requestData?.Bank_branch || requestData?.bank_branch || requestData?.bankName || 'Axis Bank Pitampura Branch';
 
+  // 1-Click Interactive Citation Navigation
+  const handleJumpToCitation = (documentId?: string | null, pageNumber?: number | null) => {
+    if (!documentId) return;
+    const cleanDoc = String(documentId).toLowerCase().trim();
+    const foundIdx = docs.findIndex((d: any) => {
+      const idMatch = String(d.id || '').toLowerCase().includes(cleanDoc);
+      const nameMatch = String(d.name || '').toLowerCase().includes(cleanDoc);
+      const catMatch = String(d.category || '').toLowerCase().includes(cleanDoc);
+      const typeMatch = String(d.type || '').toLowerCase().includes(cleanDoc);
+      return idMatch || nameMatch || catMatch || typeMatch;
+    });
+    if (foundIdx !== -1) {
+      setSelectedDocIndex(foundIdx);
+    }
+    setLeftPanelTab('VIEWER');
+    if (pageNumber) {
+      setActiveHighlightEntity({
+        key: 'page_citation',
+        label: `Page ${pageNumber}`,
+        value: `Page Citation [p. ${pageNumber}]`,
+      });
+    }
+  };
+
   return (
     <div className="space-y-5">
       {/* Toast Notification Banner */}
@@ -615,6 +709,14 @@ export default function RequestWorkspacePage() {
         </div>
       </div>
 
+      {/* Institutional Disbursement Gate Banner (Phase 3 & 7) */}
+      <DisbursementBanner
+        readiness={readiness}
+        isLoading={isEnterpriseLoading}
+        onRefresh={() => loadEnterpriseData(true)}
+        onJumpToCitation={handleJumpToCitation}
+      />
+
       {/* Main Dual-Pane Workstation */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 min-h-[700px]">
         {/* Left Column (5 Cols): Document Inspection */}
@@ -723,6 +825,9 @@ export default function RequestWorkspacePage() {
                   activeTab === 'IGR_SEARCH' ? 'Land Registry Cross-Verification' :
                   activeTab === 'SITE_SURVEY' ? 'Physical Site Survey & Boundary Audit' :
                   activeTab === 'DISCREPANCIES' ? 'Encumbrance & Risk Defect Matrix' :
+                  activeTab === 'FINDINGS' ? 'Evidence-Backed Findings Matrix' :
+                  activeTab === 'LEGAL_SIGN_OFF' ? 'Advocate Maker-Checker Sign-Off' :
+                  activeTab === 'AUDIT_TRAIL' ? 'Forensic Audit Timeline' :
                   'Title Search Report (TSR)'
                 }
               </span>
@@ -740,8 +845,16 @@ export default function RequestWorkspacePage() {
                 { id: 'TIMELINE', shortLabel: 'Timeline', icon: GitBranch },
                 { id: 'EXTRACTED_OCR', shortLabel: 'OCR Data', icon: FileSpreadsheet },
                 { id: 'IGR_SEARCH', shortLabel: 'IGR Search', icon: Database },
+                { id: 'DISCREPANCIES', shortLabel: 'Risk & Flags', icon: AlertTriangle },
+                {
+                  id: 'FINDINGS',
+                  shortLabel: 'Findings',
+                  icon: ShieldAlert,
+                  badge: caseFindings.filter((f) => f.status === 'OPEN' && (f.severity === 'CRITICAL' || f.severity === 'HIGH')).length,
+                },
+                { id: 'LEGAL_SIGN_OFF', shortLabel: 'Sign-Off', icon: Award },
+                { id: 'AUDIT_TRAIL', shortLabel: 'Audit', icon: History },
                 { id: 'SITE_SURVEY', shortLabel: 'Site Survey', icon: Camera },
-                { id: 'DISCREPANCIES', shortLabel: 'Flags & Risk', icon: AlertTriangle },
                 { id: 'TSR_REPORT', shortLabel: 'TSR Report', icon: FileCheck2 },
               ].map((tab) => {
                 const Icon = tab.icon;
@@ -758,6 +871,11 @@ export default function RequestWorkspacePage() {
                   >
                     <Icon className="w-3 h-3 shrink-0" />
                     <span>{tab.shortLabel}</span>
+                    {tab.badge ? (
+                      <span className="ml-0.5 px-1 py-0.2 rounded-full text-[9px] font-bold bg-rose-500 text-white leading-none">
+                        {tab.badge}
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}
@@ -773,8 +891,11 @@ export default function RequestWorkspacePage() {
                 <option value="TIMELINE">🌿 Flow of Title Timeline</option>
                 <option value="EXTRACTED_OCR">📊 OCR Data Grid</option>
                 <option value="IGR_SEARCH">🏛️ IGR Registry Search</option>
+                <option value="DISCREPANCIES">⚠️ Risk & Flags</option>
+                <option value="FINDINGS">🛡️ Findings Matrix</option>
+                <option value="LEGAL_SIGN_OFF">⚖️ Advocate Sign-Off</option>
+                <option value="AUDIT_TRAIL">📜 Forensic Audit Trail</option>
                 <option value="SITE_SURVEY">📍 Field Site Survey</option>
-                <option value="DISCREPANCIES">⚠️ Encumbrance Flags</option>
                 <option value="TSR_REPORT">📝 TSR / Live Editor</option>
               </select>
             </div>
@@ -838,16 +959,67 @@ export default function RequestWorkspacePage() {
               />
             )}
 
-            {/* Tab 4: Discrepancy & Encumbrance Flags */}
+            {/* Tab 4: Discrepancy & Encumbrance Flags + Collateral Risk Gauge */}
             {activeTab === 'DISCREPANCIES' && (
-              <EncumbranceFlags
+              <div className="space-y-5">
+                <RiskScoreGauge
+                  assessment={collateralRisk}
+                  isLoading={isEnterpriseLoading}
+                  onRefresh={() => loadEnterpriseData(true)}
+                  onJumpToFinding={() => setActiveTab('FINDINGS')}
+                />
+                <div className="border-t pt-4 theme-border">
+                  <EncumbranceFlags
+                    requestId={requestId}
+                    ownerName={ownerName}
+                    propertyName={propName}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Tab 5: Evidence-Backed Canonical Findings Matrix */}
+            {activeTab === 'FINDINGS' && (
+              <CaseFindingsList
                 requestId={requestId}
-                ownerName={ownerName}
-                propertyName={propName}
+                findings={caseFindings}
+                isLoading={isEnterpriseLoading}
+                onRefresh={() => loadEnterpriseData(true)}
+                onJumpToCitation={handleJumpToCitation}
+                onFindingStatusChanged={() => loadEnterpriseData(true)}
               />
             )}
 
-            {/* Tab 5: Field Site Survey */}
+            {/* Tab 6: Advocate Maker-Checker Workflow */}
+            {activeTab === 'LEGAL_SIGN_OFF' && (
+              <MakerCheckerSignOff
+                requestId={requestId}
+                advocateReview={advocateReview}
+                isLoading={isEnterpriseLoading}
+                onRefresh={() => loadEnterpriseData(true)}
+                currentUserId={user?.id}
+                currentUserName={
+                  user
+                    ? user.first_name
+                      ? `${user.first_name} ${user.last_name || ''}`.trim()
+                      : user.username
+                    : requestData?.advocateName
+                }
+              />
+            )}
+
+            {/* Tab 7: Forensic Immutable Case Audit Trail */}
+            {activeTab === 'AUDIT_TRAIL' && (
+              <AuditTimelineDrawer
+                requestId={requestId}
+                events={auditEvents}
+                totalEvents={totalAuditEvents}
+                isLoading={isEnterpriseLoading}
+                onRefresh={() => loadEnterpriseData(true)}
+              />
+            )}
+
+            {/* Tab 8: Field Site Survey */}
             {activeTab === 'SITE_SURVEY' && (
               <FieldSiteSurvey
                 requestId={requestId}

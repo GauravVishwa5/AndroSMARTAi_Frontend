@@ -10,6 +10,14 @@ import {
   DelhiSRO,
   DelhiLocality,
 } from '@/types/pms';
+import {
+  CaseFinding,
+  FindingsResponse,
+  CollateralRiskScore,
+  DisbursementReadiness,
+  AdvocateReview,
+  AuditTrailResponse,
+} from '@/types/enterprise';
 
 export const requestsApi = {
   getRequestsList: async (forceRefresh = false): Promise<any[]> => {
@@ -320,6 +328,139 @@ export const requestsApi = {
     );
     localCache.remove(`req_survey_${requestId}`);
     localCache.remove(`req_details_${requestId}`);
+    return response.data;
+  },
+
+  // ============================================================================
+  // ENTERPRISE PLATFORM (PHASES 1 - 6) APIS
+  // ============================================================================
+
+  // Phase 1: Canonical Findings
+  getFindings: async (requestId: string, forceRefresh = false): Promise<FindingsResponse> => {
+    const cacheKey = `req_findings_${requestId}`;
+    if (!forceRefresh) {
+      const cached = localCache.get<FindingsResponse>(cacheKey);
+      if (cached) return cached;
+    }
+    const response = await apiClient.get(`/api/request/${encodeURIComponent(requestId)}/findings`);
+    if (response.data) {
+      localCache.set(cacheKey, response.data, 2);
+    }
+    return response.data;
+  },
+
+  updateFindingStatus: async (
+    requestId: string,
+    findingId: string | number,
+    status: 'OPEN' | 'RESOLVED' | 'WAIVED',
+    resolutionNotes?: string
+  ): Promise<any> => {
+    const response = await apiClient.patch(
+      `/api/request/${encodeURIComponent(requestId)}/findings/${encodeURIComponent(String(findingId))}`,
+      { status, resolution_notes: resolutionNotes || '' }
+    );
+    localCache.remove(`req_findings_${requestId}`);
+    localCache.remove(`req_risk_${requestId}`);
+    localCache.remove(`req_readiness_${requestId}`);
+    localCache.remove(`req_audit_${requestId}`);
+    return response.data;
+  },
+
+  syncFindings: async (requestId: string): Promise<any> => {
+    const response = await apiClient.post(`/api/request/${encodeURIComponent(requestId)}/findings/sync`);
+    localCache.remove(`req_findings_${requestId}`);
+    localCache.remove(`req_risk_${requestId}`);
+    localCache.remove(`req_readiness_${requestId}`);
+    return response.data;
+  },
+
+  // Phase 2: Collateral Risk Score
+  getRiskAssessment: async (requestId: string, forceRefresh = false): Promise<CollateralRiskScore> => {
+    const cacheKey = `req_risk_${requestId}`;
+    if (!forceRefresh) {
+      const cached = localCache.get<CollateralRiskScore>(cacheKey);
+      if (cached) return cached;
+    }
+    const response = await apiClient.get(`/api/request/${encodeURIComponent(requestId)}/risk-assessment`);
+    if (response.data) {
+      localCache.set(cacheKey, response.data, 2);
+    }
+    return response.data;
+  },
+
+  // Phase 3: Disbursement Readiness
+  getDisbursementReadiness: async (requestId: string, forceRefresh = false): Promise<DisbursementReadiness> => {
+    const cacheKey = `req_readiness_${requestId}`;
+    if (!forceRefresh) {
+      const cached = localCache.get<DisbursementReadiness>(cacheKey);
+      if (cached) return cached;
+    }
+    const response = await apiClient.get(`/api/request/${encodeURIComponent(requestId)}/disbursement-readiness`);
+    if (response.data) {
+      localCache.set(cacheKey, response.data, 2);
+    }
+    return response.data;
+  },
+
+  // Phase 5: Advocate Maker-Checker
+  getAdvocateReview: async (requestId: string, forceRefresh = false): Promise<{ review: AdvocateReview | null; enabled: boolean }> => {
+    const cacheKey = `req_advocate_${requestId}`;
+    if (!forceRefresh) {
+      const cached = localCache.get<{ review: AdvocateReview | null; enabled: boolean }>(cacheKey);
+      if (cached) return cached;
+    }
+    const response = await apiClient.get(`/api/request/${encodeURIComponent(requestId)}/advocate-review`);
+    if (response.data) {
+      localCache.set(cacheKey, response.data, 2);
+    }
+    return response.data;
+  },
+
+  submitAdvocateMaker: async (
+    requestId: string,
+    payload: { bar_council_id: string; legal_opinion: string; maker_notes?: string }
+  ): Promise<any> => {
+    const response = await apiClient.post(
+      `/api/request/${encodeURIComponent(requestId)}/advocate-review/submit-maker`,
+      payload
+    );
+    localCache.remove(`req_advocate_${requestId}`);
+    localCache.remove(`req_audit_${requestId}`);
+    localCache.remove(`req_details_${requestId}`);
+    return response.data;
+  },
+
+  actionAdvocateChecker: async (
+    requestId: string,
+    payload: { action: 'APPROVE' | 'REJECT' | 'RETURN'; checker_notes?: string }
+  ): Promise<any> => {
+    const response = await apiClient.post(
+      `/api/request/${encodeURIComponent(requestId)}/advocate-review/action-checker`,
+      payload
+    );
+    localCache.remove(`req_advocate_${requestId}`);
+    localCache.remove(`req_audit_${requestId}`);
+    localCache.remove(`req_details_${requestId}`);
+    return response.data;
+  },
+
+  // Phase 6: Case Audit Trail
+  getAuditTrail: async (
+    requestId: string,
+    params?: { limit?: number; offset?: number; event_type?: string },
+    forceRefresh = false
+  ): Promise<AuditTrailResponse> => {
+    const cacheKey = `req_audit_${requestId}_${params?.limit || 50}_${params?.offset || 0}_${params?.event_type || 'all'}`;
+    if (!forceRefresh) {
+      const cached = localCache.get<AuditTrailResponse>(cacheKey);
+      if (cached) return cached;
+    }
+    const response = await apiClient.get(`/api/request/${encodeURIComponent(requestId)}/audit-trail`, {
+      params,
+    });
+    if (response.data) {
+      localCache.set(cacheKey, response.data, 2);
+    }
     return response.data;
   },
 };

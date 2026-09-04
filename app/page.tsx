@@ -34,6 +34,9 @@ import {
   Play,
   Users,
   Landmark,
+  ShieldAlert,
+  Fingerprint,
+  TrendingDown,
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { DemoVideoGallery } from '@/components/landing/DemoVideoGallery';
@@ -42,7 +45,9 @@ export default function HomePage() {
   const router = useRouter();
   const { isAuthenticated, user, logout, initializeFromStorage } = useAuthStore();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [activeHeroTab, setActiveHeroTab] = useState<'TIMELINE' | 'OCR' | 'IGR' | 'TSR'>('TIMELINE');
+  const [activeHeroTab, setActiveHeroTab] = useState<
+    'TIMELINE' | 'FINDINGS' | 'RISK_GATE' | 'MAKER_CHECKER' | 'TSR'
+  >('TIMELINE');
 
   useEffect(() => {
     initializeFromStorage();
@@ -65,23 +70,26 @@ export default function HomePage() {
         </div>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden xl:flex items-center gap-6 text-xs font-semibold theme-text-secondary shrink-0">
-          <a href="#roles" className="hover:theme-text-primary transition-colors flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-bold">
-            <Users className="w-3.5 h-3.5" />
-            <span>4 Role Portals</span>
+        <nav className="hidden lg:flex items-center gap-7 text-xs sm:text-sm font-medium theme-text-secondary shrink-0">
+          <a href="#pillars" className="hover:theme-text-primary transition-colors flex items-center gap-1.5 text-slate-700 dark:text-slate-200 font-semibold">
+            <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <span>Platform</span>
           </a>
-          <a href="#ai-sro" className="hover:theme-text-primary transition-colors flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400 font-bold">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Gemini & SRO Engine</span>
+          <a href="#workflow" className="hover:theme-text-primary transition-colors">
+            How It Works
           </a>
-          <a href="#video-demos" className="hover:theme-text-primary transition-colors flex items-center gap-1.5">
-            <Play className="w-3.5 h-3.5 fill-current text-blue-500" />
-            <span>14 Video Demos</span>
+          <a href="#banks" className="hover:theme-text-primary transition-colors">
+            Bank Standards
           </a>
-          <a href="#features" className="hover:theme-text-primary transition-colors">Features</a>
-          <a href="#workflow" className="hover:theme-text-primary transition-colors">How It Works</a>
-          <a href="#banks" className="hover:theme-text-primary transition-colors">Bank Templates</a>
-          <Link href="/requests" className="hover:theme-text-primary transition-colors">Workspace</Link>
+          <Link
+            href="/requests"
+            className="hover:theme-text-primary transition-colors flex items-center gap-1.5 text-blue-600 dark:text-blue-400 font-semibold"
+          >
+            <span>Workspace</span>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+              Live
+            </span>
+          </Link>
         </nav>
 
         {/* CTA Buttons & Mobile Toggle */}
@@ -131,7 +139,7 @@ export default function HomePage() {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="xl:hidden p-2 rounded-xl theme-card border text-slate-600 dark:text-slate-300 hover:text-slate-900 shrink-0"
+            className="lg:hidden p-2 rounded-xl theme-card border text-slate-600 dark:text-slate-300 hover:text-slate-900 shrink-0"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -141,59 +149,37 @@ export default function HomePage() {
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="xl:hidden fixed inset-x-0 top-16 sm:top-20 z-30 theme-surface border-b theme-border p-5 space-y-4 shadow-xl animate-fadeIn">
-          <nav className="flex flex-col space-y-3 text-sm font-semibold theme-text-primary">
+        <div className="lg:hidden fixed inset-x-0 top-16 sm:top-20 z-30 theme-surface border-b theme-border p-5 space-y-4 shadow-xl animate-fadeIn">
+          <nav className="flex flex-col space-y-2 text-sm font-medium theme-text-primary">
             <a
-              href="#roles"
+              href="#pillars"
               onClick={() => setMobileMenuOpen(false)}
-              className="p-2 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold flex items-center gap-2"
+              className="p-2.5 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 font-semibold flex items-center justify-between"
             >
-              <Users className="w-4 h-4" />
-              <span>4 Role Gateways</span>
-            </a>
-            <a
-              href="#ai-sro"
-              onClick={() => setMobileMenuOpen(false)}
-              className="p-2 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>Gemini AI & State SRO Engine</span>
-            </a>
-            <a
-              href="#video-demos"
-              onClick={() => setMobileMenuOpen(false)}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2"
-            >
-              <Play className="w-4 h-4 fill-current text-blue-500" />
-              <span>14 Video Demonstration Series</span>
-            </a>
-            <a
-              href="#features"
-              onClick={() => setMobileMenuOpen(false)}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
-            >
-              Core Features
+              <span>Platform</span>
+              <ShieldCheck className="w-4 h-4" />
             </a>
             <a
               href="#workflow"
               onClick={() => setMobileMenuOpen(false)}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
-              3-Step Workflow
+              How It Works
             </a>
             <a
               href="#banks"
               onClick={() => setMobileMenuOpen(false)}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
-              Institutional Bank Formats
+              Bank Standards
             </a>
             <Link
               href="/requests"
               onClick={() => setMobileMenuOpen(false)}
-              className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"
+              className="p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between text-blue-600 dark:text-blue-400 font-semibold"
             >
-              Active Workspace Cases
+              <span>Case Workspace</span>
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </nav>
 
@@ -242,18 +228,18 @@ export default function HomePage() {
         <div className="text-center max-w-4xl mx-auto space-y-4">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 text-xs font-semibold text-blue-700 dark:text-blue-300 shadow-2xs">
             <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-            <span>Institutional Property Due-Diligence & Legal Scrutiny Architecture</span>
+            <span>Institutional Collateral Intelligence for Banks &amp; NBFCs</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold theme-text-primary tracking-tight leading-[1.15]">
-            Automated 30-Year Title Search &{' '}
+            Verify Faster. Detect Risk Earlier.{' '}
             <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-500 bg-clip-text text-transparent">
-              Bank-Standard Legal Clearance.
+              Disburse with Confidence.
             </span>
           </h1>
 
           <p className="text-xs sm:text-sm lg:text-base text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto">
-            Empanelled banking advocate workstation for mortgage title scrutiny. Powered by Google Gemini 2.0 Flash legal extraction, automated cross-referencing against Maharashtra IGR & Delhi DORIS land registries, and 1-click Title Search Report (TSR / LSR) generation.
+            Bank-grade collateral intelligence platform transforming mortgage title scrutiny into automated, evidence-backed intelligence. Featuring deterministic 0–100 Collateral Risk Scoring, automated Disbursement Readiness Gates with condition precedent extraction, 1-click citation navigation, and dual-control advocate sign-off.
           </p>
 
           {/* Action CTAs */}
@@ -267,20 +253,40 @@ export default function HomePage() {
             </Link>
 
             <a
-              href="#roles"
+              href="#pillars"
               className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl theme-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs sm:text-sm border theme-border shadow-2xs transition-all active:scale-95 cursor-pointer"
             >
-              <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-              <span>4 Role Gateways</span>
+              <ShieldAlert className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <span>4 Enterprise Pillars</span>
             </a>
 
             <a
-              href="#video-demos"
+              href="#roles"
               className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl theme-surface hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-semibold text-xs sm:text-sm border theme-border shadow-2xs transition-all active:scale-95 cursor-pointer"
             >
-              <Play className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400 fill-current" />
-              <span>14 Video Demos</span>
+              <Users className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+              <span>4 Role Gateways</span>
             </a>
+          </div>
+
+          {/* Trust Highlights Strip */}
+          <div className="pt-2 flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs font-medium text-slate-500 dark:text-slate-400">
+            <div className="flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-emerald-500" />
+              <span>0–100 Explainable Risk Score</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Award className="w-4 h-4 text-blue-500" />
+              <span>Maker-Checker Dual Control</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Lock className="w-4 h-4 text-violet-500" />
+              <span>PostgreSQL Append-Only Audit Trail</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Database className="w-4 h-4 text-indigo-500" />
+              <span>State Land Registry Cross-Check</span>
+            </div>
           </div>
         </div>
 
@@ -303,9 +309,10 @@ export default function HomePage() {
             <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-200/70 dark:bg-slate-900 border theme-border text-xs font-semibold overflow-x-auto">
               {[
                 { id: 'TIMELINE', label: 'Title Timeline', icon: GitBranch },
-                { id: 'OCR', label: 'Gemini OCR Matrix', icon: FileSpreadsheet },
-                { id: 'IGR', label: 'SRO Registry Match', icon: Database },
-                { id: 'TSR', label: 'Live TSR Editor', icon: FileCheck2 },
+                { id: 'FINDINGS', label: 'Evidence Findings', icon: ShieldAlert },
+                { id: 'RISK_GATE', label: 'Risk & Readiness Gate', icon: ShieldCheck },
+                { id: 'MAKER_CHECKER', label: 'Advocate Sign-Off', icon: Award },
+                { id: 'TSR', label: 'Bank TSR Report', icon: FileCheck2 },
               ].map((tab) => {
                 const Icon = tab.icon;
                 const active = activeHeroTab === tab.id;
@@ -313,7 +320,7 @@ export default function HomePage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveHeroTab(tab.id as any)}
-                    className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
                       active
                         ? 'bg-blue-600 text-white shadow-sm'
                         : 'theme-text-secondary hover:theme-text-primary'
@@ -386,64 +393,164 @@ export default function HomePage() {
               </div>
             )}
 
-            {/* OCR Extractor View */}
-            {activeHeroTab === 'OCR' && (
+            {/* Evidence-Backed Findings Matrix View */}
+            {activeHeroTab === 'FINDINGS' && (
               <div className="space-y-4 animate-fadeIn">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <h3 className="text-sm font-bold theme-text-primary flex items-center gap-2">
-                    <FileSpreadsheet className="w-4 h-4 text-blue-500" />
-                    <span>Google Gemini 2.0 Flash Legal OCR Extraction</span>
+                    <ShieldAlert className="w-4 h-4 text-rose-500" />
+                    <span>Evidence-Backed Findings Matrix (Page-Anchored Citations)</span>
                   </h3>
-                  <span className="text-xs font-mono text-emerald-600 dark:text-emerald-400 font-bold">Confidence: 98.4% Match</span>
+                  <div className="flex items-center gap-1.5 text-xs font-mono">
+                    <span className="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold border border-rose-500/20">
+                      0 Open Critical
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold border border-amber-500/20">
+                      1 Pre-Disbursement CP
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/20">
+                      3 Resolved
+                    </span>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                  <div className="p-3.5 rounded-xl theme-card border">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Borrower Name</span>
-                    <p className="font-bold theme-text-primary">Mr. Rahul Sharma</p>
+                <div className="space-y-2.5 text-xs">
+                  <div className="p-3.5 rounded-xl theme-card border border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-950/20 space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200">
+                          RESOLVED
+                        </span>
+                        <span className="font-bold theme-text-primary">Survey & CTS Sub-Division Alignment</span>
+                      </div>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono text-[10px] font-semibold border border-blue-500/20">
+                        <FileText className="w-3 h-3" /> Sale_Deed_2018.pdf : p.14
+                      </span>
+                    </div>
+                    <p className="text-[11px] theme-text-secondary leading-relaxed">
+                      Initial query on CTS 589 vs 589/2 sub-division successfully cured via Supplementary Rectification Deed #1294 registered on 14/02/2026.
+                    </p>
                   </div>
-                  <div className="p-3.5 rounded-xl theme-card border">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Lender Bank</span>
-                    <p className="font-bold theme-text-primary">State Bank of India</p>
-                  </div>
-                  <div className="p-3.5 rounded-xl theme-card border">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">Property Schedule</span>
-                    <p className="font-bold theme-text-primary truncate">Flat 402, Sunshine Heights</p>
-                  </div>
-                  <div className="p-3.5 rounded-xl theme-card border">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase block mb-1">CTS / Survey</span>
-                    <p className="font-bold theme-text-primary font-mono">CTS No 589 / Sur. 142/3</p>
+
+                  <div className="p-3.5 rounded-xl theme-card border border-amber-500/30 bg-amber-500/5 dark:bg-amber-950/20 space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-900/60 text-amber-800 dark:text-amber-200">
+                          CONDITION PRECEDENT
+                        </span>
+                        <span className="font-bold theme-text-primary">Original Title Document Deposit</span>
+                      </div>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono text-[10px] font-semibold border border-blue-500/20">
+                        <FileText className="w-3 h-3" /> Allotment_1998.pdf : p.1
+                      </span>
+                    </div>
+                    <p className="text-[11px] theme-text-secondary leading-relaxed">
+                      Borrower to deposit original registered Parent Allotment Deed dated 12/03/1998 into physical branch custody prior to loan disbursement.
+                    </p>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* IGR Search View */}
-            {activeHeroTab === 'IGR' && (
+            {/* Collateral Risk Score & Disbursement Readiness Gate View */}
+            {activeHeroTab === 'RISK_GATE' && (
               <div className="space-y-4 animate-fadeIn">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <h3 className="text-sm font-bold theme-text-primary flex items-center gap-2">
-                    <Database className="w-4 h-4 text-blue-500" />
-                    <span>State Land Registry (IGR) Cross-Verification</span>
+                    <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                    <span>0–100 Collateral Risk Engine &amp; Disbursement Gate</span>
                   </h3>
-                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
-                    SRO Index-II Match (100%)
+                  <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 w-fit">
+                    Score: 18 / 100 &bull; Grade A (Prime Marketable)
                   </span>
                 </div>
 
-                <div className="p-4 rounded-xl theme-card border text-xs space-y-2.5">
-                  <div className="flex justify-between border-b theme-border pb-2">
-                    <span className="theme-text-secondary">Registration Reference:</span>
-                    <span className="font-mono text-blue-600 dark:text-blue-400 font-bold">Doc #4589/2026 (Book-I)</span>
+                {/* 4 Dimension Score Breakdown */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                  <div className="p-3 rounded-xl theme-card border space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Title Integrity</span>
+                    <div className="text-base font-extrabold text-blue-600 dark:text-blue-400">35 / 35</div>
+                    <p className="text-[10px] theme-text-muted">Unbroken 30-year genealogy</p>
                   </div>
-                  <div className="flex justify-between border-b theme-border pb-2">
-                    <span className="theme-text-secondary">Owner in SRO Records:</span>
-                    <span className="font-bold theme-text-primary">Mr. Rahul Sharma</span>
+                  <div className="p-3 rounded-xl theme-card border space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Encumbrance & SRO</span>
+                    <div className="text-base font-extrabold text-violet-600 dark:text-violet-400">30 / 30</div>
+                    <p className="text-[10px] theme-text-muted">Zero adverse registry charges</p>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="theme-text-secondary">Encumbrance Finding:</span>
-                    <span className="font-bold text-emerald-600 dark:text-emerald-400">NIL Charge (Clear & Marketable)</span>
+                  <div className="p-3 rounded-xl theme-card border space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Document Chain</span>
+                    <div className="text-base font-extrabold text-emerald-600 dark:text-emerald-400">18 / 20</div>
+                    <p className="text-[10px] theme-text-muted">Parent deed certified copy ok</p>
                   </div>
+                  <div className="p-3 rounded-xl theme-card border space-y-1">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase block">Identity & KYC</span>
+                    <div className="text-base font-extrabold text-cyan-600 dark:text-cyan-400">15 / 15</div>
+                    <p className="text-[10px] theme-text-muted">PAN / Aadhaar exact match</p>
+                  </div>
+                </div>
+
+                {/* Gate Indicator */}
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-between text-xs text-amber-900 dark:text-amber-200">
+                  <div className="flex items-center gap-2">
+                    <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                    <span>
+                      <strong>Gate Status: CONDITIONAL DISBURSEMENT</strong> &mdash; 1 Pre-Disbursement Condition Precedent (CP) required prior to loan drawdown.
+                    </span>
+                  </div>
+                  <span className="px-2 py-0.5 rounded bg-amber-500/20 font-bold text-[10px] uppercase font-mono shrink-0">
+                    CP-1 Active
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Dual-Control Advocate Review View */}
+            {activeHeroTab === 'MAKER_CHECKER' && (
+              <div className="space-y-4 animate-fadeIn">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h3 className="text-sm font-bold theme-text-primary flex items-center gap-2">
+                    <Award className="w-4 h-4 text-blue-500" />
+                    <span>Dual-Control Legal Review &amp; Tamper-Evident Digital Seal</span>
+                  </h3>
+                  <span className="inline-flex items-center gap-1 px-3 py-0.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 w-fit">
+                    Section 24 Dual Sign-Off Complete
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                  {/* Maker Card */}
+                  <div className="p-3.5 rounded-xl theme-card border space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">Investigating Advocate (Maker)</span>
+                      <span className="font-mono text-[10px] font-bold text-blue-600 dark:text-blue-400">BCI: D/1420/2012</span>
+                    </div>
+                    <p className="font-bold theme-text-primary text-sm">Adv. Suresh Verma</p>
+                    <p className="text-[11px] theme-text-secondary italic">
+                      &ldquo;Title verified continuous and marketable from 1998 to 2026. Approved subject to physical deposit of allotment original.&rdquo;
+                    </p>
+                  </div>
+
+                  {/* Checker Card */}
+                  <div className="p-3.5 rounded-xl theme-card border border-emerald-500/30 bg-emerald-500/5 dark:bg-emerald-950/20 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Senior Counsel (Checker)</span>
+                      <span className="font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Approved</span>
+                    </div>
+                    <p className="font-bold theme-text-primary text-sm">Adv. Ananya Iyer (Senior Partner)</p>
+                    <p className="text-[11px] theme-text-secondary italic">
+                      &ldquo;Concur with findings. Collateral cleared for mortgage sanction. Conditions precedent logged in credit gate.&rdquo;
+                    </p>
+                  </div>
+                </div>
+
+                {/* Digital Seal Digest */}
+                <div className="p-2.5 rounded-xl bg-slate-900 text-white dark:bg-slate-950 border border-slate-800 flex items-center justify-between text-[11px] font-mono">
+                  <div className="flex items-center gap-2 truncate">
+                    <Fingerprint className="w-4 h-4 text-violet-400 shrink-0" />
+                    <span className="text-slate-400">SHA-256 Digital Seal:</span>
+                    <span className="text-slate-200 truncate">9f8e7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f7a8b9c0d1e2f3a4b5c6d7e8f</span>
+                  </div>
+                  <span className="text-emerald-400 font-bold shrink-0 ml-2">VERIFIED UNTAMPERED</span>
                 </div>
               </div>
             )}
@@ -477,29 +584,155 @@ export default function HomePage() {
         {/* ── Key Metrics & Institutional Highlights ───────────────── */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 pt-2">
           <div className="p-5 rounded-2xl theme-surface border text-center space-y-1 shadow-xs">
-            <span className="text-2xl sm:text-3xl font-extrabold text-blue-600 dark:text-blue-400">30 Years</span>
-            <p className="text-xs font-semibold theme-text-primary">Chain of Title Trace</p>
-            <p className="text-[11px] theme-text-muted">Unbroken ownership genealogy</p>
+            <span className="text-2xl sm:text-3xl font-extrabold text-blue-600 dark:text-blue-400">0 – 100</span>
+            <p className="text-xs font-semibold theme-text-primary">Deterministic Risk Score</p>
+            <p className="text-[11px] theme-text-muted">Explainable 4-dimension model</p>
           </div>
 
           <div className="p-5 rounded-2xl theme-surface border text-center space-y-1 shadow-xs">
             <span className="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400">100% SRO</span>
             <p className="text-xs font-semibold theme-text-primary">Registry Cross-Verification</p>
-            <p className="text-[11px] theme-text-muted">Maharashtra e-Search & Delhi DORIS</p>
+            <p className="text-[11px] theme-text-muted">Maharashtra e-Search &amp; Delhi DORIS</p>
           </div>
 
           <div className="p-5 rounded-2xl theme-surface border text-center space-y-1 shadow-xs">
-            <span className="text-2xl sm:text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">&lt; 3 Mins</span>
-            <p className="text-xs font-semibold theme-text-primary">Automated Turnaround</p>
-            <p className="text-[11px] theme-text-muted">Gemini OCR & Legal Extraction</p>
+            <span className="text-2xl sm:text-3xl font-extrabold text-indigo-600 dark:text-indigo-400">1-Click</span>
+            <p className="text-xs font-semibold theme-text-primary">Verifiable Citation Jump</p>
+            <p className="text-[11px] theme-text-muted">Page-anchored deed evidence</p>
           </div>
 
           <div className="p-5 rounded-2xl theme-surface border text-center space-y-1 shadow-xs">
-            <span className="text-2xl sm:text-3xl font-extrabold text-amber-600 dark:text-amber-400">12+ Banks</span>
-            <p className="text-xs font-semibold theme-text-primary">Official Legal Formats</p>
-            <p className="text-[11px] theme-text-muted">SBI, HDFC, Axis, ICICI & PNB</p>
+            <span className="text-2xl sm:text-3xl font-extrabold text-amber-600 dark:text-amber-400">Dual-Control</span>
+            <p className="text-xs font-semibold theme-text-primary">Maker-Checker Governance</p>
+            <p className="text-[11px] theme-text-muted">Bar Council ID &amp; SHA-256 seal</p>
           </div>
         </div>
+
+        {/* ── 4 Institutional Pillars of Collateral Intelligence ─────── */}
+        <section id="pillars" className="space-y-8 pt-4">
+          <div className="text-center space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-bold uppercase tracking-wider">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Institutional Product Architecture</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold theme-text-primary">
+              The 4 Pillars of Bank-Grade Collateral Intelligence
+            </h2>
+            <p className="text-xs sm:text-sm theme-text-secondary max-w-2xl mx-auto">
+              Engineered to replace subjective legal scrutiny with verifiable evidence, deterministic risk scoring, automated disbursement gates, and dual-control sign-offs.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Pillar 1 */}
+            <div className="p-6 rounded-2xl theme-surface border border-slate-200 dark:border-slate-800/80 hover:border-blue-500/50 transition-all space-y-4 shadow-sm hover:shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold border border-blue-500/20">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                  PILLAR 1
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold theme-text-primary">
+                  Evidence-Backed Findings &amp; 1-Click Citation Jump
+                </h3>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
+                  Verbatim Source Anchoring
+                </p>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                Every title break, survey subdivision mismatch, and encumbrance defect is converted into a canonical finding anchored to the exact deed page and text snippet. Reviewers verify findings in one click with zero manual searching.
+              </p>
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>Page-level canvas highlight &amp; in-place advocate waiver notes</span>
+              </div>
+            </div>
+
+            {/* Pillar 2 */}
+            <div className="p-6 rounded-2xl theme-surface border border-slate-200 dark:border-slate-800/80 hover:border-violet-500/50 transition-all space-y-4 shadow-sm hover:shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400 flex items-center justify-center font-bold border border-violet-500/20">
+                  <Scale className="w-6 h-6" />
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-violet-50 dark:bg-violet-950/60 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800">
+                  PILLAR 2
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold theme-text-primary">
+                  Deterministic 0–100 Collateral Risk Engine
+                </h3>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
+                  Explainable Multi-Dimension Scoring
+                </p>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                Computes a mathematically reproducible risk score across Title Integrity (/35), Encumbrance &amp; Registry (/30), Document Chain (/20), and Identity &amp; KYC (/15). Every deduction provides an exact explainability trail with zero black-box hallucination.
+              </p>
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>Grade A/B/C/D classification with tenant policy weight overrides</span>
+              </div>
+            </div>
+
+            {/* Pillar 3 */}
+            <div className="p-6 rounded-2xl theme-surface border border-slate-200 dark:border-slate-800/80 hover:border-emerald-500/50 transition-all space-y-4 shadow-sm hover:shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold border border-emerald-500/20">
+                  <ShieldCheck className="w-6 h-6" />
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                  PILLAR 3
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold theme-text-primary">
+                  Automated Disbursement Readiness Gate
+                </h3>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
+                  Machine-Readable Conditions Precedent (CP)
+                </p>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                Eliminates credit committee bottlenecks with automated readiness status: READY (clean clear title), CONDITIONAL (actionable CPs required before loan drawdown), or BLOCKED (fatal title or statutory attachment blocker).
+              </p>
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>Direct LOS/LMS integration readiness for instantaneous sanctioning</span>
+              </div>
+            </div>
+
+            {/* Pillar 4 */}
+            <div className="p-6 rounded-2xl theme-surface border border-slate-200 dark:border-slate-800/80 hover:border-indigo-500/50 transition-all space-y-4 shadow-sm hover:shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold border border-indigo-500/20">
+                  <Award className="w-6 h-6" />
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                  PILLAR 4
+                </span>
+              </div>
+              <div>
+                <h3 className="text-base font-bold theme-text-primary">
+                  Dual-Control Advocate Sign-off &amp; SHA-256 Seal
+                </h3>
+                <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
+                  Section 24 Maker-Checker Governance
+                </p>
+              </div>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                Enforces institutional separation of duties. Empaneled Advocate (Maker) records Bar Council ID and submits preliminary opinion; Senior Counsel (Checker) validates title conditions and seals with a tamper-evident SHA-256 digital digest.
+              </p>
+              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                <span>Enforced by PostgreSQL append-only immutability database triggers</span>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* ── 4-Role Gateway Section (NEW) ──────────────────────────── */}
         <section id="roles" className="space-y-8 pt-4">
