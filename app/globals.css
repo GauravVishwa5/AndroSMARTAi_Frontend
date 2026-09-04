@@ -289,3 +289,12 @@ body {
     box-shadow: none !important;
   }
 }
+
+/* Scrollbar hide utility — for horizontally-scrollable tab bars */
+.scrollbar-hide {
+  -ms-overflow-style: none;   /* IE / Edge */
+  scrollbar-width: none;      /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;              /* Chrome / Safari / Opera */
+}

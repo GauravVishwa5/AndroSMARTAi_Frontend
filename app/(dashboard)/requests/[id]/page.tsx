@@ -71,10 +71,18 @@ import {
 } from '@/types/enterprise';
 import { getDemoWorkspaceCase } from '@/lib/demoData';
 
+/** Returns true only for demo/investor presentation sessions. */
+function isDemoSession(tokenValue: string | null | undefined, username: string | null | undefined): boolean {
+  if (tokenValue === 'demo-investor-token-pvs-2026') return true;
+  if (username && (username.startsWith('demo.') || username === 'demo')) return true;
+  return false;
+}
+
 export default function RequestWorkspacePage() {
   const params = useParams();
   const requestId = (params?.id as string) || 'REQ-101';
-  const { user } = useAuthStore();
+  const { user, token } = useAuthStore();
+  const isDemo = isDemoSession(token?.access_token, user?.username);
 
   // Active Workspace Tab
   const [activeTab, setActiveTab] = useState<
@@ -237,8 +245,10 @@ export default function RequestWorkspacePage() {
   };
 
   useEffect(() => {
-    if (requestId) {
-      // 1. Populate demo workspace data immediately for seamless instant presentation
+    if (!requestId) return;
+
+    if (isDemo) {
+      // Demo / investor session: pre-fill with curated showcase data immediately
       const demo = getDemoWorkspaceCase(requestId);
       setRequestData(demo.requestData);
       setReadiness(demo.readiness);
@@ -260,12 +270,12 @@ export default function RequestWorkspacePage() {
       } else {
         setRequestStatus('Pending');
       }
-
-      // 2. Fetch live updates if server is available, gracefully preserving demo data on error
+    } else {
+      // Real authenticated user: fetch live data from backend only
       loadDetails(false);
       loadEnterpriseData(false);
     }
-  }, [requestId]);
+  }, [requestId, isDemo]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleOpenEditModal = () => {
     const st = requestData?.state || 'Delhi';
@@ -395,7 +405,9 @@ export default function RequestWorkspacePage() {
       rawDocsList = [];
     }
   }
-  if (rawDocsList.length === 0) {
+  // Only fall back to demo documents in a demo session;
+  // real users see an empty document panel if backend has no docs yet.
+  if (rawDocsList.length === 0 && isDemo) {
     const demoFallback = getDemoWorkspaceCase(requestId);
     rawDocsList = demoFallback.docs || [];
   }
@@ -867,24 +879,25 @@ export default function RequestWorkspacePage() {
           </div>
 
 
-          {/* 1280x800 Optimized Segmented Tab Bar */}
-          <div className="border-b theme-border bg-white dark:bg-slate-900 p-1.5 flex items-center justify-between gap-1 overflow-x-auto">
-            <div className="flex items-center gap-1 p-0.5 rounded-md bg-slate-100 dark:bg-slate-800/80 border theme-border text-xs w-full justify-between">
+          {/* Workspace Tab Bar – scrollable, no truncation */}
+          <div className="border-b theme-border bg-white dark:bg-slate-900">
+            {/* Desktop / Tablet: scrollable pill tabs */}
+            <div className="hidden sm:flex items-center gap-0.5 overflow-x-auto px-2 pt-2 pb-0 scrollbar-hide">
               {[
-                { id: 'TIMELINE', shortLabel: 'Timeline', icon: GitBranch },
-                { id: 'EXTRACTED_OCR', shortLabel: 'OCR Data', icon: FileSpreadsheet },
-                { id: 'IGR_SEARCH', shortLabel: 'IGR Search', icon: Database },
-                { id: 'DISCREPANCIES', shortLabel: 'Risk & Flags', icon: AlertTriangle },
+                { id: 'TIMELINE',      label: 'Timeline',    icon: GitBranch },
+                { id: 'EXTRACTED_OCR', label: 'OCR Data',    icon: FileSpreadsheet },
+                { id: 'IGR_SEARCH',    label: 'IGR Search',  icon: Database },
+                { id: 'DISCREPANCIES', label: 'Risk & Flags',icon: AlertTriangle },
                 {
                   id: 'FINDINGS',
-                  shortLabel: 'Findings',
+                  label: 'Findings',
                   icon: ShieldAlert,
                   badge: caseFindings.filter((f) => f.status === 'OPEN' && (f.severity === 'CRITICAL' || f.severity === 'HIGH')).length,
                 },
-                { id: 'LEGAL_SIGN_OFF', shortLabel: 'Sign-Off', icon: Award },
-                { id: 'AUDIT_TRAIL', shortLabel: 'Audit', icon: History },
-                { id: 'SITE_SURVEY', shortLabel: 'Site Survey', icon: Camera },
-                { id: 'TSR_REPORT', shortLabel: 'TSR Report', icon: FileCheck2 },
+                { id: 'LEGAL_SIGN_OFF', label: 'Sign-Off',   icon: Award },
+                { id: 'AUDIT_TRAIL',   label: 'Audit',       icon: History },
+                { id: 'SITE_SURVEY',   label: 'Site Survey', icon: Camera },
+                { id: 'TSR_REPORT',    label: 'TSR Report',  icon: FileCheck2 },
               ].map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
@@ -892,17 +905,17 @@ export default function RequestWorkspacePage() {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
-                    className={`flex-1 py-1 px-1.5 rounded text-[11px] font-medium transition-colors flex items-center justify-center gap-1 whitespace-nowrap cursor-pointer ${
+                    className={`relative flex items-center gap-1.5 px-3 py-2 text-[11.5px] font-medium whitespace-nowrap transition-colors cursor-pointer border-b-2 -mb-px ${
                       isActive
-                        ? 'bg-white dark:bg-slate-900 text-[#1D4ED8] dark:text-blue-400 font-semibold shadow-2xs border border-slate-200 dark:border-slate-700'
-                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                        ? 'border-violet-600 text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-950/20 rounded-t-md'
+                        : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/40 rounded-t-md'
                     }`}
                   >
-                    <Icon className="w-3 h-3 shrink-0" />
-                    <span>{tab.shortLabel}</span>
-                    {tab.badge ? (
-                      <span className="ml-0.5 px-1 py-0.2 rounded-full text-[9px] font-bold bg-rose-500 text-white leading-none">
-                        {tab.badge}
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span>{tab.label}</span>
+                    {(tab as any).badge ? (
+                      <span className="ml-0.5 min-w-[16px] h-4 px-1 flex items-center justify-center rounded-full text-[9px] font-bold bg-rose-500 text-white leading-none">
+                        {(tab as any).badge}
                       </span>
                     ) : null}
                   </button>
@@ -910,17 +923,17 @@ export default function RequestWorkspacePage() {
               })}
             </div>
 
-            {/* Quick Dropdown on smaller views */}
-            <div className="sm:hidden shrink-0">
+            {/* Mobile: compact dropdown */}
+            <div className="sm:hidden px-3 py-2">
               <select
                 value={activeTab}
                 onChange={(e) => setActiveTab(e.target.value as any)}
-                className="px-2.5 py-1.5 rounded-lg border theme-border theme-card text-xs font-bold theme-text-primary focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="w-full px-2.5 py-1.5 rounded-lg border theme-border theme-card text-xs font-bold theme-text-primary focus:outline-none focus:ring-1 focus:ring-violet-500"
               >
                 <option value="TIMELINE">🌿 Flow of Title Timeline</option>
                 <option value="EXTRACTED_OCR">📊 OCR Data Grid</option>
                 <option value="IGR_SEARCH">🏛️ IGR Registry Search</option>
-                <option value="DISCREPANCIES">⚠️ Risk & Flags</option>
+                <option value="DISCREPANCIES">⚠️ Risk &amp; Flags</option>
                 <option value="FINDINGS">🛡️ Findings Matrix</option>
                 <option value="LEGAL_SIGN_OFF">⚖️ Advocate Sign-Off</option>
                 <option value="AUDIT_TRAIL">📜 Forensic Audit Trail</option>
