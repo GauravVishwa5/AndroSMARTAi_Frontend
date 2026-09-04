@@ -799,10 +799,10 @@ export default function HomePage() {
               <div className="mt-6 pt-2">
                 <Link
                   href="/branch"
-                  onClick={() => activateDemoPersona('branch')}
+                  onClick={() => { if (!isAuthenticated) activateDemoPersona('branch'); }}
                   className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold text-xs transition-all shadow-md shadow-blue-500/20 group-hover:shadow-blue-500/30 cursor-pointer"
                 >
-                  <span>Launch Branch Portal</span>
+                  <span>{isAuthenticated ? 'Go to Branch Portal' : 'Launch Branch Portal'}</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
@@ -855,10 +855,10 @@ export default function HomePage() {
               <div className="mt-6 pt-2">
                 <Link
                   href="/legal"
-                  onClick={() => activateDemoPersona('legal')}
+                  onClick={() => { if (!isAuthenticated) activateDemoPersona('legal'); }}
                   className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-semibold text-xs transition-all shadow-md shadow-indigo-500/20 group-hover:shadow-indigo-500/30 cursor-pointer"
                 >
-                  <span>Open Scrutiny Queue</span>
+                  <span>{isAuthenticated ? 'Go to Scrutiny Queue' : 'Open Scrutiny Queue'}</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
@@ -911,18 +911,20 @@ export default function HomePage() {
               <div className="mt-6 pt-2 space-y-2">
                 <Link
                   href="/applicant/dashboard"
-                  onClick={() => activateDemoPersona('applicant')}
+                  onClick={() => { if (!isAuthenticated) activateDemoPersona('applicant'); }}
                   className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-semibold text-xs transition-all shadow-md shadow-emerald-500/20 group-hover:shadow-emerald-500/30 cursor-pointer"
                 >
-                  <span>Borrower Dashboard</span>
+                  <span>{isAuthenticated ? 'Go to Borrower Dashboard' : 'Borrower Dashboard'}</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
-                <Link
-                  href="/applicant/activate"
-                  className="flex items-center justify-center gap-1.5 w-full py-1.5 px-3 rounded-lg border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-semibold text-[11px] transition-colors"
-                >
-                  <span>🔑 Activate Account via Token</span>
-                </Link>
+                {!isAuthenticated && (
+                  <Link
+                    href="/applicant/activate"
+                    className="flex items-center justify-center gap-1.5 w-full py-1.5 px-3 rounded-lg border border-emerald-200 dark:border-emerald-800/80 bg-emerald-50/50 dark:bg-emerald-950/30 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 font-semibold text-[11px] transition-colors"
+                  >
+                    <span>🔑 Activate Account via Token</span>
+                  </Link>
+                )}
               </div>
             </div>
 
@@ -973,10 +975,10 @@ export default function HomePage() {
               <div className="mt-6 pt-2">
                 <Link
                   href="/admin"
-                  onClick={() => activateDemoPersona('admin')}
+                  onClick={() => { if (!isAuthenticated) activateDemoPersona('admin'); }}
                   className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-semibold text-xs transition-all shadow-md shadow-amber-500/20 group-hover:shadow-amber-500/30 cursor-pointer"
                 >
-                  <span>Admin Console</span>
+                  <span>{isAuthenticated ? 'Go to Admin Console' : 'Admin Console'}</span>
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
               </div>
