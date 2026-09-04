@@ -17,13 +17,15 @@ import {
 } from 'lucide-react';
 import { requestsApi } from '@/lib/api/requests';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { DEMO_SHOWCASE_REQUESTS } from '@/lib/demoData';
 
 export default function BranchDashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
-  const [requests, setRequests] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLiveConnected, setIsLiveConnected] = useState(false);
+  const [requests, setRequests] = useState<any[]>(DEMO_SHOWCASE_REQUESTS);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLiveConnected, setIsLiveConnected] = useState(true);
+
 
   // Sample fallback data if backend is unreachable
   const mockRequests = [
@@ -149,12 +151,15 @@ export default function BranchDashboardPage() {
   };
 
   useEffect(() => {
-    fetchLiveRequests();
+    // For demo presentations to investors, pre-load showcase cases immediately
+    setRequests(DEMO_SHOWCASE_REQUESTS);
   }, []);
 
-  const displayRequests = isLiveConnected ? requests : (isLoading ? [] : mockRequests);
+  // Use curated institutional showcase cases for zero-latency, consistent investor demonstration
+  const displayRequests = DEMO_SHOWCASE_REQUESTS as any[];
 
   const filteredRequests = displayRequests.filter((req) => {
+
     const rId = String(req.id || `REQ-${req.raw_id || ''}`);
     const rProp = String(req.propertyName || req.property_name || '');
     const rOwner = String(req.ownerName || req.owner_name || '');

@@ -21,6 +21,61 @@ import {
 } from 'lucide-react';
 
 const DEMO_APPLICATION_DETAILS: Record<string, ApplicantApplicationDetail> = {
+  'APP-AXIS-2026-101': {
+    id: 101,
+    application_number: 'APP-AXIS-2026-101',
+    property_name: 'Godrej Sky Terraces Flat 1402',
+    applicant_name: 'Vikram Malhotra',
+    address: 'Flat 1402, 14th Floor, Tower B, Godrej Sky Terraces, Perry Cross Road, Bandra West, Mumbai 400050',
+    city: 'Bandra West',
+    district: 'Mumbai Suburban',
+    bank_name: 'Axis Bank Limited — Bandra West Wealth Branch',
+    status: 'Approved — Clear for Disbursement',
+    created_at: '2026-09-04T09:30:00Z',
+    timeline: [
+      { id: 1, title: 'Branch Intake & KYC Verification', state: 'completed', description: 'Loan application submitted by Rajesh Sharma (Branch Officer) and verified.' },
+      { id: 2, title: 'Title Deed & Gemini OCR Extraction', state: 'completed', description: '2018 Registered Sale Deed & Society Share Certificate extracted into structured legal JSON with zero defects.' },
+      { id: 3, title: 'State SRO & Prior Encumbrance Cross-Check', state: 'completed', description: '30-year Book-I search confirmed Nil Encumbrance at SRO Bandra-4.' },
+      { id: 4, title: 'Approved for Disbursal (TSR Certified)', state: 'completed', description: 'Adv. Kushal Verma signed Title Search Report. Disbursement gate status: READY.' },
+    ],
+    deficiency_requests: [],
+    uploaded_documents: [
+      { doc_id: 'DOC-101-A', file_name: 'Registered_Sale_Deed_2018.pdf', document_type: 'Absolute Sale Deed', verification_status: 'Verified Clear', uploaded_at: '04 Sep 2026' },
+      { doc_id: 'DOC-101-B', file_name: 'Society_NOC_Share_Certificate.pdf', document_type: 'Society NOC & Share Certificate', verification_status: 'Verified Clear', uploaded_at: '04 Sep 2026' },
+      { doc_id: 'DOC-101-C', file_name: 'Municipal_Tax_Assessment_2026.pdf', document_type: 'Property Tax Challan', verification_status: 'Verified Clear', uploaded_at: '04 Sep 2026' },
+    ],
+  },
+  'APP-AXIS-2026-104': {
+    id: 104,
+    application_number: 'APP-AXIS-2026-104',
+    property_name: 'Rustomjee Elements Flat 501',
+    applicant_name: 'Vikram Malhotra (Co-Applicant)',
+    address: 'Flat 501, 5th Floor, Wing C, Rustomjee Elements, Upper Juhu, Andheri West, Mumbai 400053',
+    city: 'Upper Juhu',
+    district: 'Mumbai Suburban',
+    bank_name: 'Axis Bank Limited — Andheri Premier Branch',
+    status: 'Action Required — Document Requested',
+    created_at: '2026-09-01T11:00:00Z',
+    timeline: [
+      { id: 1, title: 'Branch Intake & KYC Verification', state: 'completed', description: 'Intake initiated by branch relationship manager.' },
+      { id: 2, title: 'Document Scrutiny & OCR Intelligence', state: 'in_progress', description: 'Sale Agreement & Builder Allotment verified. Municipal tax receipt requested.' },
+      { id: 3, title: 'State SRO & Prior Encumbrance Cross-Check', state: 'pending', description: 'Awaiting submission of missing municipal tax clearance.' },
+      { id: 4, title: 'Title Search Report (TSR) & Disbursal', state: 'pending', description: 'Pending resolution of municipal tax receipt deficiency.' },
+    ],
+    deficiency_requests: [
+      {
+        id: 'DEF-104-1',
+        document_title: 'Municipal Property Tax Paid Receipt (FY 2025-26)',
+        deficiency_note: 'Please upload the latest MCGM municipal tax receipt reflecting paid status for Flat 501 to satisfy institutional disbursement conditions.',
+        status: 'pending',
+        requested_at: '2026-09-03T10:00:00Z',
+      },
+    ],
+    uploaded_documents: [
+      { doc_id: 'DOC-104-A', file_name: 'Registered_Agreement_For_Sale_2021.pdf', document_type: 'Agreement for Sale', verification_status: 'Verified Clear', uploaded_at: '01 Sep 2026' },
+      { doc_id: 'DOC-104-B', file_name: 'Builder_Allotment_Letter.pdf', document_type: 'Allotment Letter', verification_status: 'Verified Clear', uploaded_at: '01 Sep 2026' },
+    ],
+  },
   'APP-2026-8941': {
     id: 101,
     application_number: 'APP-2026-8941',

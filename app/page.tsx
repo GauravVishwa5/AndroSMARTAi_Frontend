@@ -40,6 +40,8 @@ import {
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 import { DemoVideoGallery } from '@/components/landing/DemoVideoGallery';
+import { activateDemoPersona } from '@/lib/demoData';
+
 
 export default function HomePage() {
   const router = useRouter();
@@ -797,6 +799,7 @@ export default function HomePage() {
               <div className="mt-6 pt-2">
                 <Link
                   href="/branch"
+                  onClick={() => activateDemoPersona('branch')}
                   className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-semibold text-xs transition-all shadow-md shadow-blue-500/20 group-hover:shadow-blue-500/30 cursor-pointer"
                 >
                   <span>Launch Branch Portal</span>
@@ -852,6 +855,7 @@ export default function HomePage() {
               <div className="mt-6 pt-2">
                 <Link
                   href="/legal"
+                  onClick={() => activateDemoPersona('legal')}
                   className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-semibold text-xs transition-all shadow-md shadow-indigo-500/20 group-hover:shadow-indigo-500/30 cursor-pointer"
                 >
                   <span>Open Scrutiny Queue</span>
@@ -907,6 +911,7 @@ export default function HomePage() {
               <div className="mt-6 pt-2 space-y-2">
                 <Link
                   href="/applicant/dashboard"
+                  onClick={() => activateDemoPersona('applicant')}
                   className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-semibold text-xs transition-all shadow-md shadow-emerald-500/20 group-hover:shadow-emerald-500/30 cursor-pointer"
                 >
                   <span>Borrower Dashboard</span>
@@ -968,6 +973,7 @@ export default function HomePage() {
               <div className="mt-6 pt-2">
                 <Link
                   href="/admin"
+                  onClick={() => activateDemoPersona('admin')}
                   className="flex items-center justify-center gap-2 w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-semibold text-xs transition-all shadow-md shadow-amber-500/20 group-hover:shadow-amber-500/30 cursor-pointer"
                 >
                   <span>Admin Console</span>
@@ -975,6 +981,7 @@ export default function HomePage() {
                 </Link>
               </div>
             </div>
+
           </div>
         </section>
 

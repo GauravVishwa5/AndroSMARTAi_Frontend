@@ -273,6 +273,112 @@ export default function LoginPage() {
             </button>
           </form>
 
+          {/* Investor & Partner Demo Mode Quick-Fill */}
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/90 border border-blue-200 dark:border-blue-900/60 shadow-xs space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide">
+                <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>Investor & Partner Demo Roles</span>
+              </div>
+              <span className="text-[10px] font-mono text-slate-400">
+                1-Click Direct Sign-In
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+              Select an institutional persona below to test end-to-end collateral intelligence, dual-control maker-checker, and borrower tracking:
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              {/* Role 1: Branch Officer */}
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => executeLogin('demo.branch@andropvs.com', 'DemoUser@12345', '/branch')}
+                className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 text-left transition-all hover:shadow-xs group cursor-pointer disabled:opacity-60"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    Branch Desk
+                  </span>
+                  <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                </div>
+                <div className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">
+                  Rajesh Sharma
+                </div>
+                <div className="text-[10px] text-slate-500 truncate">
+                  Chief Credit Underwriter (/branch)
+                </div>
+              </button>
+
+              {/* Role 2: Legal Counsel (Maker) */}
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => executeLogin('demo.legal@andropvs.com', 'DemoUser@12345', '/legal')}
+                className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 text-left transition-all hover:shadow-xs group cursor-pointer disabled:opacity-60"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                    Advocate Maker
+                  </span>
+                  <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                </div>
+                <div className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">
+                  Adv. Kushal Verma
+                </div>
+                <div className="text-[10px] text-slate-500 truncate">
+                  Title Investigation & Digital Seal (/legal)
+                </div>
+              </button>
+
+              {/* Role 3: Risk Head / Checker */}
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => executeLogin('demo.admin@andropvs.com', 'DemoUser@12345', '/admin')}
+                className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-500 dark:hover:border-purple-500 text-left transition-all hover:shadow-xs group cursor-pointer disabled:opacity-60"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                    Risk Checker
+                  </span>
+                  <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-purple-600 transition-colors" />
+                </div>
+                <div className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">
+                  Dr. Priya Nair
+                </div>
+                <div className="text-[10px] text-slate-500 truncate">
+                  CRO & Checker Sign-off (/admin)
+                </div>
+              </button>
+
+              {/* Role 4: Borrower Applicant */}
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => executeLogin('demo.applicant@andropvs.com', 'DemoUser@12345', '/applicant/dashboard')}
+                className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-amber-500 dark:hover:border-amber-500 text-left transition-all hover:shadow-xs group cursor-pointer disabled:opacity-60"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                    Borrower
+                  </span>
+                  <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-amber-600 transition-colors" />
+                </div>
+                <div className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">
+                  Vikram Malhotra
+                </div>
+                <div className="text-[10px] text-slate-500 truncate">
+                  Retail Mortgage Applicant (/applicant)
+                </div>
+              </button>
+            </div>
+
+            <div className="text-[10px] text-slate-400 text-center font-mono pt-1">
+              Universal Demo Password: <span className="font-bold text-slate-600 dark:text-slate-300">DemoUser@12345</span>
+            </div>
+          </div>
+
           <p className="text-center text-xs text-slate-500">
             Don&apos;t have an account?{' '}
             <Link href="/signup" className="text-[#1D4ED8] dark:text-blue-400 hover:underline font-medium">

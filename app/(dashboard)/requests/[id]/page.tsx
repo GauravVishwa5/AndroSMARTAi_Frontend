@@ -69,10 +69,11 @@ import {
   AdvocateReview,
   CaseAuditEvent,
 } from '@/types/enterprise';
+import { getDemoWorkspaceCase } from '@/lib/demoData';
 
 export default function RequestWorkspacePage() {
   const params = useParams();
-  const requestId = (params?.id as string) || 'REQ-349';
+  const requestId = (params?.id as string) || 'REQ-101';
   const { user } = useAuthStore();
 
   // Active Workspace Tab
@@ -237,8 +238,32 @@ export default function RequestWorkspacePage() {
 
   useEffect(() => {
     if (requestId) {
-      loadDetails(true);
-      loadEnterpriseData(true);
+      // 1. Populate demo workspace data immediately for seamless instant presentation
+      const demo = getDemoWorkspaceCase(requestId);
+      setRequestData(demo.requestData);
+      setReadiness(demo.readiness);
+      setCollateralRisk(demo.risk);
+      setCaseFindings(demo.findings);
+      setAdvocateReview(demo.advocateReview);
+      setAuditEvents(demo.auditEvents);
+      setTotalAuditEvents(demo.auditEvents.length);
+      setIsLoading(false);
+      setIsEnterpriseLoading(false);
+
+      const s = String(demo.requestData?.status || '').toLowerCase();
+      if (s.includes('clear') || s.includes('verified') || s.includes('completed')) {
+        setRequestStatus('Verified');
+      } else if (s.includes('reject') || s.includes('flag') || s.includes('block')) {
+        setRequestStatus('Rejected');
+      } else if (s.includes('progress') || s.includes('investig')) {
+        setRequestStatus('In Progress');
+      } else {
+        setRequestStatus('Pending');
+      }
+
+      // 2. Fetch live updates if server is available, gracefully preserving demo data on error
+      loadDetails(false);
+      loadEnterpriseData(false);
     }
   }, [requestId]);
 
@@ -359,16 +384,20 @@ export default function RequestWorkspacePage() {
   };
 
   let rawDocsList: any[] = [];
-  const candidateDocs = requestData?.documents || requestData?.documents_report || requestData?.lsr_documents || [];
-  if (Array.isArray(candidateDocs)) {
+  const candidateDocs = requestData?.documents || requestData?.documents_report || requestData?.lsr_documents;
+  if (Array.isArray(candidateDocs) && candidateDocs.length > 0) {
     rawDocsList = candidateDocs;
   } else if (typeof candidateDocs === 'string') {
     try {
       const parsed = JSON.parse(candidateDocs);
-      if (Array.isArray(parsed)) rawDocsList = parsed;
+      if (Array.isArray(parsed) && parsed.length > 0) rawDocsList = parsed;
     } catch {
       rawDocsList = [];
     }
+  }
+  if (rawDocsList.length === 0) {
+    const demoFallback = getDemoWorkspaceCase(requestId);
+    rawDocsList = demoFallback.docs || [];
   }
 
   const docs = rawDocsList.length > 0 ? rawDocsList.map((d: any, idx: number) => { try {

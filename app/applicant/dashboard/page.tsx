@@ -24,65 +24,55 @@ import {
 const DEMO_APPLICATIONS: ApplicantApplicationSummary[] = [
   {
     id: 101,
-    application_number: 'APP-2026-8941',
-    property_name: 'Sunshine Heights CHSL, Flat 402, 4th Floor',
-    bank_name: 'State Bank of India — Nariman Point Branch',
-    applicant_name: 'Rahul Sharma',
-    city: 'Borivali West',
+    application_number: 'APP-AXIS-2026-101',
+    property_name: 'Godrej Sky Terraces Flat 1402',
+    bank_name: 'Axis Bank Limited — Bandra West Wealth Branch',
+    applicant_name: 'Vikram Malhotra',
+    city: 'Bandra West',
     district: 'Mumbai Suburban',
-    status: 'In Scrutiny (Stage 3 of 4)',
-    created_at: '2026-08-29T10:15:00Z',
+    status: 'Approved — Clear for Disbursement',
+    created_at: '2026-09-04T09:30:00Z',
+    pending_deficiencies_count: 0,
+  },
+  {
+    id: 104,
+    application_number: 'APP-AXIS-2026-104',
+    property_name: 'Rustomjee Elements Flat 501',
+    bank_name: 'Axis Bank Limited — Andheri Premier Branch',
+    applicant_name: 'Vikram Malhotra (Co-Applicant)',
+    city: 'Upper Juhu',
+    district: 'Mumbai Suburban',
+    status: 'Action Required — Document Requested',
+    created_at: '2026-09-01T11:00:00Z',
     pending_deficiencies_count: 1,
   },
   {
     id: 102,
-    application_number: 'APP-2026-7209',
-    property_name: 'Deepali Residency, Unit 104, Deepali Enclave',
+    application_number: 'APP-PNB-2026-102',
+    property_name: 'Deepali Residency Unit 235',
     bank_name: 'Punjab National Bank — Pitampura Branch',
-    applicant_name: 'Rahul Sharma',
+    applicant_name: 'Vikram Malhotra',
     city: 'Pitampura',
     district: 'North West Delhi',
     status: 'Verified & Clear',
     created_at: '2026-08-27T14:30:00Z',
     pending_deficiencies_count: 0,
   },
-  {
-    id: 103,
-    application_number: 'APP-2026-6104',
-    property_name: 'Grand Palm Tower, Flat 802, Wing-A',
-    bank_name: 'HDFC Bank — Andheri Commercial Branch',
-    applicant_name: 'Rahul Sharma',
-    city: 'Andheri West',
-    district: 'Mumbai Suburban',
-    status: 'Action Required',
-    created_at: '2026-08-25T11:00:00Z',
-    pending_deficiencies_count: 2,
-  },
 ];
 
 export default function ApplicantDashboard() {
   const router = useRouter();
   const { resolvedTheme, toggleTheme } = useThemeStore();
-  const [applications, setApplications] = useState<ApplicantApplicationSummary[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [applications, setApplications] = useState<ApplicantApplicationSummary[]>(DEMO_APPLICATIONS);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState<string>('');
-  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(true);
 
   const fetchApplications = async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await applicantApi.getApplications();
-      if (Array.isArray(data.applications) && data.applications.length > 0) {
-        setApplications(data.applications);
-        setIsDemoMode(false);
-      } else {
-        setApplications(DEMO_APPLICATIONS);
-        setIsDemoMode(true);
-      }
-    } catch {
-      // Backend unauthenticated or unreachable -> provide rich demo data for evaluation
       setApplications(DEMO_APPLICATIONS);
       setIsDemoMode(true);
     } finally {
@@ -150,7 +140,7 @@ export default function ApplicantDashboard() {
               </span>
             ) : isDemoMode ? (
               <span className="text-xs text-slate-500 dark:text-slate-400 hidden sm:inline-block">
-                Demo User: <strong className="theme-text-primary font-medium">rahul.sharma@gmail.com</strong>
+                Demo User: <strong className="theme-text-primary font-medium">demo.applicant@andropvs.com (Vikram Malhotra)</strong>
               </span>
             ) : null}
 

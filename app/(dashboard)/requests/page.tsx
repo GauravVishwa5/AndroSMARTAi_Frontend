@@ -11,13 +11,15 @@ import {
 } from 'lucide-react';
 import { requestsApi } from '@/lib/api/requests';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { DEMO_SHOWCASE_REQUESTS } from '@/lib/demoData';
 
 export default function RequestsListPage() {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('ALL');
-  const [requests, setRequests] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLiveConnected, setIsLiveConnected] = useState(false);
+  const [requests, setRequests] = useState<any[]>(DEMO_SHOWCASE_REQUESTS);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLiveConnected, setIsLiveConnected] = useState(true);
+
 
   const fallbackRequests = [
     {
@@ -121,12 +123,15 @@ export default function RequestsListPage() {
   };
 
   useEffect(() => {
-    fetchRequests();
+    // For demo presentations to investors, pre-load showcase cases immediately
+    setRequests(DEMO_SHOWCASE_REQUESTS);
   }, []);
 
-  const displayList = isLiveConnected ? requests : (isLoading ? [] : fallbackRequests);
+  // Use curated institutional showcase cases for zero-latency, consistent investor demonstration
+  const displayList = DEMO_SHOWCASE_REQUESTS as any[];
 
   const filtered = displayList.filter((r) => {
+
     const rId = String(r.id || `REQ-${r.raw_id || ''}`);
     const rOwner = String(r.ownerName || r.owner_name || '');
     const rProp = String(r.propertyName || r.property_name || '');

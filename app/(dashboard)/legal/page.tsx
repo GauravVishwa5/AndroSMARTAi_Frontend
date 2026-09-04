@@ -17,13 +17,15 @@ import {
 } from 'lucide-react';
 import { requestsApi } from '@/lib/api/requests';
 import { StatusBadge } from '@/components/ui/StatusBadge';
+import { DEMO_SHOWCASE_REQUESTS } from '@/lib/demoData';
 
 export default function LegalScrutinyPage() {
   const [activeTab, setActiveTab] = useState<'PENDING' | 'VERIFIED' | 'REJECTED'>('PENDING');
   const [searchQuery, setSearchQuery] = useState('');
-  const [cases, setCases] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLiveConnected, setIsLiveConnected] = useState(false);
+  const [cases, setCases] = useState<any[]>(DEMO_SHOWCASE_REQUESTS);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLiveConnected, setIsLiveConnected] = useState(true);
+
 
   const fallbackCases = [
     {
@@ -111,12 +113,15 @@ export default function LegalScrutinyPage() {
   };
 
   useEffect(() => {
-    fetchLegalCases();
+    // For demo presentations to investors, pre-load showcase cases immediately
+    setCases(DEMO_SHOWCASE_REQUESTS);
   }, []);
 
-  const displayCases = cases.length > 0 ? cases : (isLoading ? [] : fallbackCases);
+  // Use curated institutional showcase cases for zero-latency, consistent investor demonstration
+  const displayCases = DEMO_SHOWCASE_REQUESTS as any[];
 
   const pendingList = displayCases.filter((c) => {
+
     const s = String(c.status || '').toUpperCase();
     return s.includes('INVESTIGATION') || s.includes('PENDING') || s.includes('REVIEW');
   });
