@@ -48,14 +48,14 @@ interface IgrRegistrySearchProps {
 
 export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
   requestId,
-  stateName = 'Delhi',
-  sroId = '95',
+  stateName = 'Maharashtra',
+  sroId = '',
   sroName = '',
-  villageName = 'Deepali',
-  districtName = 'Mumbai Suburban',
+  villageName = '',
+  districtName = '',
   talukaName = '',
-  ctsNumber = 'CTS-1029',
-  ownerName = 'Gaurav Vishwakarma',
+  ctsNumber = '',
+  ownerName = '',
   fromYear = 2001,
 }) => {
   const isInitialMah = (stateName || '').toLowerCase().includes('mah');
@@ -66,18 +66,18 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
   // Delhi Geographic Master State
   const [delhiSros, setDelhiSros] = useState<any[]>([]);
   const [delhiLocalities, setDelhiLocalities] = useState<any[]>([]);
-  const [selectedSroId, setSelectedSroId] = useState<string>(sroId || '95');
-  const [selectedLocality, setSelectedLocality] = useState<string>(villageName || 'Deepali');
+  const [selectedSroId, setSelectedSroId] = useState<string>(sroId || '');
+  const [selectedLocality, setSelectedLocality] = useState<string>(villageName || '');
 
   // Maharashtra Geographic Master State
   const [districts, setDistricts] = useState<any[]>([]);
-  const [selectedDistrict, setSelectedDistrict] = useState<string>(districtName || 'Mumbai Suburban');
+  const [selectedDistrict, setSelectedDistrict] = useState<string>(districtName || '');
   const [areas, setAreas] = useState<any[]>([]);
-  const [selectedArea, setSelectedArea] = useState<string>(talukaName || villageName || 'Andheri');
+  const [selectedArea, setSelectedArea] = useState<string>(talukaName || villageName || '');
 
   // Common Search Parameters
-  const [ctsQuery, setCtsQuery] = useState(ctsNumber || (isInitialMah ? 'CTS-1029' : 'Plot No. 235'));
-  const [ownerQuery, setOwnerQuery] = useState(ownerName || 'Gaurav Vishwakarma');
+  const [ctsQuery, setCtsQuery] = useState(ctsNumber || '');
+  const [ownerQuery, setOwnerQuery] = useState(ownerName || '');
   const [startYear, setStartYear] = useState(fromYear || 2001);
   const [endYear, setEndYear] = useState(2026);
   const [filterKeyword, setFilterKeyword] = useState('');
@@ -238,72 +238,11 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
         }
       }
 
-      // Fallback contextual defaults if table was empty
-      setRecords(state === 'Maharashtra' ? [
-        {
-          id: 'mh-1',
-          year: '2020',
-          regNo: '8472',
-          bookNo: 'Index-II',
-          registrationDate: '14-Aug-2020',
-          sroOffice: 'SRO Andheri-1 (Mumbai Suburban)',
-          party1: 'Sunil K. Sharma (Seller)',
-          party2: `${ownerQuery || 'Gaurav Vishwakarma'} (Purchaser / Current Borrower)`,
-          propertyDetails: `Flat No. 235, Sunshine Heights, CTS #${ctsQuery || '1029'}, Andheri West, Mumbai`,
-          consideration: 'Rs. 85,00,000',
-          marketValue: 'Rs. 82,50,000',
-          encumbranceStatus: 'NIL',
-          isRelevant: true,
-        },
-        {
-          id: 'mh-2',
-          year: '1998',
-          regNo: '1249',
-          bookNo: 'Index-II',
-          registrationDate: '22-Mar-1998',
-          sroOffice: 'SRO Borivali-3 (Mumbai Suburban)',
-          party1: 'MHADA Housing Authority',
-          party2: 'Sunil K. Sharma (Original Allottee)',
-          propertyDetails: `Flat No. 235, Building B-4, Borivali West, Mumbai`,
-          consideration: 'Rs. 18,50,000',
-          marketValue: 'Rs. 18,50,000',
-          encumbranceStatus: 'NIL',
-          isRelevant: true,
-        },
-      ] : [
-        {
-          id: 'dl-1',
-          year: '2020',
-          regNo: '8472',
-          bookNo: 'Book-I',
-          registrationDate: '14-Aug-2020',
-          sroOffice: 'SR VI-A - Pitampura (North West Delhi)',
-          party1: 'Sunil K. Sharma (Vendor)',
-          party2: `${ownerQuery || 'Gaurav Vishwakarma'} (Vendee / Mortgagor)`,
-          propertyDetails: `Flat/Unit No. 235, Deepali Residency, Pitampura, North West Delhi`,
-          consideration: 'Rs. 85,00,000',
-          marketValue: 'Rs. 82,50,000',
-          encumbranceStatus: 'NIL',
-          isRelevant: true,
-        },
-        {
-          id: 'dl-2',
-          year: '1998',
-          regNo: '1249',
-          bookNo: 'Book-I',
-          registrationDate: '22-Mar-1998',
-          sroOffice: 'SR VI - New Delhi',
-          party1: 'Delhi Development Authority (DDA)',
-          party2: 'Sunil K. Sharma (Allottee)',
-          propertyDetails: `Plot No. 235, Block-B, Deepali, Pitampura, New Delhi`,
-          consideration: 'Rs. 18,50,000',
-          marketValue: 'Rs. 18,50,000',
-          encumbranceStatus: 'NIL',
-          isRelevant: true,
-        },
-      ]);
+      // If database or live API had no records, show genuine empty state
+      setRecords([]);
     } catch (err) {
       console.warn('Live IGR records load error:', err);
+      setRecords([]);
     } finally {
       setIsLoadingRecords(false);
     }
@@ -316,15 +255,6 @@ export const IgrRegistrySearch: React.FC<IgrRegistrySearchProps> = ({
   // Handle explicit toggle
   const handleStateChange = (st: 'Delhi' | 'Maharashtra') => {
     setSelectedState(st);
-    if (st === 'Delhi') {
-      if (ctsQuery.startsWith('CTS-')) {
-        setCtsQuery('Plot No. 235');
-      }
-    } else {
-      if (!ctsQuery.startsWith('CTS-') && !ctsQuery.startsWith('Survey')) {
-        setCtsQuery('CTS-1029');
-      }
-    }
   };
 
   const handleExecuteIgrSearch = async (e: React.FormEvent) => {

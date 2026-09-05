@@ -80,18 +80,21 @@ export const TsrLiveEditor: React.FC<TsrLiveEditorProps> = ({
 
   const effectiveCts =
     requestData?.cts_survey_khasra_no ||
+    requestData?.ctsNumber ||
+    requestData?.cts ||
     ctsNumber ||
-    'CTS-1029';
+    'Not available';
 
   const effectiveLocation =
     requestData?.property_address ||
-    (requestData?.city && requestData?.state
-      ? `${requestData.city}, ${requestData.state}`
-      : 'Pitampura, North West Delhi');
+    requestData?.address ||
+    (requestData?.city || requestData?.state
+      ? `${requestData?.city || ''}, ${requestData?.state || ''}`.trim().replace(/^,\s*|,\s*$/g, '')
+      : 'Not available');
 
   const effectivePropertySchedule =
     requestData?.property_address ||
-    `All that piece and parcel of residential Flat/Unit No. ${flatNumber || '235'}, ${propertyName || 'Deepali Residency'}, ${effectiveLocation}, CTS/Survey #${effectiveCts}, together with proportionate undivided impartible share in the underlying land.`;
+    `All that piece and parcel of residential ${flatNumber ? `Flat/Unit No. ${flatNumber}, ` : ''}${propertyName || 'Subject Property'}, ${effectiveLocation !== 'Not available' ? effectiveLocation : ''}${effectiveCts !== 'Not available' ? `, CTS/Survey #${effectiveCts}` : ''}, together with proportionate undivided impartible share in the underlying land.`;
 
   // Editable state clauses
   const [propertySchedule, setPropertySchedule] = useState('');
@@ -103,25 +106,27 @@ export const TsrLiveEditor: React.FC<TsrLiveEditorProps> = ({
   // Initialize and sync clauses with actual request data
   useEffect(() => {
     setPropertySchedule(
-      `All that piece and parcel of residential Flat/Unit No. ${flatNumber || '235'}, ${propertyName || 'Deepali Residency'}, ${effectiveLocation}, bearing CTS / Survey No. ${effectiveCts}, together with proportionate undivided impartible share in the underlying freehold land and common areas.`
+      `All that piece and parcel of residential ${flatNumber ? `Flat/Unit No. ${flatNumber}, ` : ''}${propertyName || 'Subject Property'}, ${effectiveLocation !== 'Not available' ? effectiveLocation : ''}${effectiveCts !== 'Not available' ? `, bearing CTS / Survey No. ${effectiveCts}` : ''}, together with proportionate undivided impartible share in the underlying freehold land and common areas.`
     );
 
     setChainSummary(
-      `1. The property schedule was initially allotted vide Conveyance / Allotment Deed Doc #1249 dated 22-Mar-1998 registered with Sub-Registrar in favor of Mr. Sunil K. Sharma.\n2. Subsequently, Mr. Sunil K. Sharma executed a Registered Sale Deed Doc #8472 dated 14-Aug-2020 in favor of the current Mortgagor / Borrower, ${effectiveOwner}, for valuable consideration.\n3. The 30-year chain of title devolution (2001–2026) is continuous, legally valid, unbroken, and fully supported by registered title deeds.`
+      docs && docs.length > 0
+        ? `1. Chain of title compiled from ${docs.length} submitted document(s) for ${effectiveOwner || 'the borrower'}.\n2. Title devolution verification is ongoing based on uploaded title records.`
+        : `1. No registered title-chain documents have been uploaded or verified for this docket yet.\n2. Chain of title verification is pending submission of parent deeds and registered title instruments.`
     );
 
     setSroSearchSummary(
-      `A comprehensive online and physical search was conducted in the Office of the Sub-Registrar (${requestData?.state?.toLowerCase().includes('mah') ? 'SRO Andheri-1 / Mumbai Suburban' : 'SRO VI-A Pitampura, North West Delhi'}) for the past 30 years (2001 to 2026). The Index-II / Book-I computerized registers and revenue records reveal zero prior active mortgages, attachments, or adverse court encumbrances against ${effectiveOwner}.`
+      `Search of computerized registers conducted for ${effectiveLocation !== 'Not available' ? effectiveLocation : 'the subject jurisdiction'}. Computerized revenue and registration records reflect status for ${effectiveOwner || 'the applicant'}.`
     );
 
     setLegalOpinion(
-      `In our professional legal opinion as Bank Panel Advocate, the Title of the Mortgagor/Borrower ${effectiveOwner} to the schedule property described hereunder is CLEAR, VALID, MARKETABLE, AND ABSOLUTELY UNENCUMBERED. The Bank (${effectiveBank}) may safely proceed with the creation of a valid and binding Equitable Mortgage by deposit of original title deeds.`
+      `In our professional legal opinion as Bank Panel Advocate, the Title of the Mortgagor/Borrower ${effectiveOwner || 'the applicant'} to the schedule property described hereunder is subjected to scrutiny. The Bank (${effectiveBank || 'the lender'}) may proceed with legal due diligence and standard documentation.`
     );
 
     setConditionsPrecedent(
-      `1. Deposit of original Registered Sale Deed Doc #8472 dated 14-Aug-2020 in favor of ${effectiveOwner}.\n2. Deposit of original Parent Conveyance / Allotment Deed Doc #1249 dated 22-Mar-1998.\n3. Original Society / Association NOC confirming clearance of maintenance dues and permitting mortgage creation.\n4. Execution of Bank Standard Memorandum of Deposit of Title Deeds (MODTD) with payment of required stamp duty.\n5. CERSAI registration within 30 days of mortgage creation.`
+      `1. Deposit of original registered title deeds in favor of ${effectiveOwner || 'the Mortgagor'}.\n2. Original Society / Association NOC confirming clearance of maintenance dues and permitting mortgage creation.\n3. Execution of Bank Standard Memorandum of Deposit of Title Deeds (MODTD) with payment of required stamp duty.\n4. CERSAI registration within 30 days of mortgage creation.`
     );
-  }, [effectiveOwner, effectiveBank, effectiveAdvocate, effectiveCts, effectiveLocation, flatNumber, propertyName, requestData]);
+  }, [effectiveOwner, effectiveBank, effectiveAdvocate, effectiveCts, effectiveLocation, flatNumber, propertyName, requestData, docs]);
 
   const handleDownloadDocx = async () => {
     setIsDownloading(true);

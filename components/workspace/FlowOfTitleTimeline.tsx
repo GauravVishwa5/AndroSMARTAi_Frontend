@@ -48,61 +48,68 @@ interface FlowOfTitleTimelineProps {
 
 export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
   requestId,
-  ownerName = 'Gaurav Vishwakarma',
-  propertyName = 'Deepali Residency',
-  flatNumber = '235',
-  bankBranch = 'State Bank of India',
+  ownerName = '',
+  propertyName = '',
+  flatNumber = '',
+  bankBranch = '',
   docs = [],
   onSelectDoc,
 }) => {
-  const effectiveOwner = ownerName || 'Gaurav Vishwakarma';
-  const effectiveBank = bankBranch || 'State Bank of India';
+  const effectiveOwner = ownerName || '';
+  const effectiveBank = bankBranch || '';
 
-  // Build authentic 30-year unbroken chain of title
+  // Build authentic chain of title strictly from verified documents/evidence
   const buildInitialNodes = (): TimelineNode[] => {
-    return [
-      {
-        id: 'node-1',
-        year: '1998',
-        date: '22-Mar-1998',
-        deedType: 'Parent Allotment / Conveyance Deed',
-        regNo: 'Doc #1249/Book-I',
-        vendor: 'Delhi Development Authority (DDA)',
-        vendee: 'Sunil K. Sharma',
-        consideration: 'Rs. 18,50,000',
-        sro: 'SRO VI New Delhi',
-        propertyDesc: `Plot/Flat No. ${flatNumber || '235'}, ${propertyName}`,
-        status: 'verified',
-      },
-      {
-        id: 'node-2',
-        year: '2020',
-        date: '14-Aug-2020',
-        deedType: 'Absolute Registered Sale Deed',
-        regNo: 'Doc #8472/Book-I',
-        vendor: 'Sunil K. Sharma',
-        vendee: effectiveOwner,
-        consideration: 'Rs. 85,00,000',
-        sro: 'SRO VI-A Pitampura',
-        propertyDesc: `Flat No. ${flatNumber || '235'}, ${propertyName}`,
-        status: 'verified',
-        isCurrentBorrower: true,
-      },
-      {
-        id: 'node-3',
-        year: '2026',
-        date: '31-Aug-2026',
-        deedType: 'Proposed Equitable Mortgage (MODTD)',
-        regNo: 'Pending Registration',
-        vendor: effectiveOwner,
-        vendee: effectiveBank,
-        consideration: 'Credit Facility: Rs. 75,00,000',
-        sro: 'SRO VI-A Pitampura',
-        propertyDesc: `Flat No. ${flatNumber || '235'}, ${propertyName}`,
-        status: 'verified',
-        isCurrentBorrower: true,
-      },
-    ];
+    if (!docs || !Array.isArray(docs) || docs.length === 0) {
+      return [];
+    }
+
+    const titleDocs = docs.filter((d: any) => {
+      const t = (d.type || d.document_type || d.name || '').toLowerCase();
+      return (
+        t.includes('sale') ||
+        t.includes('conveyance') ||
+        t.includes('allotment') ||
+        t.includes('title') ||
+        t.includes('deed') ||
+        t.includes('mortgage') ||
+        t.includes('modtd') ||
+        t.includes('gift') ||
+        t.includes('release')
+      );
+    });
+
+    if (titleDocs.length === 0) {
+      return [];
+    }
+
+    return titleDocs.map((d: any, idx: number) => {
+      const ext = d.extracted_json || d.extracted_data || d.extracted || {};
+      const year = ext.year || ext.execution_year || (d.created_at ? String(new Date(d.created_at).getFullYear()) : (d.date ? String(d.date).slice(0, 4) : ''));
+      const vendor = ext.vendor || ext.seller || ext.executant || ext.party1 || 'Extracted Vendor';
+      const vendee = ext.vendee || ext.buyer || ext.claimant || ext.party2 || effectiveOwner || 'Extracted Vendee';
+      const consideration = ext.consideration || ext.amount || ext.market_value ? `Rs. ${ext.consideration || ext.amount || ext.market_value}` : 'As per deed';
+
+      return {
+        id: `node-${d.id || idx}`,
+        year: year || 'N/A',
+        date: d.created_at || d.date || year || 'N/A',
+        deedType: d.type || d.document_type || 'Title Document',
+        regNo: ext.registration_number || ext.doc_number || d.id || 'N/A',
+        vendor: vendor,
+        vendee: vendee,
+        consideration: consideration,
+        sro: ext.sro || ext.sub_registrar || 'SRO',
+        propertyDesc: ext.property_description || propertyName || 'Subject Property',
+        status: (d.verification_status === 'Verified' ? 'verified' : 'pending') as any,
+        isCurrentBorrower: Boolean(effectiveOwner && vendee.toLowerCase().includes(effectiveOwner.toLowerCase())),
+        docIndex: idx,
+      };
+    }).sort((a, b) => {
+      const yA = parseInt(a.year) || 0;
+      const yB = parseInt(b.year) || 0;
+      return yA - yB;
+    });
   };
 
   const [nodes, setNodes] = useState<TimelineNode[]>(buildInitialNodes);
@@ -110,32 +117,22 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
 
   const [nodeForm, setNodeForm] = useState<Partial<TimelineNode>>({
-    year: '2015',
-    date: '10-Nov-2015',
-    deedType: 'Registered Sale Deed / Release Deed',
-    regNo: 'Doc #4120/Book-I',
+    year: '2020',
+    date: '',
+    deedType: 'Registered Sale Deed',
+    regNo: '',
     vendor: '',
     vendee: '',
-    consideration: 'Rs. 45,00,000',
-    sro: 'SRO VI-A Pitampura',
+    consideration: '',
+    sro: '',
     propertyDesc: propertyName,
     status: 'verified',
   });
 
-  // Sync owner & bank updates
+  // Re-sync nodes whenever docs or case context changes
   useEffect(() => {
-    setNodes((prev) =>
-      prev.map((n) => {
-        if (n.id === 'node-2') {
-          return { ...n, vendee: effectiveOwner };
-        }
-        if (n.id === 'node-3') {
-          return { ...n, vendor: effectiveOwner, vendee: effectiveBank };
-        }
-        return n;
-      })
-    );
-  }, [effectiveOwner, effectiveBank]);
+    setNodes(buildInitialNodes());
+  }, [docs, effectiveOwner, propertyName]);
 
   const handleOpenAddModal = () => {
     setEditingNodeId(null);
@@ -251,7 +248,11 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          {continuityGaps.length === 0 ? (
+          {nodes.length === 0 ? (
+            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border theme-border">
+              <span>No Title Deeds</span>
+            </span>
+          ) : continuityGaps.length === 0 ? (
             <span className="flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span>Chain Intact (Unbroken)</span>
@@ -274,7 +275,8 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
       </div>
 
       {/* Timeline Steps Visualization */}
-      <div className="relative pl-6 sm:pl-7 space-y-4 before:absolute before:left-2.5 sm:before:left-3 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-300 dark:before:bg-slate-700">
+      {nodes.length > 0 ? (
+        <div className="relative pl-6 sm:pl-7 space-y-4 before:absolute before:left-2.5 sm:before:left-3 before:top-3 before:bottom-3 before:w-0.5 before:bg-slate-300 dark:before:bg-slate-700">
         {nodes.map((node, index) => {
           const isLast = index === nodes.length - 1;
           const isFirst = index === 0;
@@ -370,6 +372,15 @@ export const FlowOfTitleTimeline: React.FC<FlowOfTitleTimelineProps> = ({
           );
         })}
       </div>
+      ) : (
+        <div className="p-8 text-center rounded-lg bg-white dark:bg-slate-900 border theme-border shadow-2xs">
+          <GitBranch className="w-10 h-10 mx-auto text-slate-400 mb-3 opacity-60" />
+          <h4 className="text-sm font-semibold theme-text-primary">No title-chain evidence available</h4>
+          <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+            No registered sale deeds, conveyance deeds, or chain documents have been uploaded or extracted for this case yet. Upload title instruments or execute an IGR registry search to reconstruct the sequential chain of devolution.
+          </p>
+        </div>
+      )}
 
       {/* ── MODAL: Add / Edit Chain of Title Node ─────────────────────────────── */}
       {showAddModal && (

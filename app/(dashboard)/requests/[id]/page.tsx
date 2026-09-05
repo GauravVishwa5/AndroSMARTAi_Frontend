@@ -571,12 +571,12 @@ export default function RequestWorkspacePage() {
 
   const currentDoc = docs[Math.min(selectedDocIndex, Math.max(0, docs.length - 1))] || null;
 
-  const propName = requestData?.propertyName || requestData?.property_name || 'Deepali Residency';
-  const flatNo = requestData?.flatNumber || requestData?.flat_number ? `Flat ${requestData?.flatNumber || requestData?.flat_number}` : 'Flat 235';
-  const ownerName = requestData?.ownerName || requestData?.owner_name || requestData?.applicantName || 'Ajay Kumar';
-  const cts = requestData?.ctsNumber || requestData?.ctsnumber || 'CTS-1029';
-  const location = requestData?.address || `${requestData?.city || 'Pitampura'}, ${requestData?.state || 'New Delhi'}`;
-  const bankBranch = requestData?.Bank_branch || requestData?.bank_branch || requestData?.bankName || 'Axis Bank Pitampura Branch';
+  const propName = requestData?.propertyName || requestData?.property_name || 'Not available';
+  const flatNo = requestData?.flatNumber || requestData?.flat_number ? `Flat ${requestData?.flatNumber || requestData?.flat_number}` : '';
+  const ownerName = requestData?.ownerName || requestData?.owner_name || requestData?.owner || requestData?.applicantName || requestData?.applicant_name || 'Not available';
+  const cts = requestData?.ctsNumber || requestData?.cts_number || requestData?.cts || requestData?.ctsnumber || 'Not available';
+  const location = requestData?.address || (requestData?.city || requestData?.state ? `${requestData?.city || ''}, ${requestData?.state || ''}`.trim().replace(/^,\s*|,\s*$/g, '') : 'Not available');
+  const bankBranch = requestData?.branchName || requestData?.branch_name || requestData?.branch || requestData?.Bank_branch || (requestData?.bankName || requestData?.bank ? `${requestData.bankName || requestData.bank}` : 'Not available');
 
   // 1-Click Interactive Citation Navigation
   const handleJumpToCitation = (documentId?: string | null, pageNumber?: number | null) => {
@@ -653,7 +653,7 @@ export default function RequestWorkspacePage() {
                   {propName} {flatNo && <span className="font-normal text-slate-500">({flatNo})</span>}
                 </h1>
                 <span className="px-2 py-0.5 rounded-lg text-[11px] font-mono bg-slate-100 dark:bg-slate-800 border theme-border text-slate-600 dark:text-slate-400">
-                  CTS {cts}
+                  {cts === 'Not available' ? 'No CTS assigned' : `CTS ${cts}`}
                 </span>
                 {/* Status Badge */}
                 <StatusBadge status={requestStatus} />
