@@ -47,6 +47,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       localStorage.removeItem('andropvs_token');
       localStorage.removeItem('andropvs_user');
       localStorage.removeItem('andropvs_modules');
+      window.location.href = '/login';
     }
     set({
       user: null,

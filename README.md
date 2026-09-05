@@ -9,7 +9,7 @@ Modern, high-performance Legal Due-Diligence & Title Search web portal built for
 - **Branch Operations & Case Intake**: Fast wizard for property title search requests, multi-file upload with OCR processing status, and document classification.
 - **Legal Scrutiny Workspace**: Split-screen document viewer with side-by-side title tree builder, flow-of-title timeline, and live search note authoring.
 - **IGR & Land Records Explorer**: Real-time integration with IGR Maharashtra / Land Registry APIs with automated 30-year search summary generation.
-- **Report Generation & Live Document Editing**: One-click generation of Bank-Format Title Search Reports (TSR), Non-Encumbrance Certificates (NEC), and embedded WOPI/Word viewer integration.
+- **Report Generation & Live Document Editing**: One-click generation of Bank-Format Title Search Reports (TSR), Non-Encumbrance Certificates (NEC), and interactive in-browser legal report editing with direct S3 delivery.
 - **Real-Time OCR Progress Streaming**: Server-Sent Events (SSE) live updates for background OCR, entity extraction, and valuation analysis.
 - **Role-Based Dashboards**: Tailored views and permissions for Branch Officers, Legal Advocates, Panel Reviewers, and System Administrators.
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   FileText,
@@ -15,13 +15,21 @@ import {
   Building,
   Calendar,
   Eye,
+  RefreshCw,
+  Wifi,
+  WifiOff,
+  Loader2,
 } from 'lucide-react';
+import { requestsApi } from '@/lib/api/requests';
 
 export default function ReportsHubPage() {
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('ALL');
+  const [reports, setReports] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLiveConnected, setIsLiveConnected] = useState(false);
 
-  const reports = [
+  const fallbackReports = [
     {
       id: 'LSR-2026-0881',
       reqId: 'REQ-349',
@@ -29,10 +37,11 @@ export default function ReportsHubPage() {
       propertyName: 'Deepali Residency, Pitampura',
       borrower: 'Ajay Kumar',
       advocate: 'Adv. Suresh Kulkarni',
-      clearanceStatus: 'Clear Title (No Encumbrance)',
+      clearanceStatus: 'Clear Title',
       generatedDate: 'Aug 30, 2026',
       fileSize: '2.4 MB',
       format: 'DOCX / PDF',
+      downloadUrl: null,
     },
     {
       id: 'SCR-2026-0412',
@@ -41,10 +50,11 @@ export default function ReportsHubPage() {
       propertyName: 'Sunrise Heights CHSL, Borivali',
       borrower: 'Rajesh Patil',
       advocate: 'Adv. Meenakshi Joshi',
-      clearanceStatus: 'Conditional (NOC Required)',
+      clearanceStatus: 'Conditional',
       generatedDate: 'Aug 29, 2026',
       fileSize: '1.8 MB',
       format: 'DOCX / PDF',
+      downloadUrl: null,
     },
     {
       id: 'LSR-2026-0799',
@@ -53,14 +63,86 @@ export default function ReportsHubPage() {
       propertyName: 'Kavitha Thingalaya Villa, Borivali',
       borrower: 'Kavitha Thingalaya',
       advocate: 'Adv. R. Venkatraman',
-      clearanceStatus: 'Clear Title (No Encumbrance)',
+      clearanceStatus: 'Clear Title',
       generatedDate: 'Aug 27, 2026',
       fileSize: '3.1 MB',
       format: 'DOCX / PDF',
+      downloadUrl: null,
     },
   ];
 
-  const filtered = reports.filter((r) => {
+  const fetchLiveReports = async () => {
+    setIsLoading(true);
+    try {
+      const data = await requestsApi.getRequestsList();
+      if (Array.isArray(data) && data.length > 0) {
+        // Map database requests to report items
+        const liveReportList: any[] = [];
+        data.forEach((r: any) => {
+          const reqId = r.request_id || r.id || 'REQ-LIVE';
+          const propName = r.property_name || r.propertyName || 'Property';
+          const borrower = r.borrower_name || r.owner_name || r.ownerName || 'Borrower';
+          const dateStr = r.created_at ? new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Aug 31, 2026';
+
+          if (r.lsr_report_url || r.lsr_report || r.status === 'Completed' || r.status === 'Verified') {
+            liveReportList.push({
+              id: `LSR-${reqId.replace(/[^0-9]/g, '') || '901'}`,
+              reqId: reqId,
+              reportType: 'LSR (Legal Scrutiny Report)',
+              propertyName: propName,
+              borrower: borrower,
+              advocate: r.advocate_name || 'Legal Counsel',
+              clearanceStatus: r.status || 'Clear Title',
+              generatedDate: dateStr,
+              fileSize: '2.8 MB',
+              format: 'DOCX',
+              downloadUrl: r.lsr_report_url || r.lsr_report,
+            });
+          }
+
+          if (r.scr_report_url || r.scr_report || r.search_report) {
+            liveReportList.push({
+              id: `SCR-${reqId.replace(/[^0-9]/g, '') || '402'}`,
+              reqId: reqId,
+              reportType: 'SCR (Title Search Certificate)',
+              propertyName: propName,
+              borrower: borrower,
+              advocate: r.advocate_name || 'Title Examiner',
+              clearanceStatus: r.status || 'Verified',
+              generatedDate: dateStr,
+              fileSize: '1.9 MB',
+              format: 'DOCX',
+              downloadUrl: r.scr_report_url || r.scr_report || r.search_report,
+            });
+          }
+        });
+
+        if (liveReportList.length > 0) {
+          setReports(liveReportList);
+        } else {
+          setReports(fallbackReports);
+        }
+        setIsLiveConnected(true);
+      } else {
+        setReports(fallbackReports);
+        setIsLiveConnected(true);
+      }
+    } catch (err) {
+      console.warn('Backend offline, using fallback reports data:', err);
+      setReports(fallbackReports);
+      setIsLiveConnected(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveReports();
+  }, []);
+
+  const displayReports = reports.length > 0 ? reports : fallbackReports;
+
+  const filtered = displayReports.filter((r) => {
     const matchSearch =
       r.id.toLowerCase().includes(search.toLowerCase()) ||
       r.reqId.toLowerCase().includes(search.toLowerCase()) ||
@@ -85,9 +167,38 @@ export default function ReportsHubPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <div
+            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+              isLiveConnected
+                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20'
+                : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+            }`}
+          >
+            {isLiveConnected ? (
+              <>
+                <Wifi className="w-3.5 h-3.5" />
+                <span>Live Database</span>
+              </>
+            ) : (
+              <>
+                <WifiOff className="w-3.5 h-3.5" />
+                <span>Offline / Mock Mode</span>
+              </>
+            )}
+          </div>
+
+          <button
+            onClick={fetchLiveReports}
+            disabled={isLoading}
+            className="p-2 rounded-xl theme-card border hover:border-blue-500 text-xs text-slate-400 hover:text-slate-200 transition-all"
+            title="Refresh reports"
+          >
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin text-blue-500' : ''}`} />
+          </button>
+
           <Link
-            href="/requests"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl theme-card border theme-text-primary text-xs font-semibold hover:border-blue-500 transition-all shadow-sm active:scale-95"
+            href="/branch"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl theme-card border theme-text-primary text-xs font-semibold hover:border-blue-500 transition-all shadow-sm active:scale-95"
           >
             <Building className="w-4 h-4 text-blue-500 dark:text-blue-400" />
             <span>Select File to Scrutinize</span>
@@ -99,7 +210,9 @@ export default function ReportsHubPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="p-4 rounded-xl theme-card border">
           <p className="text-xs theme-text-secondary font-medium">Total Reports Generated</p>
-          <h3 className="text-2xl font-bold theme-text-primary mt-1">128 Files</h3>
+          <h3 className="text-2xl font-bold theme-text-primary mt-1">
+            {isLoading ? '...' : `${displayReports.length} Files`}
+          </h3>
           <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5 font-semibold">100% Audit Verified</p>
         </div>
         <div className="p-4 rounded-xl theme-card border">
@@ -156,52 +269,79 @@ export default function ReportsHubPage() {
               </tr>
             </thead>
             <tbody className="divide-y theme-border">
-              {filtered.map((rep) => (
-                <tr key={rep.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                  <td className="py-3.5 px-4 font-mono font-semibold text-blue-600 dark:text-blue-400">
-                    <span className="flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
-                      {rep.id}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <p className="font-semibold theme-text-primary">{rep.propertyName}</p>
-                    <Link
-                      href={`/requests/${rep.reqId}`}
-                      className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-mono"
-                    >
-                      {rep.reqId}
-                    </Link>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className="px-2 py-0.5 rounded-md theme-card border font-mono text-[11px] theme-text-primary">
-                      {rep.reportType.split(' ')[0]}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <p className="theme-text-primary">{rep.borrower}</p>
-                    <p className="text-[11px] theme-text-muted">{rep.advocate}</p>
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold badge-clear">
-                      <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                      {rep.clearanceStatus.split(' ')[0]}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 font-mono theme-text-muted text-[11px]">
-                    {rep.generatedDate}
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <button
-                      onClick={() => alert(`Downloading ${rep.id} (DOCX/PDF)...`)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600/15 hover:bg-blue-600/30 text-blue-600 dark:text-blue-400 text-xs font-medium transition-colors"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                      <span>Download</span>
-                    </button>
+              {isLoading ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-10">
+                    <Loader2 className="w-6 h-6 animate-spin text-blue-500 mx-auto" />
+                    <p className="text-xs theme-text-muted mt-2">Loading reports from database...</p>
                   </td>
                 </tr>
-              ))}
+              ) : filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-10 text-xs theme-text-muted">
+                    No reports match your search query.
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((rep) => (
+                  <tr key={rep.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                    <td className="py-3.5 px-4 font-mono font-semibold text-blue-600 dark:text-blue-400">
+                      <span className="flex items-center gap-1.5">
+                        <FileText className="w-3.5 h-3.5 text-indigo-500 dark:text-indigo-400" />
+                        {rep.id}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <p className="font-semibold theme-text-primary">{rep.propertyName}</p>
+                      <Link
+                        href={`/requests/${rep.reqId}`}
+                        className="text-[11px] text-blue-600 dark:text-blue-400 hover:underline font-mono"
+                      >
+                        {rep.reqId}
+                      </Link>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="px-2 py-0.5 rounded-md theme-card border font-mono text-[11px] theme-text-primary">
+                        {rep.reportType.split(' ')[0]}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <p className="theme-text-primary">{rep.borrower}</p>
+                      <p className="text-[11px] theme-text-muted">{rep.advocate}</p>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold badge-clear">
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                        {rep.clearanceStatus.split(' ')[0]}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 font-mono theme-text-muted text-[11px]">
+                      {rep.generatedDate}
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      {rep.downloadUrl ? (
+                        <a
+                          href={rep.downloadUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-medium transition-colors"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          <span>Download</span>
+                        </a>
+                      ) : (
+                        <Link
+                          href={`/requests/${rep.reqId}`}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-600/15 hover:bg-blue-600/30 text-blue-600 dark:text-blue-400 text-xs font-medium transition-colors"
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>View Details</span>
+                        </Link>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

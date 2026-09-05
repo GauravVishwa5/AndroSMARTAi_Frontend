@@ -1,9 +1,23 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
+// Route requests to configured API URL
+// In browser on HTTPS (e.g. Vercel), use relative URLs '' so Next.js server proxies to EC2 backend without Mixed Content browser blocks
+const getBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    if (window.location.protocol === 'https:') {
+      return '';
+    }
+    return process.env.NEXT_PUBLIC_API_URL || '';
+  }
+  const rawUrl =
+    process.env.BACKEND_INTERNAL_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    'http://127.0.0.1:8000';
+  return rawUrl.replace(/\/+$/, '');
+};
 
 export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },
@@ -16,12 +30,18 @@ apiClient.interceptors.request.use(
       const storedToken = localStorage.getItem('andropvs_token');
       if (storedToken) {
         try {
-          const token = JSON.parse(storedToken);
-          if (token?.access_token) {
-            config.headers.Authorization = `Bearer ${token.access_token}`;
+          let accessToken: string | null = null;
+          try {
+            const token = JSON.parse(storedToken);
+            accessToken = typeof token === 'string' ? token : token?.access_token || token?.token;
+          } catch {
+            accessToken = storedToken;
+          }
+          if (accessToken) {
+            config.headers.Authorization = `Bearer ${accessToken}`;
           }
         } catch (e) {
-          // ignore json parse error
+          // ignore
         }
       }
     }
@@ -36,8 +56,13 @@ apiClient.interceptors.response.use(
   async (error: AxiosError) => {
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
-        // Clear invalid token if unauthorized and not on login page
-        if (!window.location.pathname.includes('/login')) {
+        const pathname = window.location.pathname;
+        const isApplicantRoute = pathname.startsWith('/applicant');
+        const isLoginRoute = pathname.includes('/login');
+        const skipRedirect = (error.config?.headers as any)?.['X-Skip-Auth-Redirect'] === 'true';
+
+        // Clear invalid token and redirect only if not on public/demo/applicant routes
+        if (!isLoginRoute && !isApplicantRoute && !skipRedirect) {
           localStorage.removeItem('andropvs_token');
           localStorage.removeItem('andropvs_user');
           localStorage.removeItem('andropvs_modules');

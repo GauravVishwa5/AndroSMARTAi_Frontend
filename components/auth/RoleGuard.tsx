@@ -18,16 +18,18 @@ export function RoleGuard({
 }: RoleGuardProps) {
   const { user, isAuthenticated } = useAuthStore();
 
-  const userRole = user?.role || '';
-  const isAdmin = user?.is_admin || false;
+  const userRole = (user?.role || '').toLowerCase();
+  const isSuperAdminOrAdmin = Boolean(
+    user?.is_admin ||
+    user?.is_superuser ||
+    userRole.includes('admin') ||
+    userRole.includes('super') ||
+    userRole.includes('devops')
+  );
 
   const hasAccess =
-    isAdmin ||
-    allowedRoles.some(
-      (role) =>
-        userRole.toLowerCase().includes(role.toLowerCase()) ||
-        (role.toLowerCase() === 'admin' && isAdmin)
-    );
+    isSuperAdminOrAdmin ||
+    allowedRoles.some((role) => userRole.includes(role.toLowerCase()));
 
   if (!hasAccess && isAuthenticated) {
     return (

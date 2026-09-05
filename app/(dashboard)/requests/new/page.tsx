@@ -16,6 +16,11 @@ import {
   ArrowRight,
   ArrowLeft,
   Sparkles,
+  Search,
+  RefreshCw,
+  Edit3,
+  Layers,
+  Landmark,
 } from 'lucide-react';
 import { DocumentTypesResponse, DelhiSRO, DelhiLocality, GeographicState, District, Taluka, Village } from '@/types/pms';
 
@@ -37,8 +42,15 @@ export default function NewRequestPage() {
     flatNumber: '',
     address: '',
     state: 'Maharashtra', // Default to Maharashtra
-    city: 'Mumbai',
+    district_id: '',
+    district: 'Mumbai Suburban',
+    district_mr: 'मुंबई उपनगर',
+    taluka_id: '',
+    taluka: '',
+    taluka_mr: '',
+    city: '',
     village: '',
+    village_mr: '',
     pinCode: '',
     ctsNumber: '',
     propertyNumbers: ['235-GF'], // Chip input
@@ -65,6 +77,12 @@ export default function NewRequestPage() {
   const [villages, setVillages] = useState<Village[]>([]);
   const [delhiSros, setDelhiSros] = useState<DelhiSRO[]>([]);
   const [delhiLocalities, setDelhiLocalities] = useState<DelhiLocality[]>([]);
+
+  // Search & custom village toggle
+  const [villageSearch, setVillageSearch] = useState('');
+  const [delhiLocalitySearch, setDelhiLocalitySearch] = useState('');
+  const [isCustomVillage, setIsCustomVillage] = useState(false);
+  const [isLoadingLocations, setIsLoadingLocations] = useState(false);
 
   // Fetch initial masters
   useEffect(() => {
@@ -95,41 +113,156 @@ export default function NewRequestPage() {
     loadMasters();
   }, []);
 
-  // When state changes to Delhi, fetch Delhi SROs
+  // When state changes to Delhi or Maharashtra
   useEffect(() => {
     if (formData.state === 'Delhi') {
+      setIsLoadingLocations(true);
       requestsApi
         .getDelhiSROs()
-        .then((sros) => setDelhiSros(sros))
+        .then((sros) => {
+          const arr = Array.isArray(sros) ? sros : (sros as any)?.items || [];
+          setDelhiSros(arr);
+          const initialSro = formData.sro_id || '95';
+          const matched = arr.find((s: any) => String(s.sro_id) === String(initialSro)) || arr[0];
+          setFormData((prev) => ({
+            ...prev,
+            sro_id: matched ? String(matched.sro_id) : '95',
+          }));
+        })
         .catch(() => {
           setDelhiSros([
-            { sro_id: '95', sro_name: 'SR VI-A - Pitampura' },
-            { sro_id: '96', sro_name: 'SR VI-B - Rohini' },
+            { sro_id: '95', sro_name: 'North West-Rohini (SR VIC)' },
+            { sro_id: '78', sro_name: 'North West Model Town (SR VIA)' },
           ]);
-        });
+        })
+        .finally(() => setIsLoadingLocations(false));
     } else if (formData.state === 'Maharashtra') {
+      setIsLoadingLocations(true);
       requestsApi
         .getDistricts()
-        .then((dist) => setDistricts(dist))
-        .catch(() => {
-          setDistricts([
-            { id: 1, district_name: 'Mumbai Suburban', state_id: 1 },
-            { id: 2, district_name: 'Pune', state_id: 1 },
-            { id: 3, district_name: 'Thane', state_id: 1 },
-          ]);
-        });
+        .then((dist) => {
+          const distList = Array.isArray(dist) ? dist : [];
+          setDistricts(distList);
+          // If a district is already set or default to first
+          const defaultDist = distList.find((d: any) => (d.district_name || d.name || d.name_en) === 'Mumbai Suburban') || distList[0];
+          if (defaultDist) {
+            const dName = (defaultDist as any).district_name || (defaultDist as any).name_en || (defaultDist as any).name;
+            const dNameMr = (defaultDist as any).name_mr || (defaultDist as any).district_name_mr || dName;
+            setFormData((prev) => ({
+              ...prev,
+              district_id: String(defaultDist.id),
+              district: dName,
+              district_mr: dNameMr,
+            }));
+            handleDistrictChange(String(defaultDist.id), dName, dNameMr);
+          }
+        })
+        .catch((err) => {
+          console.warn('Failed to load districts from API', err);
+        })
+        .finally(() => setIsLoadingLocations(false));
     }
   }, [formData.state]);
+
+  // Handle District Change
+  const handleDistrictChange = async (districtId: string, districtName?: string, districtNameMr?: string) => {
+    const selectedDist = districts.find((d: any) => String(d.id || d.district_id) === String(districtId));
+    const dName = districtName || (selectedDist as any)?.district_name || (selectedDist as any)?.name_en || (selectedDist as any)?.name || '';
+    const dNameMr = districtNameMr || (selectedDist as any)?.name_mr || (selectedDist as any)?.district_name_mr || dName;
+
+    setFormData((prev) => ({
+      ...prev,
+      district_id: districtId,
+      district: dName,
+      district_mr: dNameMr,
+      taluka_id: '',
+      taluka: '',
+      taluka_mr: '',
+      village: '',
+      village_mr: '',
+    }));
+    setVillageSearch('');
+
+    if (districtId) {
+      setIsLoadingLocations(true);
+      try {
+        const [talukaList, villageList] = await Promise.all([
+          requestsApi.getTalukas(districtId).catch(() => []),
+          requestsApi.getVillages(undefined, districtId).catch(() => []),
+        ]);
+        setTalukas(talukaList);
+        setVillages(villageList);
+      } catch (e) {
+        console.warn('Failed to load talukas/villages for district', e);
+      } finally {
+        setIsLoadingLocations(false);
+      }
+    } else {
+      setTalukas([]);
+      setVillages([]);
+    }
+  };
+
+  // Handle Taluka Change
+  const handleTalukaChange = async (talukaId: string) => {
+    const selectedTaluka = talukas.find((t: any) => String(t.id || t.taluk_id) === String(talukaId));
+    const tName = (selectedTaluka as any)?.taluka_name || (selectedTaluka as any)?.name_en || (selectedTaluka as any)?.name || '';
+    const tNameMr = (selectedTaluka as any)?.name_mr || (selectedTaluka as any)?.taluka_name_mr || tName;
+
+    setFormData((prev) => ({
+      ...prev,
+      taluka_id: talukaId,
+      taluka: tName,
+      taluka_mr: tNameMr,
+      village: '',
+      village_mr: '',
+    }));
+    setVillageSearch('');
+
+    if (talukaId) {
+      setIsLoadingLocations(true);
+      try {
+        const villageList = await requestsApi.getVillages(talukaId, formData.district_id).catch(() => []);
+        setVillages(villageList);
+      } catch (e) {
+        console.warn('Failed to load villages for taluka', e);
+      } finally {
+        setIsLoadingLocations(false);
+      }
+    } else if (formData.district_id) {
+      // Fall back to district villages
+      requestsApi.getVillages(undefined, formData.district_id).then(setVillages).catch(() => []);
+    }
+  };
 
   // When Delhi SRO selected, fetch Localities
   useEffect(() => {
     if (formData.state === 'Delhi' && formData.sro_id) {
+      setIsLoadingLocations(true);
       requestsApi
         .getDelhiLocalities(formData.sro_id)
-        .then((locs) => setDelhiLocalities(locs))
+        .then((locs) => {
+          const arr = Array.isArray(locs) ? locs : (locs as any)?.items || [];
+          setDelhiLocalities(arr);
+          if (arr.length > 0) {
+            const hasCurrent = arr.some((l: any) => l.locality_name === formData.village);
+            if (!hasCurrent) {
+              const defLoc = arr.find((l: any) => l.locality_name.toLowerCase().includes('deepali')) || arr[0];
+              setFormData((prev) => ({
+                ...prev,
+                village: defLoc?.locality_name || '',
+              }));
+            }
+          }
+        })
         .catch(() => {
-          setDelhiLocalities([{ locality_name: 'Deepali' }, { locality_name: 'Shakurpur' }, { locality_name: 'Pitampura' }]);
-        });
+          setDelhiLocalities([
+            { locality_name: 'Deepali' },
+            { locality_name: 'Block-H-4-5 Pitampura' },
+            { locality_name: 'Begumpur' },
+          ]);
+        })
+        .finally(() => setIsLoadingLocations(false));
     }
   }, [formData.state, formData.sro_id]);
 
@@ -156,7 +289,7 @@ export default function NewRequestPage() {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files).map((file) => ({
         file,
-        docType: docTypesData?.document_types?.[0]?.document_type || 'Sale Deed',
+        docType: 'Auto-Detect',
       }));
       setUploadedFiles([...uploadedFiles, ...newFiles]);
     }
@@ -173,38 +306,50 @@ export default function NewRequestPage() {
 
     try {
       // 1. Create BankForm Request
+      // For Maharashtra, send Marathi values in district, taluka, village so Lambda receives the exact Marathi portal strings:
+      const isMaha = formData.state === 'Maharashtra';
       const payload = {
-        owner_name: formData.ownerName,
-        applicant_name: formData.applicantName || formData.ownerName,
-        property_name: formData.propertyName,
-        bank_name: formData.bankName,
-        bank_branch: formData.Bank_branch,
+        ownerName: formData.ownerName,
+        applicantName: formData.applicantName || formData.ownerName,
+        propertyName: formData.propertyName,
+        bankName: formData.bankName,
+        Bank_branch: formData.Bank_branch,
+        flatNumber: formData.flatNumber,
+        address: formData.address,
         state: formData.state,
+        district: isMaha && formData.district_mr ? formData.district_mr : formData.district,
+        district_id: formData.district_id,
+        district_eng: formData.district,
+        taluka: isMaha && formData.taluka_mr ? formData.taluka_mr : formData.taluka,
+        taluka_id: formData.taluka_id,
+        taluka_eng: formData.taluka,
         city: formData.city,
-        village: formData.village,
-        pincode: formData.pinCode,
-        cts_number: formData.ctsNumber,
-        property_numbers: formData.propertyNumbers,
-        from_year: formData.from_year,
-        case_type: formData.caseType,
-        transaction_type: formData.transactionType,
-        advocate_name: formData.advocateName,
-        search_name: formData.searchName,
+        village: isMaha && formData.village_mr ? formData.village_mr : formData.village,
+        village_eng: formData.village,
+        pinCode: formData.pinCode,
+        ctsNumber: formData.ctsNumber,
+        propertyNumbers: formData.propertyNumbers,
+        from_year: Number(formData.from_year) || 2001,
+        caseType: formData.caseType,
+        transactionType: formData.transactionType,
+        advocateName: formData.advocateName,
+        searchName: formData.searchName,
         category: formData.category,
       };
 
-      const res = await requestsApi.createRequest(payload).catch(() => ({
-        id: `REQ-${Math.floor(100 + Math.random() * 900)}`,
-        success: true,
-      }));
+      const res = await requestsApi.createRequest(payload);
+      const reqId = res.id || `REQ-${res.raw_id || '1'}`;
 
-      const reqId = res.id || 'REQ-349';
-
-      // 2. Upload Documents & Enqueue Celery OCR if files attached
+      // 2. Upload Documents to S3 & Postgres
       if (uploadedFiles.length > 0) {
         const files = uploadedFiles.map((u) => u.file);
         const docTypes = uploadedFiles.map((u) => u.docType);
-        await documentsApi.queueOcrAndUpload(reqId, files, docTypes).catch(() => null);
+        try {
+          await requestsApi.uploadNewDocuments(reqId, files, docTypes);
+        } catch (uploadErr) {
+          console.warn('Upload via uploadNewDocuments failed, falling back to queueOcrAndUpload:', uploadErr);
+          await documentsApi.queueOcrAndUpload(reqId, files, docTypes).catch(() => null);
+        }
       }
 
       router.push(`/requests/${reqId}`);
@@ -218,31 +363,34 @@ export default function NewRequestPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Top Title & Step Indicator */}
-      <div className="p-4 sm:p-6 rounded-2xl theme-surface border backdrop-blur-md shadow-sm">
+      <div className="p-4 sm:p-5 rounded-lg theme-surface border shadow-2xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <h1 className="text-lg sm:text-xl font-bold theme-text-primary tracking-tight">Create Property Request (BankForm)</h1>
-            <p className="text-xs theme-text-secondary mt-0.5">Initiate property title investigation and document OCR queue</p>
+            <h1 className="text-lg sm:text-xl font-bold theme-text-primary tracking-tight">Create Property Verification Request</h1>
+            <p className="text-xs theme-text-secondary mt-0.5">Initiate banking due-diligence intake, land registry search, and document OCR queue</p>
           </div>
-          <span className="text-xs font-mono px-3 py-1 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-bold w-fit">
+          <span className="text-xs font-mono px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-[#1D4ED8] dark:text-blue-400 border theme-border font-semibold w-fit">
             Step {currentStep} of 3
           </span>
         </div>
 
-
         {/* Stepper Progress */}
-        <div className="grid grid-cols-3 gap-2 mt-6">
+        <div className="grid grid-cols-3 gap-3 mt-4">
           {[
-            { step: 1, title: '1. Bank & Case Details' },
-            { step: 2, title: '2. Geography & Property' },
-            { step: 3, title: '3. Document Upload' },
+            { step: 1, title: '1. Applicant & Loan' },
+            { step: 2, title: '2. Property & Geography' },
+            { step: 3, title: '3. Documents & Priority' },
           ].map((s) => (
-            <div
-              key={s.step}
-              className={`h-2 rounded-full transition-all ${
-                currentStep >= s.step ? 'bg-gradient-to-r from-blue-600 to-indigo-600' : 'bg-slate-200 dark:bg-slate-800'
-              }`}
-            />
+            <div key={s.step} className="space-y-1">
+              <div
+                className={`h-1.5 rounded-full transition-colors ${
+                  currentStep >= s.step ? 'bg-[#1D4ED8]' : 'bg-slate-200 dark:bg-slate-800'
+                }`}
+              />
+              <p className={`text-[11px] truncate ${currentStep === s.step ? 'text-[#1D4ED8] dark:text-blue-400 font-semibold' : 'text-slate-500'}`}>
+                {s.title}
+              </p>
+            </div>
           ))}
         </div>
       </div>
@@ -256,10 +404,10 @@ export default function NewRequestPage() {
 
       {/* Step 1: Bank & Case Details */}
       {currentStep === 1 && (
-        <div className="p-6 rounded-2xl theme-surface border space-y-4 shadow-sm">
-          <h2 className="text-sm font-bold theme-text-primary flex items-center gap-2">
-            <Building className="w-4 h-4 text-blue-500 dark:text-blue-400" />
-            <span>Bank & Case Intake Details</span>
+        <div className="p-5 sm:p-6 rounded-lg theme-surface border space-y-4 shadow-2xs">
+          <h2 className="text-sm font-bold theme-text-primary flex items-center gap-2 pb-2 border-b theme-border">
+            <Building className="w-4 h-4 text-slate-700 dark:text-slate-300" />
+            <span>Applicant & Case Intake Details</span>
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -273,7 +421,7 @@ export default function NewRequestPage() {
                 value={formData.ownerName}
                 onChange={(e) => setFormData({ ...formData, ownerName: e.target.value })}
                 placeholder="e.g. Ajay Kumar"
-                className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full theme-input border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
               />
             </div>
 
@@ -284,7 +432,7 @@ export default function NewRequestPage() {
                 value={formData.applicantName}
                 onChange={(e) => setFormData({ ...formData, applicantName: e.target.value })}
                 placeholder="e.g. Ajay Kumar (leave empty if same as owner)"
-                className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full theme-input border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
               />
             </div>
 
@@ -294,7 +442,7 @@ export default function NewRequestPage() {
                 type="text"
                 value={formData.bankName}
                 onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
-                className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full theme-input border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
               />
             </div>
 
@@ -304,7 +452,7 @@ export default function NewRequestPage() {
                 type="text"
                 value={formData.Bank_branch}
                 onChange={(e) => setFormData({ ...formData, Bank_branch: e.target.value })}
-                className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full theme-input border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
               />
             </div>
 
@@ -313,7 +461,7 @@ export default function NewRequestPage() {
               <select
                 value={formData.caseType}
                 onChange={(e) => setFormData({ ...formData, caseType: e.target.value })}
-                className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full theme-input border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-xs theme-text-primary focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
               >
                 <option value="General">General / Standard</option>
                 <option value="SRA">SRA (Slum Rehabilitation Authority)</option>
@@ -328,19 +476,19 @@ export default function NewRequestPage() {
                 type="number"
                 value={formData.from_year}
                 onChange={(e) => setFormData({ ...formData, from_year: parseInt(e.target.value) || 2000 })}
-                className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                className="w-full theme-input border border-slate-300 dark:border-slate-700 rounded-md px-3 py-2 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
               />
             </div>
           </div>
 
-          <div className="flex justify-end pt-4">
+          <div className="flex justify-end pt-3 border-t theme-border">
             <button
               type="button"
               onClick={() => setCurrentStep(2)}
               disabled={!formData.ownerName}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md transition-all disabled:opacity-50 active:scale-95"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
             >
-              <span>Next: Geography & Property</span>
+              <span>Next: Property & Geography</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -374,7 +522,7 @@ export default function NewRequestPage() {
                 type="text"
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                placeholder="Mumbai / New Delhi"
+                placeholder="Enter City Name"
                 className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -385,7 +533,7 @@ export default function NewRequestPage() {
                 type="text"
                 value={formData.pinCode}
                 onChange={(e) => setFormData({ ...formData, pinCode: e.target.value })}
-                placeholder="110034"
+                placeholder="Enter Pin Code"
                 className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -394,71 +542,266 @@ export default function NewRequestPage() {
           {/* Conditional Delhi SRO & Locality vs Maharashtra Cascading */}
           {formData.state === 'Delhi' ? (
             <div className="p-4 rounded-xl bg-blue-500/5 dark:bg-blue-950/20 border border-blue-500/20 space-y-3">
-              <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-                Delhi DORIS Land Registry Fields
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Landmark className="w-3.5 h-3.5" />
+                  Delhi DORIS Land Registry Fields (22 SROs • 6,632 Localities)
+                </span>
+                {delhiLocalities.length > 0 && (
+                  <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    {delhiLocalities.length} Localities in Selected SRO
+                  </span>
+                )}
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold theme-text-secondary mb-1.5">
-                    Sub-Registrar Office (SR. Office) <span className="text-red-500">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold theme-text-secondary">
+                      Sub-Registrar Office (SR. Office) <span className="text-red-500">*</span>
+                    </label>
+                    <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400">
+                      {delhiSros.length} SROs
+                    </span>
+                  </div>
                   <select
                     value={formData.sro_id}
-                    onChange={(e) => setFormData({ ...formData, sro_id: e.target.value })}
+                    onChange={(e) => {
+                      const newSro = e.target.value;
+                      setFormData({ ...formData, sro_id: newSro, village: '' });
+                      setDelhiLocalitySearch('');
+                    }}
                     className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="">Select SRO</option>
-                    {delhiSros.map((s) => (
+                    <option value="">-- Select Delhi SRO --</option>
+                    {(Array.isArray(delhiSros) ? delhiSros : []).map((s: any) => (
                       <option key={s.sro_id} value={s.sro_id}>
-                        {s.sro_name}
+                        {s.sro_name} {s.locality_count ? `(${s.locality_count} localities)` : ''}
                       </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold theme-text-secondary mb-1.5">
-                    Locality Name <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={formData.village}
-                    onChange={(e) => setFormData({ ...formData, village: e.target.value })}
-                    className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select Locality</option>
-                    {delhiLocalities.map((l, i) => (
-                      <option key={i} value={l.locality_name}>
-                        {l.locality_name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold theme-text-secondary">
+                      Locality Name <span className="text-red-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomVillage(!isCustomVillage)}
+                      className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+                    >
+                      <Edit3 className="w-2.5 h-2.5" />
+                      <span>{isCustomVillage ? 'Choose from List' : 'Type Custom'}</span>
+                    </button>
+                  </div>
+
+                  {isCustomVillage ? (
+                    <input
+                      type="text"
+                      value={formData.village}
+                      onChange={(e) => setFormData({ ...formData, village: e.target.value })}
+                      placeholder="e.g. Deepali / Pitampura"
+                      className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <div className="space-y-1.5">
+                      <select
+                        value={formData.village}
+                        onChange={(e) => setFormData({ ...formData, village: e.target.value })}
+                        disabled={!formData.sro_id || delhiLocalities.length === 0}
+                        className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                      >
+                        <option value="">
+                          {!formData.sro_id
+                            ? '-- Select SRO first --'
+                            : delhiLocalities.length === 0
+                            ? '-- Loading Localities... --'
+                            : `-- Select Locality (${delhiLocalities.length} available) --`}
+                        </option>
+                        {(delhiLocalitySearch.trim()
+                          ? delhiLocalities.filter((l: any) =>
+                              (l.locality_name || '').toLowerCase().includes(delhiLocalitySearch.toLowerCase())
+                            )
+                          : delhiLocalities
+                        ).map((l: any, i: number) => (
+                          <option key={i} value={l.locality_name}>
+                            {l.locality_name} {l.archival ? '(Archival)' : ''}
+                          </option>
+                        ))}
+                      </select>
+
+                      {delhiLocalities.length > 15 && (
+                        <div className="relative">
+                          <Search className="w-3 h-3 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="text"
+                            value={delhiLocalitySearch}
+                            onChange={(e) => setDelhiLocalitySearch(e.target.value)}
+                            placeholder={`Filter ${delhiLocalities.length} localities in dropdown...`}
+                            className="w-full bg-slate-100 dark:bg-slate-900 border theme-border rounded-lg pl-7 pr-2.5 py-1 text-[11px] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold theme-text-secondary mb-1.5">District</label>
-                <select
-                  className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  {districts.map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.district_name}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* 1. District Dropdown */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold theme-text-secondary">
+                      District <span className="text-red-500">*</span>
+                    </label>
+                    <span className="text-[10px] font-mono text-blue-600 dark:text-blue-400">
+                      {districts.length} Districts
+                    </span>
+                  </div>
+                  <select
+                    value={formData.district_id}
+                    onChange={(e) => handleDistrictChange(e.target.value)}
+                    className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">-- Select District --</option>
+                    {districts.map((d: any) => (
+                      <option key={d.id} value={d.id}>
+                        {d.district_name || d.name_en || d.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 2. Taluka Dropdown */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold theme-text-secondary">
+                      Taluka / Sub-District
+                    </label>
+                    <span className="text-[10px] font-mono text-indigo-600 dark:text-indigo-400">
+                      {talukas.length > 0 ? `${talukas.length} Talukas` : 'Select District'}
+                    </span>
+                  </div>
+                  <select
+                    value={formData.taluka_id}
+                    onChange={(e) => handleTalukaChange(e.target.value)}
+                    disabled={!formData.district_id || talukas.length === 0}
+                    className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                  >
+                    <option value="">
+                      {talukas.length > 0 ? '-- Select Taluka --' : '-- No Taluka Split (Urban) --'}
                     </option>
-                  ))}
-                </select>
+                    {talukas.map((t: any) => (
+                      <option key={t.id} value={t.id}>
+                        {t.taluka_name || t.name_en || t.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 3. Village / Locality Dropdown & Switcher */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="block text-xs font-semibold theme-text-secondary">
+                      Village / Locality <span className="text-red-500">*</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setIsCustomVillage(!isCustomVillage)}
+                      className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center gap-1"
+                    >
+                      <Edit3 className="w-2.5 h-2.5" />
+                      <span>{isCustomVillage ? 'Choose from List' : 'Type Custom'}</span>
+                    </button>
+                  </div>
+
+                  {isCustomVillage ? (
+                    <input
+                      type="text"
+                      value={formData.village}
+                      onChange={(e) => setFormData({ ...formData, village: e.target.value })}
+                      placeholder="e.g. Borivali / Bandra East"
+                      className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  ) : (
+                    <div className="space-y-1.5">
+                      <select
+                        value={formData.village}
+                        onChange={(e) => {
+                          const vName = e.target.value;
+                          const selectedVillage = villages.find(
+                            (v: any) => (v.village_name || v.name_en || v.name) === vName
+                          );
+                          const vNameMr = (selectedVillage as any)?.name_mr || (selectedVillage as any)?.village_name_mr || vName;
+                          setFormData({
+                            ...formData,
+                            village: vName,
+                            village_mr: vNameMr,
+                          });
+                        }}
+                        disabled={villages.length === 0}
+                        className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm theme-text-primary focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                      >
+                        <option value="">
+                          {isLoadingLocations
+                            ? 'Loading villages...'
+                            : villages.length > 0
+                            ? `-- Select Village (${villages.length} available) --`
+                            : '-- Select District / Taluka first --'}
+                        </option>
+                        {(villageSearch.trim()
+                          ? villages.filter((v: any) =>
+                              (v.village_name || v.name_en || v.name || '')
+                                .toLowerCase()
+                                .includes(villageSearch.toLowerCase())
+                            )
+                          : villages.slice(0, 400)
+                        ).map((v: any, idx: number) => {
+                          const vName = v.village_name || v.name_en || v.name;
+                          return (
+                            <option key={`${v.id || idx}-${vName}`} value={vName}>
+                              {vName} {v.pincode ? `(${v.pincode})` : ''}
+                            </option>
+                          );
+                        })}
+                      </select>
+
+                      {/* Quick Filter Search Bar for Village Dropdown if many villages */}
+                      {villages.length > 15 && (
+                        <div className="relative">
+                          <Search className="w-3 h-3 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                          <input
+                            type="text"
+                            value={villageSearch}
+                            onChange={(e) => setVillageSearch(e.target.value)}
+                            placeholder={`Filter ${villages.length} villages in dropdown...`}
+                            className="w-full bg-slate-100 dark:bg-slate-900 border theme-border rounded-lg pl-7 pr-2.5 py-1 text-[11px] placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold theme-text-secondary mb-1.5">Village / Locality</label>
-                <input
-                  type="text"
-                  value={formData.village}
-                  onChange={(e) => setFormData({ ...formData, village: e.target.value })}
-                  placeholder="Borivali / Andheri"
-                  className="w-full theme-input border rounded-xl px-3.5 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
+              {/* Status info bar */}
+              <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-950/60 border theme-border flex items-center justify-between text-[11px] theme-text-secondary">
+                <div className="flex items-center gap-2">
+                  <Layers className="w-3.5 h-3.5 text-blue-500" />
+                  <span>
+                    Selected: <strong>{formData.district || 'None'}</strong> &rarr;{' '}
+                    <strong>{formData.taluka || 'All'}</strong> &rarr;{' '}
+                    <strong className="text-blue-600 dark:text-blue-400">{formData.village || 'Not selected'}</strong>
+                  </span>
+                </div>
+                {isLoadingLocations && (
+                  <span className="inline-flex items-center gap-1 text-blue-600 animate-pulse text-[10px]">
+                    <RefreshCw className="w-3 h-3 animate-spin" /> Loading location data...
+                  </span>
+                )}
               </div>
             </div>
           )}
@@ -527,11 +870,11 @@ export default function NewRequestPage() {
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-4">
+          <div className="flex items-center justify-between pt-3 border-t theme-border">
             <button
               type="button"
               onClick={() => setCurrentStep(1)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl theme-card border theme-text-primary text-xs font-semibold hover:border-blue-500 transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back</span>
@@ -540,7 +883,7 @@ export default function NewRequestPage() {
               type="button"
               onClick={() => setCurrentStep(3)}
               disabled={!formData.propertyName}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold shadow-md disabled:opacity-50 active:scale-95"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold shadow-2xs transition-colors disabled:opacity-50 cursor-pointer"
             >
               <span>Next: Upload Documents</span>
               <ArrowRight className="w-4 h-4" />
@@ -551,18 +894,18 @@ export default function NewRequestPage() {
 
       {/* Step 3: Document Upload with Sub-type Hierarchy */}
       {currentStep === 3 && (
-        <div className="p-6 rounded-2xl theme-surface border space-y-5 shadow-sm">
-          <h2 className="text-sm font-bold theme-text-primary flex items-center gap-2">
-            <FileText className="w-4 h-4 text-blue-500 dark:text-blue-400" />
+        <div className="p-5 sm:p-6 rounded-lg theme-surface border space-y-4 shadow-2xs">
+          <h2 className="text-sm font-bold theme-text-primary flex items-center gap-2 pb-2 border-b theme-border">
+            <FileText className="w-4 h-4 text-slate-700 dark:text-slate-300" />
             <span>Document Intake & Sub-Type Classification</span>
           </h2>
 
           {/* Upload Dropzone */}
-          <div className="border-2 border-dashed theme-border hover:border-blue-500/60 rounded-2xl p-8 text-center transition-all theme-card">
-            <Upload className="w-10 h-10 text-blue-500 dark:text-blue-400 mx-auto mb-3 animate-bounce" />
-            <p className="text-sm font-semibold theme-text-primary">Drag & drop scanned title deeds, NOCs, or Index-II PDFs</p>
-            <p className="text-xs theme-text-secondary mt-1">Supports PDF, JPG, PNG, DOCX (up to 50MB per file)</p>
-            <label className="mt-4 inline-block px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold cursor-pointer shadow-md active:scale-95">
+          <div className="border border-dashed border-slate-300 dark:border-slate-700 hover:border-blue-500 rounded-lg p-6 text-center transition-colors bg-slate-50/50 dark:bg-slate-900/50">
+            <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+            <p className="text-xs font-semibold theme-text-primary">Drag & drop scanned title deeds, NOCs, or Index-II PDFs</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">Supports PDF, JPG, PNG, DOCX (up to 50MB per file)</p>
+            <label className="mt-3 inline-block px-3.5 py-1.5 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-medium text-slate-700 dark:text-slate-200 cursor-pointer shadow-2xs transition-colors">
               <span>Browse Files</span>
               <input type="file" multiple onChange={handleFileUpload} className="hidden" />
             </label>
@@ -605,8 +948,9 @@ export default function NewRequestPage() {
                           }
                           setUploadedFiles(updated);
                         }}
-                        className="theme-input border rounded-lg px-2.5 py-1.5 text-xs theme-text-primary focus:outline-none"
+                        className="theme-input border rounded-lg px-2.5 py-1.5 text-xs theme-text-primary focus:outline-none font-medium"
                       >
+                        <option value="Auto-Detect">✨ Auto-Detect by AI (Recommended)</option>
                         {docTypesData?.document_types?.map((d) => (
                           <option key={d.id} value={d.document_type}>
                             {d.document_type}
@@ -648,11 +992,11 @@ export default function NewRequestPage() {
           )}
 
           {/* Submit Button */}
-          <div className="flex items-center justify-between pt-4">
+          <div className="flex items-center justify-between pt-3 border-t theme-border">
             <button
               type="button"
               onClick={() => setCurrentStep(2)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl theme-card border theme-text-primary text-xs font-semibold hover:border-blue-500 transition-all"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-md bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>Back</span>
@@ -661,14 +1005,14 @@ export default function NewRequestPage() {
               type="button"
               onClick={handleSubmit}
               disabled={isSubmitting}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-blue-600/25 disabled:opacity-50 active:scale-95"
+              className="flex items-center gap-1.5 px-5 py-2 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white text-xs font-semibold shadow-2xs disabled:opacity-50 transition-colors cursor-pointer"
             >
               {isSubmitting ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   <CheckCircle2 className="w-4 h-4" />
-                  <span>Submit & Queue OCR Extraction</span>
+                  <span>Submit & Queue Verification</span>
                 </>
               )}
             </button>

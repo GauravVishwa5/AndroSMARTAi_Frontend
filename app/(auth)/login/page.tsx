@@ -14,6 +14,8 @@ import {
   Sparkles,
   ArrowRight,
   AlertCircle,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import { Logo } from '@/components/ui/Logo';
 
@@ -23,6 +25,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,7 +38,9 @@ export default function LoginPage() {
       if (res.token && res.user) {
         setAuth(res.user, res.token, (res as any).entitlements || res.module_access || {});
         const role = res.user.role || '';
-        if (role.toLowerCase().includes('admin')) {
+        if ((res.user as any).is_applicant || role.toLowerCase().includes('applicant')) {
+          window.location.href = '/applicant/dashboard';
+        } else if (res.user.is_admin || role.toLowerCase().includes('admin')) {
           window.location.href = '/admin';
         } else if (role.toLowerCase().includes('legal')) {
           window.location.href = '/legal';
@@ -47,30 +52,8 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      // If error or network problem, allow demo bypass for local development
-      if (targetEmail.includes('demo.') || targetEmail.includes('andropvs.com')) {
-        const dummyUser = {
-          id: 'c0000000-0000-0000-0000-000000000002',
-          username: targetEmail.split('@')[0],
-          email: targetEmail,
-          first_name: targetEmail.includes('branch') ? 'Branch' : targetEmail.includes('legal') ? 'Legal' : 'Admin',
-          last_name: 'User',
-          role: targetEmail.includes('branch') ? 'Branch User' : targetEmail.includes('legal') ? 'Legal Investigator' : 'Super Admin',
-          is_admin: targetEmail.includes('admin'),
-          is_active: true,
-        };
-        const dummyToken = {
-          access_token: 'demo-local-jwt-token',
-          token_type: 'bearer',
-          user_id: dummyUser.id,
-          expires_in: 86400,
-        };
-        setAuth(dummyUser as any, dummyToken as any, {});
-        window.location.href = targetEmail.includes('legal') ? '/legal' : targetEmail.includes('admin') ? '/admin' : '/branch';
-        return;
-      }
       setError(
-        err?.response?.data?.detail || 'Authentication failed. Please check your email and password.'
+        err?.response?.data?.detail || err?.message || 'Authentication failed. Please check your email, password, and backend connection.'
       );
     } finally {
       setIsLoading(false);
@@ -89,120 +72,83 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen theme-canvas flex flex-col md:flex-row">
-      {/* Left Column: Brand & FinTech Value Prop */}
-      <div className="hidden md:flex flex-col justify-between w-1/2 p-12 bg-slate-900 border-r border-slate-800 text-slate-100 relative overflow-hidden">
-        {/* Background ambient glow */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-10 right-10 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
-
+      {/* Left Column: Brand & Institutional FinTech Context */}
+      <div className="hidden md:flex flex-col justify-between w-1/2 p-12 bg-[#0B0F14] border-r border-slate-800 text-slate-100 relative">
         {/* Logo & Brand Header */}
         <div className="z-10">
-          <Logo variant="nobg" size="lg" showBadge={true} subtitle="Legal Due-Diligence & Verification Platform" href="/" />
+          <Logo variant="nobg" size="lg" showBadge={true} subtitle="Legal Due-Diligence & Title Scrutiny Platform" href="/" />
         </div>
 
         {/* Core Value Highlights */}
         <div className="space-y-6 z-10 max-w-md my-auto">
           <div>
-            <span className="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-              Enterprise Title Search
+            <span className="px-2.5 py-1 rounded text-xs font-semibold bg-blue-950/50 text-blue-300 border border-blue-800">
+              Institutional Mortgage Due-Diligence
             </span>
-            <h2 className="text-3xl font-bold text-white tracking-tight mt-3 leading-tight">
-              AI-Powered Property Search & Instant Legal Clearance.
+            <h2 className="text-2xl lg:text-3xl font-bold text-white tracking-tight mt-3 leading-snug">
+              Automated 30-Year Title Search & Legal Scrutiny Architecture.
             </h2>
-            <p className="text-sm text-slate-400 mt-2">
-              Accelerate bank mortgage investigations with automated Maharashtra & Delhi IGR title searches, multi-page OCR extraction, and 1-click LSR report generation.
+            <p className="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed">
+              Engineered for bank legal panels, empanelled advocates, and mortgage credit risk teams. Seamless integration with DORIS & e-Search land registries, automated chain-of-title reconstruction, and 1-click TSR export.
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 pt-4">
-            <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm">
-              <ShieldCheck className="w-6 h-6 text-emerald-400 mb-2" />
-              <h3 className="text-sm font-semibold text-white">99.8% Accuracy</h3>
-              <p className="text-xs text-slate-400 mt-1">Direct Land Registry verification</p>
+          <div className="grid grid-cols-2 gap-3 pt-2">
+            <div className="p-3.5 rounded-lg bg-[#111827] border border-slate-800">
+              <ShieldCheck className="w-5 h-5 text-emerald-400 mb-1.5" />
+              <h3 className="text-xs font-bold text-white">Direct Registry Match</h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">SRO Index-II & Book-I live records</p>
             </div>
-            <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 backdrop-blur-sm">
-              <FileCheck2 className="w-6 h-6 text-indigo-400 mb-2" />
-              <h3 className="text-sm font-semibold text-white">10x Speedup</h3>
-              <p className="text-xs text-slate-400 mt-1">Automated LSR/SCR Assembly</p>
+            <div className="p-3.5 rounded-lg bg-[#111827] border border-slate-800">
+              <FileCheck2 className="w-5 h-5 text-blue-400 mb-1.5" />
+              <h3 className="text-xs font-bold text-white">Instant Title Scrutiny</h3>
+              <p className="text-[11px] text-slate-400 mt-0.5">Automated TSR/SCR assembly</p>
             </div>
           </div>
         </div>
 
         {/* Footer info */}
-        <div className="z-10 text-xs text-slate-500 flex items-center justify-between border-t border-slate-800/80 pt-6">
-          <span>&copy; 2026 AndroPVS Platform</span>
-          <span className="flex items-center gap-1 text-slate-400">
-            <Sparkles className="w-3.5 h-3.5 text-indigo-400" /> Powered by GPT-4 Title Analysis
+        <div className="z-10 text-xs text-slate-500 flex items-center justify-between border-t border-slate-800 pt-6">
+          <span>&copy; 2026 AndroSMARTAi &bull; PVS Platform</span>
+          <span className="text-slate-400 text-[11px]">
+            Institutional Bank Panel Workstation
           </span>
         </div>
       </div>
 
       {/* Right Column: Authentication Form */}
       <div className="flex-1 flex items-center justify-center p-6 md:p-12">
-        <div className="w-full max-w-md space-y-6">
+        <div className="w-full max-w-md space-y-5">
           {/* Header */}
           <div className="text-center md:text-left">
             <div className="md:hidden flex justify-center mb-6">
               <Logo variant="nobg" size="md" showBadge={true} href="/" />
             </div>
-            <h2 className="text-2xl font-bold theme-text-primary tracking-tight">Sign In to AndroPVS</h2>
-            <p className="text-sm theme-text-secondary mt-1">
-              Enter your banking credentials or sign in with SSO
+            <h2 className="text-xl sm:text-2xl font-bold theme-text-primary tracking-tight">Sign In to PVS</h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1">
+              Enter your authorized credentials or sign in with enterprise SSO
             </p>
-          </div>
-
-          {/* Quick Demo Access Buttons */}
-          <div className="p-3.5 rounded-xl theme-surface border space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-600 dark:text-blue-400">
-              ⚡ 1-Click Quick Demo Sign-In
-            </p>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => executeLogin('demo.branch@andropvs.com', 'DemoUser@12345', '/branch')}
-                className="p-2 rounded-lg bg-blue-600/10 hover:bg-blue-600/20 border border-blue-500/30 text-left transition-all group"
-              >
-                <p className="text-xs font-bold theme-text-primary group-hover:text-blue-600 dark:group-hover:text-blue-300">🏢 Branch</p>
-                <p className="text-[10px] theme-text-muted">Maker Intake</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => executeLogin('demo.legal@andropvs.com', 'DemoUser@12345', '/legal')}
-                className="p-2 rounded-lg bg-indigo-600/10 hover:bg-indigo-600/20 border border-indigo-500/30 text-left transition-all group"
-              >
-                <p className="text-xs font-bold theme-text-primary group-hover:text-indigo-600 dark:group-hover:text-indigo-300">⚖️ Legal</p>
-                <p className="text-[10px] theme-text-muted">Scrutiny LSR</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => executeLogin('demo.admin@andropvs.com', 'DemoUser@12345', '/admin')}
-                className="p-2 rounded-lg bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 text-left transition-all group"
-              >
-                <p className="text-xs font-bold theme-text-primary group-hover:text-emerald-600 dark:group-hover:text-emerald-300">🛡️ Admin</p>
-                <p className="text-[10px] theme-text-muted">System Ops</p>
-              </button>
-            </div>
           </div>
 
           {/* Error Alert */}
           {error && (
-            <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 flex items-start gap-3 text-sm text-red-600 dark:text-red-400">
-              <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+            <div className="p-3 rounded-md bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 flex items-start gap-2.5 text-xs text-rose-700 dark:text-rose-300">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-500" />
               <div className="flex-1">
-                <p className="font-semibold text-red-700 dark:text-red-300">Authentication Failed</p>
-                <p className="text-xs text-red-600 dark:text-red-400/90 mt-0.5">{error}</p>
+                <p className="font-semibold">Authentication Failed</p>
+                <p className="text-[11px] mt-0.5">{error}</p>
               </div>
             </div>
           )}
 
           {/* SSO Options */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2.5">
             <button
               type="button"
               onClick={() => handleSSO('google')}
-              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl theme-card border text-xs font-semibold theme-text-primary transition-all shadow-sm"
+              className="flex items-center justify-center gap-2 py-2 px-3 rounded-md bg-white dark:bg-slate-900 border theme-border text-xs font-medium theme-text-primary transition-colors hover:bg-slate-50 shadow-2xs cursor-pointer"
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
                 <path
                   fill="#EA4335"
                   d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.3 9 5 12 5z"
@@ -226,9 +172,9 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => handleSSO('microsoft')}
-              className="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl theme-card border text-xs font-semibold theme-text-primary transition-all shadow-sm"
+              className="flex items-center justify-center gap-2 py-2 px-3 rounded-md bg-white dark:bg-slate-900 border theme-border text-xs font-medium theme-text-primary transition-colors hover:bg-slate-50 shadow-2xs cursor-pointer"
             >
-              <svg className="w-4 h-4" viewBox="0 0 23 23">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 23 23">
                 <path fill="#f35325" d="M1 1h10v10H1z" />
                 <path fill="#81bc06" d="M12 1h10v10H12z" />
                 <path fill="#05a6f0" d="M1 12h10v10H1z" />
@@ -238,18 +184,18 @@ export default function LoginPage() {
             </button>
           </div>
 
-          <div className="flex items-center gap-3 my-4">
+          <div className="flex items-center gap-3 my-3">
             <div className="h-px theme-border flex-1" />
-            <span className="text-[11px] font-semibold theme-text-muted uppercase tracking-wider">
-              Or email login
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              Or institutional credentials
             </span>
             <div className="h-px theme-border flex-1" />
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3.5">
             <div>
-              <label className="block text-xs font-medium theme-text-secondary mb-1.5">
+              <label className="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Work Email Address
               </label>
               <div className="relative">
@@ -260,17 +206,17 @@ export default function LoginPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@axisbank.com"
-                  className="w-full theme-input border rounded-xl pl-9 pr-4 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  className="w-full theme-input border rounded-md pl-9 pr-3 py-2 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
               </div>
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-medium theme-text-secondary">Password</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Password</label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                  className="text-xs font-medium text-[#1D4ED8] dark:text-blue-400 hover:underline"
                 >
                   Forgot password?
                 </Link>
@@ -278,13 +224,25 @@ export default function LoginPage() {
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                 <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full theme-input border rounded-xl pl-9 pr-4 py-2.5 text-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  className="w-full theme-input border rounded-md pl-9 pr-10 py-2 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4" />
+                  ) : (
+                    <Eye className="w-4 h-4" />
+                  )}
+                </button>
               </div>
             </div>
 
@@ -292,32 +250,138 @@ export default function LoginPage() {
               <input
                 id="remember-me"
                 type="checkbox"
-                className="w-4 h-4 rounded theme-input text-blue-600 focus:ring-blue-500"
+                className="w-3.5 h-3.5 rounded theme-input text-[#1D4ED8] focus:ring-blue-500"
               />
-              <label htmlFor="remember-me" className="text-xs theme-text-secondary">
-                Keep me signed in on this device
+              <label htmlFor="remember-me" className="text-xs text-slate-600 dark:text-slate-400">
+                Keep me signed in on this authorized workstation
               </label>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-sm shadow-lg shadow-blue-600/25 hover:shadow-blue-600/35 transition-all disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-md bg-[#1D4ED8] hover:bg-[#1E40AF] text-white font-semibold text-xs shadow-2xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
-                  <span>Sign In to Dashboard</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <span>Sign In to Workstation</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </>
               )}
             </button>
           </form>
 
-          <p className="text-center text-xs theme-text-secondary">
+          {/* Investor & Partner Demo Mode Quick-Fill */}
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/90 border border-blue-200 dark:border-blue-900/60 shadow-xs space-y-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-blue-700 dark:text-blue-300 uppercase tracking-wide">
+                <Sparkles className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                <span>Investor & Partner Demo Roles</span>
+              </div>
+              <span className="text-[10px] font-mono text-slate-400">
+                1-Click Direct Sign-In
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-snug">
+              Select an institutional persona below to test end-to-end collateral intelligence, dual-control maker-checker, and borrower tracking:
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              {/* Role 1: Branch Officer */}
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => executeLogin('demo.branch@andropvs.com', 'DemoUser@12345', '/branch')}
+                className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500 text-left transition-all hover:shadow-xs group cursor-pointer disabled:opacity-60"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-blue-50 dark:bg-blue-950/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                    Branch Desk
+                  </span>
+                  <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-blue-600 transition-colors" />
+                </div>
+                <div className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">
+                  Rajesh Sharma
+                </div>
+                <div className="text-[10px] text-slate-500 truncate">
+                  Chief Credit Underwriter (/branch)
+                </div>
+              </button>
+
+              {/* Role 2: Legal Counsel (Maker) */}
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => executeLogin('demo.legal@andropvs.com', 'DemoUser@12345', '/legal')}
+                className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 text-left transition-all hover:shadow-xs group cursor-pointer disabled:opacity-60"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">
+                    Advocate Maker
+                  </span>
+                  <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-indigo-600 transition-colors" />
+                </div>
+                <div className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">
+                  Adv. Kushal Verma
+                </div>
+                <div className="text-[10px] text-slate-500 truncate">
+                  Title Investigation & Digital Seal (/legal)
+                </div>
+              </button>
+
+              {/* Role 3: Risk Head / Checker */}
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => executeLogin('demo.admin@andropvs.com', 'DemoUser@12345', '/admin')}
+                className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-500 dark:hover:border-purple-500 text-left transition-all hover:shadow-xs group cursor-pointer disabled:opacity-60"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                    Risk Checker
+                  </span>
+                  <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-purple-600 transition-colors" />
+                </div>
+                <div className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">
+                  Dr. Priya Nair
+                </div>
+                <div className="text-[10px] text-slate-500 truncate">
+                  CRO & Checker Sign-off (/admin)
+                </div>
+              </button>
+
+              {/* Role 4: Borrower Applicant */}
+              <button
+                type="button"
+                disabled={isLoading}
+                onClick={() => executeLogin('demo.applicant@andropvs.com', 'DemoUser@12345', '/applicant/dashboard')}
+                className="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-amber-500 dark:hover:border-amber-500 text-left transition-all hover:shadow-xs group cursor-pointer disabled:opacity-60"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                    Borrower
+                  </span>
+                  <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-amber-600 transition-colors" />
+                </div>
+                <div className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate">
+                  Vikram Malhotra
+                </div>
+                <div className="text-[10px] text-slate-500 truncate">
+                  Retail Mortgage Applicant (/applicant)
+                </div>
+              </button>
+            </div>
+
+            <div className="text-[10px] text-slate-400 text-center font-mono pt-1">
+              Universal Demo Password: <span className="font-bold text-slate-600 dark:text-slate-300">DemoUser@12345</span>
+            </div>
+          </div>
+
+          <p className="text-center text-xs text-slate-500">
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
+            <Link href="/signup" className="text-[#1D4ED8] dark:text-blue-400 hover:underline font-medium">
               Create an organization account
             </Link>
           </p>

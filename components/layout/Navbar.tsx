@@ -13,8 +13,6 @@ import {
   Sun,
   Moon,
   ChevronRight,
-  Sparkles,
-  Command,
   Menu,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -53,14 +51,14 @@ export function Navbar() {
   const breadcrumbs = getBreadcrumbs();
 
   return (
-    <header className="h-16 border-b theme-border theme-surface backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 transition-colors">
-      {/* Left: Hamburger (Mobile) + Logo + Breadcrumbs & Search */}
+    <header className="h-14 sm:h-16 border-b theme-border theme-surface px-4 sm:px-6 flex items-center justify-between sticky top-0 z-30 transition-colors">
+      {/* Left: Mobile Toggle + Dynamic Breadcrumbs & Search */}
       <div className="flex items-center gap-3 sm:gap-4 flex-1 max-w-2xl">
-        {/* Mobile Hamburger Toggle Button */}
+        {/* Mobile Hamburger (< lg) */}
         <button
           onClick={toggleMobileMenu}
-          className="lg:hidden p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white theme-card border"
-          title="Toggle Navigation Menu"
+          className="lg:hidden p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border theme-border"
+          aria-label="Toggle Navigation Menu"
         >
           <Menu className="w-5 h-5" />
         </button>
@@ -71,8 +69,8 @@ export function Navbar() {
         </div>
 
         {/* Dynamic Breadcrumbs (Desktop) */}
-        <nav className="hidden xl:flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-          <Link href="/" className="hover:text-blue-600 dark:hover:text-slate-200 transition-colors">
+        <nav aria-label="Breadcrumb" className="hidden xl:flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+          <Link href="/" className="hover:text-[#1D4ED8] dark:hover:text-blue-400 transition-colors">
             Portal
           </Link>
           {breadcrumbs.map((crumb, idx) => (
@@ -82,7 +80,7 @@ export function Navbar() {
                 href={crumb.href}
                 className={`${
                   idx === breadcrumbs.length - 1
-                    ? 'text-blue-600 dark:text-blue-400 font-semibold'
+                    ? 'text-[#1D4ED8] dark:text-blue-400 font-semibold'
                     : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
                 } transition-colors`}
               >
@@ -93,68 +91,87 @@ export function Navbar() {
         </nav>
 
         {/* Global Search Bar */}
-        <div className="relative w-full max-w-xs sm:max-w-sm lg:max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+        <div className="relative w-full max-w-xs sm:max-w-sm">
+          <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search REQ-#, Owner, CTS..."
-            className="w-full theme-input border rounded-xl pl-9 pr-10 sm:pr-14 py-2 text-xs placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all shadow-inner"
+            aria-label="Global search"
+            className="w-full theme-input border border-slate-300 dark:border-slate-700 rounded-md pl-8 pr-12 py-1.5 text-xs placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 transition-colors"
           />
-          <div className="hidden sm:flex absolute right-2.5 top-1/2 -translate-y-1/2 items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 border theme-border text-[10px] text-slate-500 dark:text-slate-400 font-mono pointer-events-none">
-            <Command className="w-3 h-3" />
-            <span>K</span>
+          <div className="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 items-center px-1 rounded bg-slate-100 dark:bg-slate-800 border theme-border text-[10px] text-slate-500 font-mono pointer-events-none">
+            Ctrl K
           </div>
         </div>
       </div>
 
       {/* Right Controls */}
       <div className="flex items-center gap-2 sm:gap-3">
-        {/* Active Branch Indicator (Desktop only) */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl theme-card border text-xs text-slate-700 dark:text-slate-300 shadow-sm">
-          <Building2 className="w-3.5 h-3.5 text-blue-500 dark:text-blue-400 shrink-0" />
-          <span className="truncate max-w-[140px] lg:max-w-[180px]">Axis Bank &mdash; Andheri West</span>
+        {/* Active Context / Branch Indicator (Desktop only) */}
+        <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100/70 dark:bg-slate-800/60 border theme-border text-xs text-slate-700 dark:text-slate-300">
+          <Building2 className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+          {pathname.startsWith('/admin') ? (
+            <span className="font-semibold text-slate-800 dark:text-slate-200">System Admin</span>
+          ) : pathname.startsWith('/legal') ? (
+            <span className="font-semibold text-slate-800 dark:text-slate-200">Legal Scrutiny Cell</span>
+          ) : (
+            <span className="truncate max-w-[160px]">Axis Bank — Andheri West</span>
+          )}
         </div>
 
         {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}
           title={`Switch to ${resolvedTheme === 'dark' ? 'Light' : 'Dark'} Mode`}
-          className="p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white theme-card border hover:border-blue-500/50 transition-all active:scale-95 shrink-0"
+          aria-label="Toggle theme"
+          className="p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border theme-border hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
         >
           {resolvedTheme === 'dark' ? (
-            <Sun className="w-4 h-4 text-amber-400 animate-spin-slow" />
+            <Sun className="w-4 h-4 text-amber-400" />
           ) : (
-            <Moon className="w-4 h-4 text-blue-600" />
+            <Moon className="w-4 h-4 text-slate-600" />
           )}
         </button>
 
         {/* Notification Bell */}
         <button
           title="Notifications"
-          className="relative p-2 rounded-xl text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white theme-card border transition-all shrink-0"
+          aria-label="Notifications"
+          className="relative p-1.5 rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white border theme-border hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+          <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#1D4ED8] rounded-full" />
         </button>
 
-        {/* User Profile Menu */}
-        <div className="flex items-center gap-2 sm:gap-2.5 pl-2 sm:pl-3 border-l theme-border">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-blue-500 flex items-center justify-center font-bold text-xs text-white shadow-md shadow-blue-500/20 shrink-0">
-            {user?.first_name ? user.first_name[0] : user?.username?.[0]?.toUpperCase() || 'A'}
+        {/* User Profile & Logout */}
+        <div className="flex items-center gap-2 pl-2 border-l theme-border">
+          <div className="w-7 h-7 rounded-md bg-[#1D4ED8] flex items-center justify-center font-bold text-xs text-white shrink-0 select-none">
+            {user?.first_name
+              ? user.first_name[0]
+              : user?.username?.toLowerCase().includes('admin') || pathname.startsWith('/admin')
+              ? 'A'
+              : user?.username?.[0]?.toUpperCase() || 'U'}
           </div>
           <div className="hidden lg:block text-left leading-tight">
-            <p className="text-xs font-semibold theme-text-primary truncate max-w-[120px]">
-              {user?.first_name ? `${user.first_name} ${user.last_name || ''}` : user?.username || 'User'}
+            <p className="text-xs font-semibold theme-text-primary truncate max-w-[130px]">
+              {user?.first_name
+                ? `${user.first_name} ${user.last_name || ''}`
+                : user?.username === 'admin' || pathname.startsWith('/admin')
+                ? 'System Admin'
+                : pathname.startsWith('/legal')
+                ? 'Adv. Kushal Verma'
+                : user?.username || 'Rajesh Sharma'}
             </p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
-              {user?.is_admin ? 'Super Admin' : 'Legal Investigator'}
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate max-w-[130px]">
+              {user?.role || (pathname.startsWith('/admin') ? 'Super Admin' : pathname.startsWith('/legal') ? 'Panel Advocate' : 'Branch Officer')}
             </p>
           </div>
 
           <button
-            onClick={logout}
+            onClick={() => logout()}
             title="Sign Out"
-            className="p-2 rounded-xl text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-colors"
+            aria-label="Sign Out"
+            className="flex items-center gap-1 p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors ml-1 cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
           </button>

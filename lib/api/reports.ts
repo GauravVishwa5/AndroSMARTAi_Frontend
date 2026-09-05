@@ -16,16 +16,9 @@ export const reportsApi = {
     return response.data;
   },
 
-  getWopiToken: async () => {
-    const response = await apiClient.post('/api/wopi/token');
-    return response.data;
-  },
-
-  getWopiEditorUrl: async (requestId: string, reportType: 'lsr' | 'scr' | 'sr') => {
-    const response = await apiClient.post('/api/wopi/generate-shared-url', {
-      request_id: requestId,
-      report_type: reportType,
-    });
+  // Direct report download via secure S3 presigned URL
+  getReportDownloadUrl: async (requestId: string, reportType: 'lsr' | 'scr' | 'sr') => {
+    const response = await apiClient.get(`/api/v1/requests/${requestId}/reports/${reportType}/download-url`);
     return response.data;
   },
 };

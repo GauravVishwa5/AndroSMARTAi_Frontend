@@ -42,8 +42,8 @@ export interface BankForm {
   villages?: string[];
   pinCode?: string;
   ctsNumber?: string;
-  propertyNumber?: string[];
-  propertyNumbers?: string;
+  propertyNumber?: string | string[];
+  propertyNumbers?: string | string[];
   from_year?: number;
   stampDuty?: string;
   lodgementReceipt?: string;
@@ -88,20 +88,28 @@ export interface GeographicState {
 
 export interface District {
   id: number;
-  district_name: string;
-  state_id: number;
+  district_name?: string;
+  name?: string;
+  name_en?: string;
+  state_id?: number;
+  region?: string;
 }
 
 export interface Taluka {
   id: number;
-  taluka_name: string;
-  district_id: number;
+  taluka_name?: string;
+  name?: string;
+  name_en?: string;
+  district_id?: number;
 }
 
 export interface Village {
   id: number;
-  village_name: string;
-  taluka_id: number;
+  village_name?: string;
+  name?: string;
+  name_en?: string;
+  taluka_id?: number;
+  pincode?: string;
 }
 
 export interface DelhiSRO {
